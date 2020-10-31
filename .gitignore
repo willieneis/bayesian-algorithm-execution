@@ -1,0 +1,31 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Jupyter notebook
+.ipynb_checkpoints
+
+# Vim
+*.sw*
+
+# Mac
+*.DS_Store
+
+# Results / data
+*hide
+*hide_*
+*save
+*/save_*
+*saved
+*/saved_*
+
+# Python
+*pylintrc*
+*.pkl
+
+# Sphinx documentation
+docs/_build/
