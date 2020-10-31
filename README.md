@@ -1,3 +1,3 @@
 # Bayesian algorithm execution (BAX)
 
-A Bayesian approach to executing algorithms with expensive function evaluations.
+A Bayesian approach to running algorithms with expensive function evaluations.
