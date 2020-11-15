@@ -21,7 +21,7 @@ class Timer(object):
     def __exit__(self, type, value, traceback):
         message = 'Elapsed: %.2f seconds' % (time.time() - self.tstart)
         if self.name:
-            message = '[%s] ' % self.name + message
+            message = '*[TIME] [%s] ' % self.name + message
         print(message)
         if self.filename:
             with open(self.filename,'a') as file:

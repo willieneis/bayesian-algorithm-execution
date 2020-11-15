@@ -69,6 +69,10 @@ class FunctionSample:
         # Return output y
         return y
 
+    def __call__(self, x):
+        """Class is callable and returns self.get_y(x)."""
+        return self.get_y(x)
+
     def print_str(self):
         """Print a description string."""
         print('*[INFO] ' + str(self))

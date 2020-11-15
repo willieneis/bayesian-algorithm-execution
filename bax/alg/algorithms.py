@@ -36,25 +36,20 @@ class LinearScan:
         # Set self.params
         self.params = Namespace()
         self.params.name = getattr(params, 'name', 'LinearScan')
-        default_x_path = [[x] for x in np.linspace(3.5, 20, 100)]
+        default_x_path = [[x] for x in np.linspace(2.5, 20, 100)]
         self.params.x_path = getattr(params, 'x_path', default_x_path)
 
-    def set_function(self, f):
+    def run_algorithm_on_f(self, f):
         """
-        Set self.f, the function that is sequentially evaluated during algorithm
-        execution.
-        """
-        self.f = f
-
-    def run_algorithm(self):
-        """Run the algorithm, and return the execution path and output."""
+        Run the algorithm by sequentially querying function f. Return the execution path
+        and output."""
         # Initialize execution path
         exe_path = Namespace(x=[], y=[])
 
         # Step through algorithm
         x = self.get_next_x(exe_path)
         while x is not None:
-            y = self.f.get_y(x)
+            y = f(x)
             exe_path.x.append(x)
             exe_path.y.append(y)
             x = self.get_next_x(exe_path)
