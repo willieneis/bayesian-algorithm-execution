@@ -42,7 +42,8 @@ class LinearScan:
     def run_algorithm_on_f(self, f):
         """
         Run the algorithm by sequentially querying function f. Return the execution path
-        and output."""
+        and output.
+        """
         # Initialize execution path
         exe_path = Namespace(x=[], y=[])
 
@@ -82,3 +83,28 @@ class LinearScan:
         print_params = copy.deepcopy(self.params)
         delattr(print_params, 'x_path')
         return f'{self.params.name} with params={print_params}'
+
+
+class LinearScanRandGap(LinearScan):
+    """
+    Algorithm that scans over a grid (with randomly drawn gap size between gridpoints)
+    on a one dimensional domain, and as output returns function values at each point on
+    grid.
+    """
+
+    def run_algorithm_on_f(self, f):
+        """
+        Run the algorithm by sequentially querying function f. Return the execution path
+        and output.
+        """
+        n_grid = len(self.params.x_path)
+        rand_factor = 0.3
+        min_gap = np.ceil((1 - rand_factor) * n_grid)
+        max_gap = np.ceil((1 + rand_factor) * n_grid)
+        new_n_grid = np.random.randint(min_gap, max_gap)
+        min_x_path = np.min(self.params.x_path)
+        max_x_path = np.max(self.params.x_path)
+        new_x_path = [[x] for x in np.linspace(min_x_path, max_x_path, new_n_grid)]
+        self.params.x_path = new_x_path
+
+        return super().run_algorithm_on_f(f)
