@@ -49,7 +49,7 @@ class SimpleGp:
         data = dict_to_namespace(data)
         self.data = copy.deepcopy(data)
 
-    def get_gp_prior_mu_cov(self, x_list, full_cov=True):
+    def get_prior_mu_cov(self, x_list, full_cov=True):
         """
         Return GP prior parameters: mean (mu) and covariance (cov).
 
@@ -72,8 +72,8 @@ class SimpleGp:
             If full_cov is True, return the covariance matrix as a numpy ndarray
             (len(x_list) x len(x_list)).
         """
-        # NOTE: currently assumes zero-mean prior.
-        # TODO: generalized beyond zero-mean prior.
+        # NOTE: currently assumes constant zero prior mean function.
+        # TODO: support other mean functions.
         mu = np.zeros(len(x_list))
         cov = self.params.kernel(x_list, x_list, self.params.ls, self.params.alpha)
 
@@ -82,7 +82,7 @@ class SimpleGp:
 
         return mu, cov
 
-    def get_gp_post_mu_cov(self, x_list, full_cov=True):
+    def get_post_mu_cov(self, x_list, full_cov=True):
         """
         Return GP posterior parameters: mean (mu) and covariance (cov). If there is no
         data, return the GP prior parameters.
@@ -107,10 +107,9 @@ class SimpleGp:
             (len(x_list) x len(x_list)).
         """
         if len(self.data.x) == 0:
-            return self.get_gp_prior_mu_cov(x_list, full_cov)
+            return self.get_prior_mu_cov(x_list, full_cov)
 
         # If data is not empty:
-
         mu, cov = gp_post(
             self.data.x,
             self.data.y,
@@ -122,16 +121,17 @@ class SimpleGp:
             full_cov=full_cov,
         )
 
+        # Return mean and cov matrix (or std-dev array if full_cov=False)
         return mu, cov
 
-    def get_gp_post_mu_cov_single(self, x):
+    def get_post_mu_cov_single(self, x):
         """Get GP posterior for an input x. Return posterior mean and std for x."""
-        mu_arr, std_arr = self.get_gp_post_mu_cov([x], full_cov=False)
+        mu_arr, std_arr = self.get_post_mu_cov([x], full_cov=False)
         return mu_arr[0], std_arr[0]
 
     def sample_prior_list(self, x_list, n_samp, full_cov=True):
         """Get samples from gp prior for each input in x_list."""
-        mu, cov = self.get_gp_prior_mu_cov(x_list, full_cov)
+        mu, cov = self.get_prior_mu_cov(x_list, full_cov)
         return self.get_normal_samples(mu, cov, n_samp, full_cov)
 
     def sample_prior(self, x, n_samp):
@@ -145,7 +145,7 @@ class SimpleGp:
             return self.sample_prior_list(x_list, n_samp, full_cov)
 
         # If data is not empty:
-        mu, cov = self.get_gp_post_mu_cov(x_list, full_cov)
+        mu, cov = self.get_post_mu_cov(x_list, full_cov)
         return self.get_normal_samples(mu, cov, n_samp, full_cov)
 
     def sample_post(self, x, n_samp):
