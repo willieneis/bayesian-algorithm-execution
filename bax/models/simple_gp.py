@@ -129,19 +129,40 @@ class SimpleGp:
         mu_arr, std_arr = self.get_gp_post_mu_cov([x], full_cov=False)
         return mu_arr[0], std_arr[0]
 
-    def sample_gp_prior(self, x_list, n_samp, full_cov=True):
+    def sample_prior_list(self, x_list, n_samp, full_cov=True):
         """Get samples from gp prior for each input in x_list."""
         mu, cov = self.get_gp_prior_mu_cov(x_list, full_cov)
         return self.get_normal_samples(mu, cov, n_samp, full_cov)
 
-    def sample_gp_post(self, x_list, n_samp, full_cov=True):
-        """Get samples from gp prior for each input in x_list."""
+    def sample_prior(self, x, n_samp):
+        """Get samples from gp prior for input x."""
+        sample_list = self.sample_prior_list([x], n_samp)
+        return sample_list[0]
+
+    def sample_post_list(self, x_list, n_samp, full_cov=True):
+        """Get samples from gp posterior for each input in x_list."""
         if len(self.data.x) == 0:
-            return self.sample_gp_prior(x_list, n_samp, full_cov)
+            return self.sample_prior_list(x_list, n_samp, full_cov)
 
         # If data is not empty:
         mu, cov = self.get_gp_post_mu_cov(x_list, full_cov)
         return self.get_normal_samples(mu, cov, n_samp, full_cov)
+
+    def sample_post(self, x, n_samp):
+        """Get samples from gp posterior for a single input x."""
+        sample_list = self.sample_post_list([x], n_samp)
+        return sample_list[0]
+
+    def sample_post_pred_list(self, x_list, n_samp, full_cov=True):
+        """Get samples from gp posterior predictive for each x in x_list."""
+        # For now, return posterior (assuming low-noise case)
+        # TODO: update this function
+        return self.sample_post_list(x_list, n_samp, full_cov)
+
+    def sample_post_pred(self, x, n_samp):
+        """Get samples from gp posterior predictive for a single input x."""
+        sample_list = self.sample_post_pred_list([x], n_samp)
+        return sample_list[0]
 
     def get_normal_samples(self, mu, cov, n_samp, full_cov):
         """Return normal samples."""
