@@ -30,7 +30,7 @@ class LinearScan:
             self.print_str()
 
     def set_params(self, params):
-        """Set self.params, the parameters for the execution path."""
+        """Set self.params, the parameters for the algorithm."""
         params = dict_to_namespace(params)
 
         # Set self.params

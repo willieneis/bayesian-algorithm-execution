@@ -55,6 +55,20 @@ class FunctionSample:
         all_obs.y = self.data.y + self.query_history.y
         self.all_obs = all_obs
 
+    def get_post_mean_std_list(self, x_list):
+        """
+        Return an array of posterior means and array of posterior std-devs (one element
+        in array for each x in x_list).
+        """
+
+        # Set self.model.data using self.data and self.query_history
+        self.set_all_obs()
+        self.model.set_data(self.all_obs)
+
+        # Compute posterior mean and std-dev
+        mean_arr, std_arr = self.model.get_post_mu_cov(x_list, full_cov=False)
+        return mean_arr, std_arr
+
     def get_y(self, x):
         """Sample and return output y at input x."""
 
@@ -76,20 +90,6 @@ class FunctionSample:
     def __call__(self, x):
         """Class is callable and returns self.get_y(x)."""
         return self.get_y(x)
-
-    def get_post_mean_std_list(self, x_list):
-        """
-        Return an array of posterior means and array of posterior std-devs (one element
-        in array for each x in x_list).
-        """
-
-        # Set self.model.data using self.data and self.query_history
-        self.set_all_obs()
-        self.model.set_data(self.all_obs)
-
-        # Compute posterior mean and std-dev
-        mean_arr, std_arr = self.model.get_post_mu_cov(x_list, full_cov=False)
-        return mean_arr, std_arr
 
     def print_str(self):
         """Print a description string."""
