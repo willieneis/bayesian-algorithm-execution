@@ -36,7 +36,7 @@ class LinearScan:
         # Set self.params
         self.params = Namespace()
         self.params.name = getattr(params, 'name', 'LinearScan')
-        default_x_path = [[x] for x in np.linspace(2.5, 20, 100)]
+        default_x_path = [[x] for x in np.linspace(3.5, 20, 100)]
         self.params.x_path = getattr(params, 'x_path', default_x_path)
 
     def run_algorithm_on_f(self, f):
