@@ -44,13 +44,15 @@ def sample_exe_path():
     return exe_path
 
 # Sample and plot execution paths
-n_paths = 12
+n_path = 12
 
 fig = plt.figure(figsize=(10, 5))
 
-with Timer(f'Sample {n_paths} execution paths'):
-    for _ in range(n_paths):
+with Timer(f'Sample {n_path} execution paths'):
+    exe_path_list = []
+    for _ in range(n_path):
         exe_path_sample = sample_exe_path()
+        exe_path_list.append(exe_path_sample)
 
         # Plot execution path sample
         plt.plot(
@@ -70,5 +72,30 @@ plt.ylabel('y')
 plt.gca().set_aspect('equal', adjustable='box')
 
 #neatplot.save_figure('testo', 'pdf')
+
+
+n_test = 200
+with Timer(f'Compute acquisition at {n_test} test points'):
+    x_test = [[x] for x in np.linspace(3.5, 20, 200)]
+    # Compute mean and std arrays for posterior
+    mu, std = model.get_post_mu_cov(x_test, full_cov=False)
+
+    # Compute mean and std arrays for posterior given execution path samples
+    mu_list = []
+    std_list = []
+    for exe_path in exe_path_list:
+        fs.set_query_history(exe_path)
+        mu_samp, std_samp = fs.get_post_mean_std_list(x_test)
+        mu_list.append(mu_samp)
+        std_list.append(std_samp)
+        # ---
+        #lcb = mu_samp - 2 * std_samp
+        #ucb = mu_samp + 2 * std_samp
+        #plt.fill_between(np.array(x_test).reshape(-1), lcb, ucb, color='blue', alpha=0.9)
+
+    lcb = mu - 2 * std
+    ucb = mu + 2 * std
+    plt.fill_between(np.array(x_test).reshape(-1), lcb, ucb, color='blue', alpha=0.1)
+
 
 plt.show()
