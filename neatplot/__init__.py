@@ -5,7 +5,9 @@ Neat plotting utilities for Python.
 import pathlib
 import matplotlib.pyplot as plt
 
-plt.style.use((pathlib.Path(__file__).parent / 'matplotlibrc').resolve())
+def use_style(style_str='default'):
+    if style_str == 'default':
+        plt.style.use((pathlib.Path(__file__).parent / 'matplotlibrc').resolve())
 
 def save_figure(file_name='figure', ext_list = ['pdf', 'png']):
     """Save figure for all extensions in ext_list."""
