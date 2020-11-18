@@ -56,7 +56,7 @@ class LinearScan:
             x = self.get_next_x(exe_path)
 
         # Compute output from exe_path, and return both
-        output = self.get_output_from_exe_path(exe_path) #### TODO
+        output = self.get_output_from_exe_path(exe_path)
         return exe_path, output
 
     def get_next_x(self, exe_path):

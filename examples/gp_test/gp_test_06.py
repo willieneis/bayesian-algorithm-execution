@@ -9,19 +9,12 @@ from bax.alg.algorithms import LinearScanRandGap
 from bax.util.timing import Timer
 from bax.acq.acquisition import AcqFunction
 
-#import neatplot
 
 seed = 11
 np.random.seed(seed)
 
 # Set function
-#f = np.sin
-f = lambda x: 2 * np.sin(x)
-
-# Set "true execution path"
-exe_path_true = Namespace()
-exe_path_true.x = [[x] for x in np.linspace(0.0, 40.0, 150)]
-exe_path_true.y = [f(x[0]) for x in exe_path_true.x]
+f = lambda x: 2 * np.sin(x[0])
 
 # Set model as a GP
 model = SimpleGp({'ls': 2.0, 'alpha': 1.5})
@@ -29,19 +22,7 @@ model = SimpleGp({'ls': 2.0, 'alpha': 1.5})
 # Set data for model
 data = Namespace()
 data.x = [[1.0], [2.0], [3.0], [10.0]]
-#data.x = [[1.0], [2.0], [3.0], [10.0], [20.0]]
-#data.x = [[1.0], [2.0], [3.0], [10.0], [20.0], [3.5]]
-#data.x = [[1.0], [2.0], [3.0], [10.0], [20.0], [3.5], [8.97]]
-#data.x = [[1.0], [2.0], [3.0], [10.0], [20.0], [3.5], [8.97], [7.148]]
-#data.x = [[1.0], [2.0], [3.0], [10.0], [20.0], [3.5], [8.97], [7.148], [10.7965]]
-#data.x = [[1.0], [2.0], [3.0], [10.0], [20.0], [3.5], [8.97], [7.148], [10.7965], [12.62]]
-#data.x = [[1.0], [2.0], [3.0], [10.0], [20.0], [3.5], [8.97], [7.148], [10.7965], [12.62], [14.528]]
-#data.x = [[1.0], [2.0], [3.0], [10.0], [20.0], [3.5], [8.97], [7.148], [10.7965], [12.62], [14.528], [15.274]]
-#data.x = [[1.0], [2.0], [3.0], [10.0], [20.0], [3.5], [8.97], [7.148], [10.7965], [12.62], [14.528], [15.274], [16.3512]]
-# ---
-#data.x = [[1.0], [2.0], [3.0], [10.0], [20.0], [3.5], [8.97], [7.148], [10.7965], [12.62], [14.528], [15.274], [16.3512], [7.646]]
-#data.x = [[1.0], [2.0], [3.0], [10.0], [20.0], [3.5], [8.97], [7.148], [10.7965], [12.62], [14.528], [15.274], [16.3512], [18.4]]
-data.y = [f(x[0]) for x in data.x]
+data.y = [f(x) for x in data.x]
 model.set_data(data)
 
 # Set function sample with model
@@ -49,15 +30,22 @@ fs = FunctionSample(verbose=False)
 fs.set_model(model)
 
 # Set algorithm
-algo = LinearScanRandGap({'x_path': [[x] for x in np.linspace(3.5, 40, 30)]})
+x_path = [[x] for x in np.linspace(3.5, 40, 30)]
+algo = LinearScanRandGap({'x_path': x_path})
 
+# Set "true execution path"
+x_path_big = [[x] for x in np.linspace(0, 40, 200)]
+exe_path_true = Namespace(x=x_path_big, y=[f(x) for x in x_path_big])
+
+# -----
+
+# Sample and plot execution paths
 def sample_exe_path():
     """Return execution path sample."""
     fs.reset_query_history()
     exe_path, _ = algo.run_algorithm_on_f(fs)
     return exe_path
 
-# Sample and plot execution paths
 n_path = 20
 
 fig = plt.figure(figsize=(8, 5))
@@ -73,6 +61,8 @@ with Timer(f'Sample {n_path} execution paths'):
             exe_path_sample.x, exe_path_sample.y, '.-', markersize=4, linewidth=0.5
         )
 
+# -----
+
 # Plot data and true execution path
 plt.plot(exe_path_true.x, exe_path_true.y, '-', color='k', linewidth=3)
 plt.plot(data.x, data.y, 'o', color='deeppink')
@@ -86,9 +76,11 @@ plt.ylabel('y')
 
 #plt.gca().set_aspect('equal', adjustable='box')
 
+# -----
+
 
 n_test = 200
-with Timer(f'Compute acquisition at {n_test} test points'):
+with Timer(f'Pre-compute and viz acquisition at {n_test} test points'):
     x_test = [[x] for x in np.linspace(3.5, 40, 200)]
     # Compute mean and std arrays for posterior
     mu, std = model.get_post_mu_cov(x_test, full_cov=False)
@@ -136,9 +128,6 @@ plt.ylim([ylim_new_min, ylim[1]])
 xlim = plt.gca().get_xlim()
 plt.plot(xlim, [ylim[0], ylim[0]], '--', color='k')
 
-
-# Save figure
-#neatplot.save_figure('testo', 'pdf')
 
 # Show plot
 plt.show()
