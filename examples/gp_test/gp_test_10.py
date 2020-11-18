@@ -8,6 +8,9 @@ from bax.models.simple_gp import SimpleGp
 from bax.alg.algorithms import AverageOutputs
 from bax.acq.acqoptimize import AcqOptimizer
 
+import neatplot
+neatplot.set_style('fonts')
+
 
 seed = 11
 np.random.seed(seed)
@@ -21,7 +24,8 @@ data.x = [[1.0]]
 data.y = [f(x) for x in data.x]
 
 # Set model as a GP
-model = SimpleGp({'ls': 2.0, 'alpha': 2.0})
+gp_params = {'ls': 2.0, 'alpha': 2.0, 'sigma': 1e-2}
+model = SimpleGp(gp_params)
 model.set_data(data)
 
 # Set arrays
@@ -60,6 +64,7 @@ for i in range(n_iter):
     plt.plot(exe_path_true.x, exe_path_true.y, '-', color='k', linewidth=3)
 
     # Show plot
+    #neatplot.save_figure(f'gp_test_10_{i}')
     plt.show()
 
     inp = input('Press enter to continue (any other key to stop): ')
@@ -73,5 +78,5 @@ for i in range(n_iter):
     data.y.append(y_next)
 
     # Update model
-    model = SimpleGp({'ls': 2.0, 'alpha': 1.5})
+    model = SimpleGp(gp_params)
     model.set_data(data)

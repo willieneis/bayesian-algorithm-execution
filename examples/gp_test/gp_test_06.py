@@ -17,7 +17,8 @@ np.random.seed(seed)
 f = lambda x: 2 * np.sin(x[0])
 
 # Set model as a GP
-model = SimpleGp({'ls': 2.0, 'alpha': 1.5})
+gp_params = {'ls': 2.0, 'alpha': 2.0, 'sigma': 1e-2}
+model = SimpleGp(gp_params)
 
 # Set data for model
 data = Namespace()

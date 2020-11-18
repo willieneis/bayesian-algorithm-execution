@@ -21,7 +21,8 @@ data.x = [[1.0], [2.0], [3.0], [10.0]]
 data.y = [f(x) for x in data.x]
 
 # Set model as a GP
-model = SimpleGp({'ls': 1.5, 'alpha': 2.0})
+gp_params = {'ls': 2.0, 'alpha': 2.0, 'sigma': 1e-2}
+model = SimpleGp(gp_params)
 model.set_data(data)
 
 # Set algorithm
@@ -40,7 +41,7 @@ for i in range(n_iter):
     # Plot setup
     fig = plt.figure(figsize=(8, 5))
     plt.xlim([0, 41])
-    plt.ylim([-4, 4])
+    plt.ylim([-5, 8])
     plt.xlabel('x')
     plt.ylabel('y')
 
@@ -67,5 +68,5 @@ for i in range(n_iter):
     data.y.append(y_next)
 
     # Update model
-    model = SimpleGp({'ls': 2.0, 'alpha': 1.5})
+    model = SimpleGp(gp_params)
     model.set_data(data)

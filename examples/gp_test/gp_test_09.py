@@ -22,7 +22,8 @@ data.x = [[1.0]]
 data.y = [f(x) for x in data.x]
 
 # Set model as a GP
-model = SimpleGp({'ls': 3.0, 'alpha': 2.0})
+gp_params = {'ls': 2.0, 'alpha': 2.0, 'sigma': 1e-2}
+model = SimpleGp(gp_params)
 model.set_data(data)
 
 # Set algorithm
@@ -74,5 +75,5 @@ for i in range(n_iter):
     data.y.append(y_next)
 
     # Update model
-    model = SimpleGp({'ls': 2.0, 'alpha': 1.5})
+    model = SimpleGp(gp_params)
     model.set_data(data)

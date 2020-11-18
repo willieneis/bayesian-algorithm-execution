@@ -23,7 +23,8 @@ exe_path_true.x = [[x] for x in np.linspace(0.0, 20.0, 150)]
 exe_path_true.y = [f(x[0]) for x in exe_path_true.x]
 
 # Set model as a GP
-model = SimpleGp({'ls': 2.0, 'alpha': 1.5})
+gp_params = {'ls': 2.0, 'alpha': 2.0, 'sigma': 1e-2}
+model = SimpleGp(gp_params)
 
 # Set data for model
 data = Namespace()
