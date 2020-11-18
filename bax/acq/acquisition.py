@@ -6,7 +6,6 @@ from argparse import Namespace
 import copy
 import numpy as np
 
-from ..models.exe_path import ExePath
 from ..util.misc_util import dict_to_namespace
 
 
