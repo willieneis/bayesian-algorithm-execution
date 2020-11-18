@@ -12,6 +12,8 @@ from ..models.function import FunctionSample
 from ..util.misc_util import dict_to_namespace
 from ..util.timing import Timer
 
+import neatplot
+
 
 class AcqOptimizer:
     """
@@ -39,8 +41,8 @@ class AcqOptimizer:
         self.params = Namespace()
         self.params.name = getattr(params, 'name', 'AcqOptimizer')
         self.params.opt_str = getattr(params, 'opt_str', 'rs')
-        self.params.n_path = getattr(params, 'n_path', 20)
-        default_x_test = [[x] for x in np.linspace(3.5, 40, 200)]
+        self.params.n_path = getattr(params, 'n_path', 100)
+        default_x_test = [[x] for x in np.linspace(3.5, 40, 500)]
         self.params.x_test = getattr(params, 'x_test', default_x_test)
         self.params.viz_acq = getattr(params, 'viz_acq', True)
 
@@ -105,19 +107,38 @@ class AcqOptimizer:
 
         # Plot execution path samples
         for exe_path in exe_path_list:
-            plt.plot(exe_path.x, exe_path.y, '.-', markersize=4, linewidth=0.5)
+            h0 = plt.plot(
+                    exe_path.x,
+                    exe_path.y,
+                    '.',
+                    markersize=4,
+                    linewidth=0.5,
+                    label='$\{ \\tilde{e}_\mathcal{A}^j \} \sim p(e_\mathcal{A}(f) | \mathcal{D}_t)$',
+            )
 
         # Plot posterior predictive
         lcb = mu - 3 * std
         ucb = mu + 3 * std
-        plt.fill_between(np.array(x_test).reshape(-1), lcb, ucb, color='blue', alpha=0.1)
+        h1 = plt.fill_between(
+            np.array(x_test).reshape(-1),
+            lcb,
+            ucb,
+            color='orange',
+            alpha=0.2,
+            label='$p(y|\mathcal{D}_t, x)$',
+        )
 
         # Plot posterior predictive given execution paths
         for mu_samp, std_samp in zip(mu_list, std_list):
             lcb = mu_samp - 3 * std_samp
             ucb = mu_samp + 3 * std_samp
-            plt.fill_between(
-                np.array(x_test).reshape(-1), lcb, ucb, color='blue', alpha=0.5
+            h2 = plt.fill_between(
+                np.array(x_test).reshape(-1),
+                lcb,
+                ucb,
+                color='blue',
+                alpha=0.1,
+                label='$p(y|\mathcal{D}_t, \\tilde{e}_\mathcal{A}, x)$',
             )
 
         # Plot data
@@ -132,7 +153,14 @@ class AcqOptimizer:
         acq_height = 0.33 * ylim_diff
         ylim_new_min = ylim[0] - acq_height
         acq_arr = (acq_arr - min_acq) / (max_acq - min_acq) * acq_height + ylim_new_min
-        plt.plot(np.array(x_test).reshape(-1), acq_arr, '-', color='red', linewidth=1)
+        h3 = plt.plot(
+            np.array(x_test).reshape(-1),
+            acq_arr,
+            '-',
+            color='red',
+            linewidth=1,
+            label='Acquisition function $\\alpha_t(x)$',
+        )
 
         # Reset y axis
         plt.ylim([ylim_new_min, ylim[1]])
@@ -140,6 +168,9 @@ class AcqOptimizer:
         # Plot dividing line
         xlim = plt.gca().get_xlim()
         plt.plot(xlim, [ylim[0], ylim[0]], '--', color='k')
+
+        # Legend
+        plt.legend(handles=[h0[0], h1, h2, h3[0]], loc=1)
 
     def print_str(self):
         """Print a description string."""
