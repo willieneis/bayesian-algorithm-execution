@@ -46,7 +46,7 @@ for i in range(n_iter):
     # Plot setup
     fig = plt.figure(figsize=(8, 5))
     plt.xlim([0, max_x + 1])
-    plt.ylim([-5.5, 5.5])
+    plt.ylim([-5.5, 6.5])
     plt.xlabel('x')
     plt.ylabel('y')
 
