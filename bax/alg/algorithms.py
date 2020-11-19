@@ -194,3 +194,89 @@ class AverageOutputs:
         print_params = copy.deepcopy(self.params)
         delattr(print_params, 'x_path')
         return f'{self.params.name} with params={print_params}'
+
+
+class OptRightScan:
+    """
+    A simple minimization algorithm that, starting from some initial point, optimizes by
+    scanning to the right until function starts to increase.
+    """
+
+    def __init__(self, params=None, verbose=True):
+        """
+        Parameters
+        ----------
+        params : Namespace_or_dict
+            Namespace or dict of parameters for the algorithm.
+        verbose : bool
+            If True, print description string.
+        """
+        self.set_params(params)
+        if verbose:
+            self.print_str()
+
+    def set_params(self, params):
+        """Set self.params, the parameters for the algorithm."""
+        params = dict_to_namespace(params)
+
+        # Set self.params
+        self.params = Namespace()
+        self.params.name = getattr(params, 'name', 'OptRightScan')
+        self.params.init_x = getattr(params, 'init_x', [4.0])
+        self.params.x_grid_gap = getattr(params, 'x_grid_gap', 0.1)
+        self.params.conv_criteria = getattr(params, 'conv_criteria', 0.05)
+        self.params.max_iter = getattr(params, 'max_iter', 100)
+
+    def run_algorithm_on_f(self, f):
+        """
+        Run the algorithm by sequentially querying function f. Return the execution path
+        and output.
+        """
+        # Initialize execution path
+        exe_path = Namespace(x=[], y=[])
+
+        # Step through algorithm
+        x = self.get_next_x(exe_path)
+        while x is not None:
+            y = f(x)
+            exe_path.x.append(x)
+            exe_path.y.append(y)
+            x = self.get_next_x(exe_path)
+
+        # Compute output from exe_path, and return both
+        output = self.get_output_from_exe_path(exe_path)
+        return exe_path, output
+
+    def get_next_x(self, exe_path):
+        """
+        Given the current execution path, return the next x in the execution path. If
+        the algorithm is complete, return None.
+        """
+        len_path = len(exe_path.x)
+        if len_path == 0:
+            next_x = self.params.init_x
+        else:
+            next_x = [exe_path.x[-1][0] + self.params.x_grid_gap]
+
+        # Algorithm finishes if objective increases by self.params.conv_criteria amount
+        if len_path >= 2:
+            if exe_path.y[-1] > exe_path.y[-2] + self.params.conv_criteria:
+                next_x = None
+
+        # Algorithm also has max number of steps
+        if len_path > self.params.max_iter:
+            next_x = None
+
+        return next_x
+
+    def get_output_from_exe_path(self, exe_path):
+        """Given an execution path, return algorithm output."""
+        return exe_path.x[-1]
+
+    def print_str(self):
+        """Print a description string."""
+        print('*[INFO] ' + str(self))
+
+    def __str__(self):
+        print_params = copy.deepcopy(self.params)
+        return f'{self.params.name} with params={print_params}'
