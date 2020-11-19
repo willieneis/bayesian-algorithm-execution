@@ -16,12 +16,8 @@ seed = 11
 np.random.seed(seed)
 
 # Set function
-#xm = 0.25
-#xa = -1.0
-#ym = 2.0
-
-xm = 0.4
-xa = 2.0
+xm = 0.3
+xa = 4.0
 ym = 2.0
 f = lambda x: ym * np.sin(np.pi * xm * (x[0] + xa)) + \
               ym * np.sin(2 * xm * np.pi * (x[0] + xa)) / 2.0
@@ -44,7 +40,7 @@ x_test = [[x] for x in np.linspace(0.0, max_x, 500)]
 y_test = [f(x) for x in x_test]
 
 # Set algorithm
-algo = OptRightScan()
+algo = OptRightScan({'x_grid_gap': 0.1})
 
 # Set "true execution path"
 exe_path_true = Namespace(x=x_path_big, y=[f(x) for x in x_path_big])

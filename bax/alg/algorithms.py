@@ -224,7 +224,7 @@ class OptRightScan:
         self.params.name = getattr(params, 'name', 'OptRightScan')
         self.params.init_x = getattr(params, 'init_x', [4.0])
         self.params.x_grid_gap = getattr(params, 'x_grid_gap', 0.1)
-        self.params.conv_criteria = getattr(params, 'conv_criteria', 0.05)
+        self.params.conv_thresh = getattr(params, 'conv_thresh', 0.2)
         self.params.max_iter = getattr(params, 'max_iter', 100)
 
     def run_algorithm_on_f(self, f):
@@ -258,9 +258,9 @@ class OptRightScan:
         else:
             next_x = [exe_path.x[-1][0] + self.params.x_grid_gap]
 
-        # Algorithm finishes if objective increases by self.params.conv_criteria amount
         if len_path >= 2:
-            if exe_path.y[-1] > exe_path.y[-2] + self.params.conv_criteria:
+            conv_max_val =  np.min(exe_path.y[:-1]) + self.params.conv_thresh
+            if exe_path.y[-1] > conv_max_val:
                 next_x = None
 
         # Algorithm also has max number of steps
