@@ -24,7 +24,7 @@ f = lambda x: ym * np.sin(np.pi * xm * (x[0] + xa)) + \
 
 # Set data for model
 data = Namespace()
-data.x = [[4.0]]
+data.x = []
 data.y = [f(x) for x in data.x]
 
 # Set model as a GP
@@ -40,7 +40,7 @@ x_test = [[x] for x in np.linspace(0.0, max_x, 500)]
 y_test = [f(x) for x in x_test]
 
 # Set algorithm
-algo = OptRightScan({'x_grid_gap': 0.1})
+algo = OptRightScan({'x_grid_gap': 0.1, 'init_x': [4.0]})
 
 # Set "true execution path"
 exe_path_true = Namespace(x=x_path_big, y=[f(x) for x in x_path_big])
