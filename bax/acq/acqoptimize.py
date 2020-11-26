@@ -25,7 +25,7 @@ class AcqOptimizer:
         Parameters
         ----------
         params : Namespace_or_dict
-            Namespace or dict of parameters for the AcqFunction.
+            Namespace or dict of parameters for the AcqOptimizer.
         verbose : bool
             If True, print description string.
         """
@@ -34,12 +34,13 @@ class AcqOptimizer:
             self.print_str()
 
     def set_params(self, params):
-        """Set self.params, the parameters for the AcqFunction."""
+        """Set self.params, the parameters for the AcqOptimizer."""
         params = dict_to_namespace(params)
 
         # Set self.params
         self.params = Namespace()
         self.params.name = getattr(params, "name", "AcqOptimizer")
+        self.params.acq_str = getattr(params, "acq_str", "exe")
         self.params.opt_str = getattr(params, "opt_str", "rs")
         self.params.n_path = getattr(params, "n_path", 100)
         default_x_test = [[x] for x in np.linspace(0.0, 40.0, 500)]
@@ -57,13 +58,15 @@ class AcqOptimizer:
 
         # Sample execution paths
         exe_path_list = []
+        output_list = []
         with Timer(f"Sample {self.params.n_path} execution paths"):
             for _ in range(self.params.n_path):
-                exe_path_sample = self.sample_exe_path(fs, algo)
-                exe_path_list.append(exe_path_sample)
+                exe_path, output = self.sample_exe_path_and_output(fs, algo)
+                exe_path_list.append(exe_path)
+                output_list.append(output)
 
         # Compute posterior, and post given each execution path, for x_test
-        with Timer(f"Pre-compute acquisition at {len(x_test)} test points"):
+        with Timer(f"Pre-compute acquisition function at {len(x_test)} test points"):
             # Compute mean and std arrays for posterior
             mu, std = model.get_post_mu_cov(x_test, full_cov=False)
 
@@ -77,19 +80,30 @@ class AcqOptimizer:
                 std_list.append(std_samp)
 
         # Compute acquisition function on x_test
-        acqf = AcqFunction()
-        acq_list = acqf(std, std_list)
+        with Timer(f"Compute acquisition function at {len(x_test)} test points"):
+            acqf = AcqFunction({'acq_str': self.params.acq_str})
+            if self.params.acq_str == 'exe':
+                acq_list = acqf(std, std_list)
+            elif self.params.acq_str == 'out':
+                acq_list = acqf(std, mu_list, std_list, output_list)
 
         # Optionally: visualize acqoptimizer
         if self.params.viz_acq:
-            self.plot_acqoptimizer_all(
-                model, exe_path_list, acq_list, x_test, mu, std, mu_list, std_list
-            )
+            with Timer(f"Visualize acquisition function"):
+                self.plot_acqoptimizer_all(
+                    model, exe_path_list, acq_list, x_test, mu, std, mu_list, std_list
+                )
 
         # Return optimizer of acquisition function
         acq_opt_idx = np.argmax(acq_list)
         acq_opt = x_test[acq_opt_idx]
         return acq_opt
+
+    def sample_exe_path_and_output(self, fs, algo):
+        """Return execution path sample given a function sample and algorithm."""
+        fs.reset_query_history()
+        exe_path, output = algo.run_algorithm_on_f(fs)
+        return exe_path, output
 
     def sample_exe_path(self, fs, algo):
         """Return execution path sample given a function sample and algorithm."""
