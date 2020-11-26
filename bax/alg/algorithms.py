@@ -33,8 +33,7 @@ class Algorithm(ABC):
 
         # Set self.params
         self.params = Namespace()
-        self.params.name = getattr(params, "name", "LinearScan")
-        self.params.x_path = getattr(params, "x_path", [])
+        self.params.name = getattr(params, "name", "Algorithm")
 
     def run_algorithm_on_f(self, f):
         """
@@ -72,10 +71,13 @@ class Algorithm(ABC):
         """Print a description string."""
         print("*[INFO] " + str(self))
 
+    def set_print_params(self):
+        """Set self.print_params."""
+        self.print_params = copy.deepcopy(self.params)
+
     def __str__(self):
-        print_params = copy.deepcopy(self.params)
-        delattr(print_params, "x_path")
-        return f"{self.params.name} with params={print_params}"
+        self.set_print_params()
+        return f"{self.params.name} with params={self.print_params}"
 
     @abstractmethod
     def get_output_from_exe_path(self, exe_path):
@@ -88,9 +90,22 @@ class LinearScan(Algorithm):
     function values at each point on grid.
     """
 
+    def set_params(self, params):
+        """Set self.params, the parameters for the algorithm."""
+        super().set_params(params)
+        params = dict_to_namespace(params)
+
+        self.params.name = getattr(params, "name", "LinearScan")
+        self.params.x_path = getattr(params, "x_path", [])
+
     def get_output_from_exe_path(self, exe_path):
         """Given an execution path, return algorithm output."""
         return exe_path.y
+
+    def set_print_params(self):
+        """Set self.print_params."""
+        self.print_params = copy.deepcopy(self.params)
+        delattr(self.print_params, "x_path")
 
 
 class LinearScanRandGap(LinearScan):
@@ -100,16 +115,12 @@ class LinearScanRandGap(LinearScan):
     grid.
     """
 
-    def __init__(self, params=None, verbose=True):
-        """
-        Parameters
-        ----------
-        params : Namespace_or_dict
-            Namespace or dict of parameters for the algorithm.
-        verbose : bool
-            If True, print description string.
-        """
-        super().__init__(params, verbose)
+    def set_params(self, params):
+        """Set self.params, the parameters for the algorithm."""
+        super().set_params(params)
+        params = dict_to_namespace(params)
+
+        self.params.name = getattr(params, "name", "LinearScanRandGap")
         self.params.x_path_orig = copy.deepcopy(self.params.x_path)
 
     def run_algorithm_on_f(self, f):
@@ -130,15 +141,34 @@ class LinearScanRandGap(LinearScan):
 
         return super().run_algorithm_on_f(f)
 
+    def set_print_params(self):
+        """Set self.print_params."""
+        self.print_params = copy.deepcopy(self.params)
+        delattr(self.print_params, "x_path")
+        delattr(self.print_params, "x_path_orig")
+
 
 class AverageOutputs(Algorithm):
     """
     Algorithm that computes the average of function outputs for a set of input points.
     """
 
+    def set_params(self, params):
+        """Set self.params, the parameters for the algorithm."""
+        super().set_params(params)
+        params = dict_to_namespace(params)
+
+        self.params.name = getattr(params, "name", "AverageOutputs")
+        self.params.x_path = getattr(params, "x_path", [])
+
     def get_output_from_exe_path(self, exe_path):
         """Given an execution path, return algorithm output."""
         return np.mean(exe_path.y)
+
+    def set_print_params(self):
+        """Set self.print_params."""
+        self.print_params = copy.deepcopy(self.params)
+        delattr(self.print_params, "x_path")
 
 
 class SortOutputs(Algorithm):
@@ -146,9 +176,22 @@ class SortOutputs(Algorithm):
     Algorithm that sorts function outputs for a set of input points.
     """
 
+    def set_params(self, params):
+        """Set self.params, the parameters for the algorithm."""
+        super().set_params(params)
+        params = dict_to_namespace(params)
+
+        self.params.name = getattr(params, "name", "SortOutputs")
+        self.params.x_path = getattr(params, "x_path", [])
+
     def get_output_from_exe_path(self, exe_path):
         """Given an execution path, return algorithm output."""
         return np.argsort(exe_path.y)
+
+    def set_print_params(self):
+        """Set self.print_params."""
+        self.print_params = copy.deepcopy(self.params)
+        delattr(self.print_params, "x_path")
 
 
 class OptRightScan(Algorithm):
@@ -159,10 +202,9 @@ class OptRightScan(Algorithm):
 
     def set_params(self, params):
         """Set self.params, the parameters for the algorithm."""
+        super().set_params(params)
         params = dict_to_namespace(params)
 
-        # Set self.params
-        self.params = Namespace()
         self.params.name = getattr(params, "name", "OptRightScan")
         self.params.init_x = getattr(params, "init_x", [4.0])
         self.params.x_grid_gap = getattr(params, "x_grid_gap", 0.1)
