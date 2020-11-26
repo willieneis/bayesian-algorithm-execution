@@ -141,10 +141,14 @@ class AverageOutputs(Algorithm):
         return np.mean(exe_path.y)
 
 
-    def __str__(self):
-        print_params = copy.deepcopy(self.params)
-        delattr(print_params, 'x_path')
-        return f'{self.params.name} with params={print_params}'
+class SortOutputs(Algorithm):
+    """
+    Algorithm that sorts function outputs for a set of input points.
+    """
+
+    def get_output_from_exe_path(self, exe_path):
+        """Given an execution path, return algorithm output."""
+        return np.argsort(exe_path.y)
 
 
 class OptRightScan(Algorithm):
