@@ -70,5 +70,10 @@ class ExePath:
         """Print a description string."""
         print('*[INFO] ' + str(self))
 
+    def set_print_params(self):
+        """Set self.print_params."""
+        self.print_params = copy.deepcopy(self.params)
+
     def __str__(self):
-        return f'ExePath with params={self.params}'
+        self.set_print_params()
+        return f'{self.params.name} with params={self.print_params}'

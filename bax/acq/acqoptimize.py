@@ -232,7 +232,11 @@ class AcqOptimizer:
         """Print a description string."""
         print("*[INFO] " + str(self))
 
+    def set_print_params(self):
+        """Set self.print_params."""
+        self.print_params = copy.deepcopy(self.params)
+        delattr(self.print_params, "x_test")
+
     def __str__(self):
-        print_params = copy.deepcopy(self.params)
-        delattr(print_params, "x_test")
-        return f"{self.params.name} with params={print_params}"
+        self.set_print_params()
+        return f"{self.params.name} with params={self.print_params}"

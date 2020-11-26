@@ -34,6 +34,7 @@ class SimpleGp:
 
         # Set self.params
         self.params = Namespace()
+        self.params.name = getattr(params, 'name', 'SimpleGp')
         self.params.ls = getattr(params, 'ls', 3.7)
         self.params.alpha = getattr(params, 'alpha', 1.85)
         self.params.sigma = getattr(params, 'sigma', 1e-5)
@@ -181,5 +182,10 @@ class SimpleGp:
         """Print a description string."""
         print('*[INFO] ' + str(self))
 
+    def set_print_params(self):
+        """Set self.print_params."""
+        self.print_params = copy.deepcopy(self.params)
+
     def __str__(self):
-        return f'SimpleGp with params={self.params}'
+        self.set_print_params()
+        return f'{self.params.name} with params={self.print_params}'
