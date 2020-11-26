@@ -39,12 +39,12 @@ class AcqOptimizer:
 
         # Set self.params
         self.params = Namespace()
-        self.params.name = getattr(params, 'name', 'AcqOptimizer')
-        self.params.opt_str = getattr(params, 'opt_str', 'rs')
-        self.params.n_path = getattr(params, 'n_path', 100)
+        self.params.name = getattr(params, "name", "AcqOptimizer")
+        self.params.opt_str = getattr(params, "opt_str", "rs")
+        self.params.n_path = getattr(params, "n_path", 100)
         default_x_test = [[x] for x in np.linspace(0.0, 40.0, 500)]
-        self.params.x_test = getattr(params, 'x_test', default_x_test)
-        self.params.viz_acq = getattr(params, 'viz_acq', True)
+        self.params.x_test = getattr(params, "x_test", default_x_test)
+        self.params.viz_acq = getattr(params, "viz_acq", True)
 
     def optimize(self, model, algo):
         """Optimize acquisition function."""
@@ -57,13 +57,13 @@ class AcqOptimizer:
 
         # Sample execution paths
         exe_path_list = []
-        with Timer(f'Sample {self.params.n_path} execution paths'):
+        with Timer(f"Sample {self.params.n_path} execution paths"):
             for _ in range(self.params.n_path):
                 exe_path_sample = self.sample_exe_path(fs, algo)
                 exe_path_list.append(exe_path_sample)
 
         # Compute posterior, and post given each execution path, for x_test
-        with Timer(f'Pre-compute acquisition at {len(x_test)} test points'):
+        with Timer(f"Pre-compute acquisition at {len(x_test)} test points"):
             # Compute mean and std arrays for posterior
             mu, std = model.get_post_mu_cov(x_test, full_cov=False)
 
@@ -123,7 +123,7 @@ class AcqOptimizer:
         # Plot various details
         h0 = self.plot_exe_path_samples(exe_path_list)
         h1 = self.plot_postpred(x_test, mu, std)
-        #h1b = self.plot_post_f_samples(x_test, mu_list)
+        # h1b = self.plot_post_f_samples(x_test, mu_list)
         h2 = self.plot_postpred_given_exe_path_samples(x_test, mu_list, std_list)
         h3 = self.plot_acqfunction(x_test, acq_list)
         h4 = self.plot_model_data(model)
@@ -137,10 +137,10 @@ class AcqOptimizer:
             h = plt.plot(
                 exe_path.x,
                 exe_path.y,
-                '.',
+                ".",
                 markersize=4,
                 linewidth=0.5,
-                label='$\{ \\tilde{e}_\mathcal{A}^j \} \sim p(e_\mathcal{A}(f) | \mathcal{D}_t)$',
+                label="$\{ \\tilde{e}_\mathcal{A}^j \} \sim p(e_\mathcal{A}(f) | \mathcal{D}_t)$",
             )
         return h
 
@@ -152,9 +152,9 @@ class AcqOptimizer:
             np.array(x_test).reshape(-1),
             lcb,
             ucb,
-            color='orange',
+            color="orange",
             alpha=0.2,
-            label='$p(y|\mathcal{D}_t, x)$',
+            label="$p(y|\mathcal{D}_t, x)$",
         )
         return h
 
@@ -167,9 +167,9 @@ class AcqOptimizer:
                 np.array(x_test).reshape(-1),
                 lcb,
                 ucb,
-                color='blue',
+                color="blue",
                 alpha=0.1,
-                label='$p(y|\mathcal{D}_t, \\tilde{e}_\mathcal{A}, x)$',
+                label="$p(y|\mathcal{D}_t, \\tilde{e}_\mathcal{A}, x)$",
             )
         return h
 
@@ -180,23 +180,23 @@ class AcqOptimizer:
             h = plt.plot(
                 np.array(x_test).reshape(-1),
                 mu_samp,
-                '-',
+                "-",
                 alpha=0.75,
                 linewidth=0.5,
-                label='$\{\\tilde{f}\} \sim p(f | \mathcal{D}_t)$',
+                label="$\{\\tilde{f}\} \sim p(f | \mathcal{D}_t)$",
             )
         return h
 
     def plot_model_data(self, model):
         """Plot model.data."""
         h = plt.plot(
-            model.data.x, model.data.y, 'o', color='deeppink', label='Observations'
+            model.data.x, model.data.y, "o", color="deeppink", label="Observations"
         )
         # -----
-        #plt.plot([0, 20], [0,0], '--', color='k', linewidth=0.5)
-        #for x, y in zip(model.data.x, model.data.y):
-            #plt.plot([x, x], [0, y], '-', color='b', linewidth=0.5)
-        #h = plt.plot(model.data.x, model.data.y, 'o', color='b')
+        # plt.plot([0, 20], [0,0], '--', color='k', linewidth=0.5)
+        # for x, y in zip(model.data.x, model.data.y):
+        # plt.plot([x, x], [0, y], '-', color='b', linewidth=0.5)
+        # h = plt.plot(model.data.x, model.data.y, 'o', color='b')
         # -----
         return h
 
@@ -213,10 +213,10 @@ class AcqOptimizer:
         h = plt.plot(
             np.array(x_test).reshape(-1),
             acq_arr,
-            '-',
-            color='red',
+            "-",
+            color="red",
             linewidth=1,
-            label='Acquisition function $\\alpha_t(x)$',
+            label="Acquisition function $\\alpha_t(x)$",
         )
 
         # Reset y axis
@@ -224,15 +224,15 @@ class AcqOptimizer:
 
         # Plot dividing line
         xlim = plt.gca().get_xlim()
-        plt.plot(xlim, [ylim[0], ylim[0]], '--', color='k')
+        plt.plot(xlim, [ylim[0], ylim[0]], "--", color="k")
 
         return h
 
     def print_str(self):
         """Print a description string."""
-        print('*[INFO] ' + str(self))
+        print("*[INFO] " + str(self))
 
     def __str__(self):
         print_params = copy.deepcopy(self.params)
-        delattr(print_params, 'x_test')
-        return f'{self.params.name} with params={print_params}'
+        delattr(print_params, "x_test")
+        return f"{self.params.name} with params={print_params}"
