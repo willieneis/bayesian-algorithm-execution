@@ -91,7 +91,7 @@ class AcqFunction:
 
             # Entropy of the Gaussian approximation to the mixture
             h_samp = self.entropy_given_normal_std(samp_std_cluster)
-            h_samp_list.append(h_samp)
+            h_samp_list.extend([h_samp] * len(idx_list))
 
         avg_h_samp = np.mean(h_samp_list, 0)
         acq_out = h_post - avg_h_samp
