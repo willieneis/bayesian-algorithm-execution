@@ -97,6 +97,22 @@ class AcqOptimizer:
         exe_path, _ = algo.run_algorithm_on_f(fs)
         return exe_path
 
+    def post_mean_exe_path(self, fs, algo):
+        """Return execution path of the posterior mean over functions"""
+        fs.reset_query_history()
+        # TODO:
+        pass
+
+    def sample_outputs(self, model, algo, n_path):
+        outputs = []
+        fs = FunctionSample(verbose=False)
+        fs.set_model(model)
+        for _ in range(n_path):
+            exe_path = self.sample_exe_path(fs, algo)
+            output = algo.get_output_from_exe_path(exe_path)
+            outputs.append(output)
+        return outputs
+
     def plot_acqoptimizer_all(
         self, model, exe_path_list, acq_list, x_test, mu, std, mu_list, std_list
     ):
