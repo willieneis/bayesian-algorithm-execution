@@ -23,9 +23,11 @@ class AcqViz1D:
         h2 = self.plot_postpred_given_exe_path_samples(x_test, mu_list, std_list)
         h3 = self.plot_acqfunction(x_test, acq_list)
         h4 = self.plot_model_data(model)
+        h5 = self.plot_acqoptima(acq_list, x_test)
 
         ## Legend
-        plt.legend(handles=[h0[0], h1, h2, h3[0], h4[0]], loc=1)
+        h_list = [h0[0], h1, h2, h3[0], h4[0], h5[0]]
+        self.make_legend(h_list)
 
     def plot_exe_path_samples(self, exe_path_list):
         """Plot execution path samples."""
@@ -120,6 +122,37 @@ class AcqViz1D:
 
         # Plot dividing line
         xlim = plt.gca().get_xlim()
-        plt.plot(xlim, [ylim[0], ylim[0]], "--", color="k")
+        plt.plot(xlim, [ylim[0], ylim[0]], "--", color="grey", alpha=0.8)
 
         return h
+
+    def plot_acqoptima(self, acq_list, x_test):
+        """Plot optima of acquisition function."""
+        acq_opt = x_test[np.argmax(acq_list)]
+        ylim = plt.gca().get_ylim()
+        h = plt.plot(
+            [acq_opt, acq_opt],
+            ylim,
+            '--',
+            color="black",
+            label="$x_t = $ argmax$_{x \in \mathcal{X}}$ $\\alpha_t(x)$",
+        )
+        return h
+
+    def make_legend(self, h_list):
+        """Make the legend."""
+
+        # For legend within axes
+        #bbta = None
+        #loc = 1
+        #ncol = 1
+
+        # For legend above axes
+        ax = plt.gca()
+        ax.set_position([0.1, 0.1, 0.85, 0.7])
+        bbta = (0.5, 1.24)
+        loc = "upper center"
+        ncol = 3
+
+        # Draw legend
+        lgd = plt.legend(handles=h_list, loc=loc, bbox_to_anchor=bbta, ncol=ncol)
