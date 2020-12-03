@@ -55,6 +55,7 @@ class AcqOptimizer:
 
         # Sample execution paths and outputs
         exe_path_list, output_list = self.get_exe_path_and_output_samples(fs, algo)
+        self.last_output_list = output_list
 
         # Define fixed set x_test over which we will optimize
         x_test = self.params.x_test
@@ -146,6 +147,13 @@ class AcqOptimizer:
 
         # Return list of acquisition function on x in x_test
         return acq_list
+
+    def get_last_output_list(self):
+        """
+        Return self.last_output_list, the last output_list computed during run of
+        self.optimize().
+        """
+        return self.last_output_list
 
     def print_str(self):
         """Print a description string."""
