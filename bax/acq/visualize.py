@@ -26,7 +26,7 @@ class AcqViz1D:
         h5 = self.plot_acqoptima(acq_list, x_test)
 
         ## Legend
-        h_list = [h0[0], h1, h2, h3[0], h4[0], h5[0]]
+        h_list = [h0[0], h4[0], h1, h2, h5[0], h3[0]]
         self.make_legend(h_list)
 
     def plot_exe_path_samples(self, exe_path_list):
@@ -67,7 +67,7 @@ class AcqViz1D:
                 ucb,
                 color="blue",
                 alpha=0.1,
-                label="$p(y|\mathcal{D}_t, \\tilde{e}_\mathcal{A}, x)$",
+                label="$p(y|\mathcal{D}_t, \\tilde{e}_\mathcal{A}^j, x)$",
             )
         return h
 
