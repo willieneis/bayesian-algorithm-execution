@@ -115,9 +115,9 @@ class AcqOptimizer:
     def get_acqfunction_list(self, x_test, fs, model, exe_path_list, output_list):
         """Compute acquisition function on each x in x_test."""
 
-        # Compute posterior, and post given each execution path, for x_test
-        with Timer(f"Pre-compute acquisition function at {len(x_test)} test points"):
-            # Compute mean and std arrays for posterior
+        # Compute acquisition function on x_test
+        with Timer(f"Compute acquisition function at {len(x_test)} test points"):
+            # Compute posterior, and post given each execution path sample, for x_test
             mu, std = model.get_post_mu_cov(x_test, full_cov=False)
 
             # Compute mean and std arrays for posterior given execution path samples
@@ -129,8 +129,7 @@ class AcqOptimizer:
                 mu_list.append(mu_samp)
                 std_list.append(std_samp)
 
-        # Compute acquisition function on x_test
-        with Timer(f"Compute acquisition function at {len(x_test)} test points"):
+            # Compute acq_list, the acqfunction value for each x in x_test
             acqf = AcqFunction({'acq_str': self.params.acq_str})
             if self.params.acq_str == 'exe':
                 acq_list = acqf(std, std_list)

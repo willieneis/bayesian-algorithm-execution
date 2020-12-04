@@ -36,6 +36,7 @@ class AcqFunction:
         self.params = Namespace()
         self.params.name = getattr(params, 'name', 'AcqFunction')
         self.params.acq_str = getattr(params, 'acq_str', 'out')
+        self.params.n_cluster_kmeans = getattr(params, 'n_cluster_kmeans', 35)
 
     def entropy_given_normal_std(self, std_arr):
         """Return entropy given an array of 1D normal standard deviations."""
@@ -104,7 +105,7 @@ class AcqFunction:
         """
         if not isinstance(output_list[0], list):
             output_list = [[out] for out in output_list]
-        km = KMeans(n_clusters=35)
+        km = KMeans(n_clusters=self.params.n_cluster_kmeans)
         km.fit(output_list)
         lab = km.labels_
         unq, unq_inv, unq_cnt = np.unique(lab, return_inverse=True, return_counts=True)
