@@ -11,7 +11,6 @@ from .visualize import AcqViz1D
 from ..models.function import FunctionSample
 from ..util.misc_util import dict_to_namespace
 from ..util.timing import Timer
-from multiprocessing import Pool
 
 
 class AcqOptimizer:
@@ -31,8 +30,6 @@ class AcqOptimizer:
         self.set_params(params)
         if verbose:
             self.print_str()
-
-        self.pool = Pool(self.params.n_path)
 
     def set_params(self, params):
         """Set self.params, the parameters for the AcqOptimizer."""
@@ -100,16 +97,9 @@ class AcqOptimizer:
     def sample_outputs(self, model, algo, n_path):
         """Return list of n_path output samples given model and algo."""
         # TODO: remove this and use above method (self.sample_exe_path_and_output) only?
+        outputs = []
         fs = FunctionSample(verbose=False)
         fs.set_model(model)
-
-        def run_path(_):
-            exe_path = self.sample_exe_path(fs, algo)
-            output = algo.get_output_from_exe_path(exe_path)
-            return output
-
-        # outputs = self.pool.map(run_path, [_ for _ in range(n_path)])
-        outputs = []
         for _ in range(n_path):
             exe_path = self.sample_exe_path(fs, algo)
             output = algo.get_output_from_exe_path(exe_path)
