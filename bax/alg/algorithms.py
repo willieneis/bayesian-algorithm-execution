@@ -261,36 +261,45 @@ class Dijkstras(Algorithm):
             explored = [False for _ in range(len(self.params.vertices))]
             min_cost = [float("inf") for _ in range(len(self.params.vertices))]
             to_explore = [(0, start)]  # initialize priority queue
+            i = 0
             while len(to_explore) > 0:
                 best_cost, current = heapq.heappop(to_explore)
-                print("best_cost", best_cost)
-                current.explored = True
+                if explored[current.index]:
+                    # our implemention could have the same node appear in the
+                    # pqueue multiple times with different costs
+                    continue
+                explored[current.index] = True
+                print(f"best_cost after exploring {i} vertices", best_cost)
+                i += 1
                 if current.index == goal.index:
                     print("Found goal")
                     return best_cost
 
                 for neighbor in current.neighbors:
                     step_cost = distance(current, neighbor)
-                    # comment out version that stores extra info in each Vertex
+                    # comment out version that stores info in each Vertex
                     # if not hasattr(neighbor, "explored"):
                     # if (
                     #    not hasattr(neighbor, "min_cost")
                     #    or best_cost + step_cost < neighbor.min_cost
                     # ):
-                    if not explored[neighbor.index]:
-                        if best_cost + step_cost < min_cost[neighbor.index]:
-                            heapq.heappush(
-                                to_explore, (best_cost + step_cost, neighbor)
-                            )  # push by cost
-                            neighbor.min_cost = best_cost + step_cost
-                            neighbor.prev = current
+                    if (not explored[neighbor.index]) and (
+                        best_cost + step_cost < min_cost[neighbor.index]
+                    ):
+                        heapq.heappush(
+                            to_explore, (best_cost + step_cost, neighbor)
+                        )  # push by cost
+                        min_cost[neighbor.index] = best_cost + step_cost
+                        neighbor.prev = current
 
             print("No path exists to goal")
             return None
 
         # comment out version that stores extra info in each Vertex
         # reinitialize graph
-        # for v in self.params.vertices:
+        for v in self.params.vertices:
+            if hasattr(v, "prev"):
+                del v.prev
         #    if hasattr(v, "explored"):
         #        del v.explored
         #    if hasattr(v, "min_cost"):
