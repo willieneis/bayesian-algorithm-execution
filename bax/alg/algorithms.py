@@ -6,8 +6,10 @@ from argparse import Namespace
 import copy
 import numpy as np
 from abc import ABC, abstractmethod
+import heapq
 
 from ..util.misc_util import dict_to_namespace
+from ..util.graph import Vertex
 
 
 class Algorithm(ABC):
@@ -236,3 +238,67 @@ class OptRightScan(Algorithm):
     def get_output_from_exe_path(self, exe_path):
         """Given an execution path, return algorithm output."""
         return exe_path.x[-1]
+
+
+class Dijkstras(Algorithm):
+    """Implments the shortest path or minimum cost algorithm using the Vertex
+    class.
+
+    """
+
+    def set_params(self, params):
+        """Set self.params, the parameters for the algorithm."""
+        super().set_params(params)
+        params = dict_to_namespace(params)
+
+        self.params.name = getattr(params, "name", "Dijkstras")
+        self.params.start = getattr(params, "start", None)
+        self.params.goal = getattr(params, "goal", None)
+        self.params.vertices = getattr(params, "vertices", None)
+
+    def run_algorithm_on_f(self, f):
+        def dijkstras(start: Vertex, goal: Vertex):
+            to_explore = [(0, start)]  # initialize priority queue
+            while len(to_explore) > 0:
+                best_cost, current = heapq.heappop(to_explore)
+                current.explored = True
+                if current == goal:
+                    return best_cost
+
+                for neighbor in current.neighbors:
+                    x, step_cost = distance(neighbor, current)
+                    if not hasattr(neighbor, "explored"):
+                        if (
+                            not hasattr(neighbor, "min_cost")
+                            or best_cost + step_cost < neighbor.min_cost
+                        ):
+                            heapq.heappush(
+                                to_explore, (best_cost + step_cost, neighbor)
+                            )  # push by cost
+                            neighbor.min_cost = best_cost + step_cost
+                            neighbor.prev = current
+
+            print("No path exists to goal")
+            return None
+
+        # reinitialize graph
+        for v in self.params.vertices:
+            if hasattr(v, "explored"):
+                del v.explored
+            if hasattr(v, "min_cost"):
+                del v.min_cost
+
+        exe_path = Namespace(x=[], y=[])
+
+        def distance(u: Vertex, v: Vertex):
+            u_pos, v_pos = u.position, v.position
+            # x = np.concatenate([u_pos, v_pos], axis=-1)
+            x = u_pos - v_pos
+            dist = f(x)
+            exe_path.x.append(x)
+            exe_path.y.append(dist)
+            return x, dist
+
+        min_cost = dijkstras(self.params.start, self.params.goal)
+
+        return exe_path, min_cost
