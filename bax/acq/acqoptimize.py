@@ -11,8 +11,7 @@ from .visualize import AcqViz1D
 from ..models.function import FunctionSample
 from ..util.misc_util import dict_to_namespace
 from ..util.timing import Timer
-
-import neatplot
+from multiprocessing import Pool
 
 
 class AcqOptimizer:
@@ -32,6 +31,8 @@ class AcqOptimizer:
         self.set_params(params)
         if verbose:
             self.print_str()
+
+        self.pool = Pool(self.params.n_path)
 
     def set_params(self, params):
         """Set self.params, the parameters for the AcqOptimizer."""
@@ -61,7 +62,9 @@ class AcqOptimizer:
         x_test = self.params.x_test
 
         # Compute acquisition function on each x in x_test
-        acq_list = self.get_acqfunction_list(x_test, fs, model, exe_path_list, output_list)
+        acq_list = self.get_acqfunction_list(
+            x_test, fs, model, exe_path_list, output_list
+        )
 
         # Return optimizer of acquisition function
         acq_opt = x_test[np.argmax(acq_list)]
@@ -97,9 +100,16 @@ class AcqOptimizer:
     def sample_outputs(self, model, algo, n_path):
         """Return list of n_path output samples given model and algo."""
         # TODO: remove this and use above method (self.sample_exe_path_and_output) only?
-        outputs = []
         fs = FunctionSample(verbose=False)
         fs.set_model(model)
+
+        def run_path(_):
+            exe_path = self.sample_exe_path(fs, algo)
+            output = algo.get_output_from_exe_path(exe_path)
+            return output
+
+        # outputs = self.pool.map(run_path, [_ for _ in range(n_path)])
+        outputs = []
         for _ in range(n_path):
             exe_path = self.sample_exe_path(fs, algo)
             output = algo.get_output_from_exe_path(exe_path)
@@ -131,10 +141,10 @@ class AcqOptimizer:
 
         # Compute acquisition function on x_test
         with Timer(f"Compute acquisition function at {len(x_test)} test points"):
-            acqf = AcqFunction({'acq_str': self.params.acq_str})
-            if self.params.acq_str == 'exe':
+            acqf = AcqFunction({"acq_str": self.params.acq_str})
+            if self.params.acq_str == "exe":
                 acq_list = acqf(std, std_list)
-            elif self.params.acq_str == 'out':
+            elif self.params.acq_str == "out":
                 acq_list = acqf(std, mu_list, std_list, output_list)
 
         # Optionally: visualize acqoptimizer

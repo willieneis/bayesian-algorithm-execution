@@ -3,10 +3,10 @@ from typing import List
 
 
 class Vertex:
-    def __init__(self, index: int, position: np.array, neighbors=[]):
+    def __init__(self, index: int, position: np.array, neighbors=None):
         self.index = index
         self.position = position
-        self.neighbors = neighbors
+        self.neighbors = [] if neighbors is None else neighbors
 
     def __repr__(self):
         return f"({self.index}, {[n.index for n in self.neighbors]})"

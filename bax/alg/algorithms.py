@@ -258,20 +258,27 @@ class Dijkstras(Algorithm):
 
     def run_algorithm_on_f(self, f):
         def dijkstras(start: Vertex, goal: Vertex):
+            explored = [False for _ in range(len(self.params.vertices))]
+            min_cost = [float("inf") for _ in range(len(self.params.vertices))]
             to_explore = [(0, start)]  # initialize priority queue
             while len(to_explore) > 0:
                 best_cost, current = heapq.heappop(to_explore)
+                print("best_cost", best_cost)
                 current.explored = True
-                if current == goal:
+                if current.index == goal.index:
+                    print("Found goal")
                     return best_cost
 
                 for neighbor in current.neighbors:
-                    x, step_cost = distance(neighbor, current)
-                    if not hasattr(neighbor, "explored"):
-                        if (
-                            not hasattr(neighbor, "min_cost")
-                            or best_cost + step_cost < neighbor.min_cost
-                        ):
+                    step_cost = distance(current, neighbor)
+                    # comment out version that stores extra info in each Vertex
+                    # if not hasattr(neighbor, "explored"):
+                    # if (
+                    #    not hasattr(neighbor, "min_cost")
+                    #    or best_cost + step_cost < neighbor.min_cost
+                    # ):
+                    if not explored[neighbor.index]:
+                        if best_cost + step_cost < min_cost[neighbor.index]:
                             heapq.heappush(
                                 to_explore, (best_cost + step_cost, neighbor)
                             )  # push by cost
@@ -281,24 +288,30 @@ class Dijkstras(Algorithm):
             print("No path exists to goal")
             return None
 
+        # comment out version that stores extra info in each Vertex
         # reinitialize graph
-        for v in self.params.vertices:
-            if hasattr(v, "explored"):
-                del v.explored
-            if hasattr(v, "min_cost"):
-                del v.min_cost
+        # for v in self.params.vertices:
+        #    if hasattr(v, "explored"):
+        #        del v.explored
+        #    if hasattr(v, "min_cost"):
+        #        del v.min_cost
 
         exe_path = Namespace(x=[], y=[])
 
         def distance(u: Vertex, v: Vertex):
             u_pos, v_pos = u.position, v.position
-            # x = np.concatenate([u_pos, v_pos], axis=-1)
-            x = u_pos - v_pos
-            dist = f(x)
-            exe_path.x.append(x)
-            exe_path.y.append(dist)
-            return x, dist
+            fu, fv = f(u_pos), f(v_pos)
+
+            exe_path.x.append(u_pos)
+            exe_path.x.append(v_pos)
+            exe_path.y.append(fu)
+            exe_path.y.append(fv)
+            dist = abs(fv - fu)
+            return dist
 
         min_cost = dijkstras(self.params.start, self.params.goal)
 
         return exe_path, min_cost
+
+    def get_output_from_exe_path(self, exe_path):
+        return None
