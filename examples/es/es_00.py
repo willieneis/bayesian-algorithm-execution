@@ -42,62 +42,64 @@ x_test = [[x] for x in np.linspace(0.0, max_x, 500)]
 y_test = [f(x) for x in x_test]
 
 # Set algorithm
-algo = EvolutionStrategies({'n_generation': 50}) # Code currently requires init to 0
+algo = EvolutionStrategies(
+    {'n_generation': 15, 'n_population': 5, 'samp_str': 'mut'}
+) # Code currently requires init to 0
 
 # -----
-algo.print_str()
+#algo.print_str()
 
-from bax.models.function import FunctionSample
-fs = FunctionSample()
-fs.set_model(model)
+#from bax.models.function import FunctionSample
+#fs = FunctionSample()
+#fs.set_model(model)
 
-e, o = algo.run_algorithm_on_f(f)
+#e, o = algo.run_algorithm_on_f(f)
 # -----
 
-## Pre-computed algorithm output on f:
-#algo_output_f = 8.597
+# Pre-computed algorithm output on f:
+algo_output_f = 8.597
 
-#n_iter = 40
+n_iter = 40
 
-#for i in range(n_iter):
-    ## Plot setup
-    #fig = plt.figure(figsize=(8, 5))
-    #plt.xlim([0, max_x])
-    #plt.ylim([-7.0, 8.0])
-    #plt.xlabel('x')
-    #plt.ylabel('y')
+for i in range(n_iter):
+    # Plot setup
+    fig = plt.figure(figsize=(8, 5))
+    plt.xlim([0, max_x])
+    plt.ylim([-7.0, 8.0])
+    plt.xlabel('x')
+    plt.ylabel('y')
 
-    ## Optimize acquisition function
-    #acqopt = AcqOptimizer({'x_test': x_test, 'acq_str': 'out'})
-    #x_next = acqopt.optimize(model, algo)
+    # Optimize acquisition function
+    acqopt = AcqOptimizer({'x_test': x_test, 'acq_str': 'out'})
+    x_next = acqopt.optimize(model, algo)
 
-    ## Compute current expected output
-    #expected_output = np.mean(acqopt.get_last_output_list())
-    #out_abs_err = np.abs(algo_output_f - expected_output)
+    # Compute current expected output
+    expected_output = np.mean(acqopt.get_last_output_list())
+    out_abs_err = np.abs(algo_output_f - expected_output)
 
-    ## Print
-    #print(f'Acq optimizer x_next = {x_next}')
-    #print(f'Current expected_output = {expected_output}')
-    #print(f'Current output abs. error = {out_abs_err}')
-    #print(f'Finished iter i = {i}')
+    # Print
+    print(f'Acq optimizer x_next = {x_next}')
+    print(f'Current expected_output = {expected_output}')
+    print(f'Current output abs. error = {out_abs_err}')
+    print(f'Finished iter i = {i}')
 
-    ## Plot true function 
-    #plt.plot(x_test, y_test, '-', color='k', linewidth=2)
+    # Plot true function
+    plt.plot(x_test, y_test, '-', color='k', linewidth=2)
 
-    ## Show plot
-    ##neatplot.save_figure(f'gp_test_11_{i}', ['png'])
-    #plt.show()
+    # Show plot
+    #neatplot.save_figure(f'gp_test_11_{i}', ['png'])
+    plt.show()
 
-    #inp = input('Press enter to continue (any other key to stop): ')
-    #if inp:
-        #break
-    #plt.close()
+    inp = input('Press enter to continue (any other key to stop): ')
+    if inp:
+        break
+    plt.close()
 
-    ## Query function, update data
-    #y_next = f(x_next)
-    #data.x.append(x_next)
-    #data.y.append(y_next)
+    # Query function, update data
+    y_next = f(x_next)
+    data.x.append(x_next)
+    data.y.append(y_next)
 
-    ## Update model
-    #model = SimpleGp(gp_params)
-    #model.set_data(data)
+    # Update model
+    model = SimpleGp(gp_params)
+    model.set_data(data)
