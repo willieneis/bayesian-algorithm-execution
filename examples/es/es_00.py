@@ -16,13 +16,6 @@ seed = 11
 np.random.seed(seed)
 
 # Set function
-xm = 0.3
-xa = 4.0
-ym = 2.0
-#f = lambda x: ym * np.sin(np.pi * xm * (x[0] + xa)) + \
-              #ym * np.sin(2 * xm * np.pi * (x[0] + xa)) / 2.0
-
-# In this example, we will be maximizing f
 f = lambda x: 10 * (-(0.1 * x[0] - 1)**2) + 3.5
 
 # Set data for model
@@ -60,7 +53,9 @@ for i in range(n_iter):
     plt.ylabel('y')
 
     # Optimize acquisition function
-    acqopt = AcqOptimizer({'x_test': x_test, 'acq_str': 'out', 'n_path': 50})
+    acqopt = AcqOptimizer(
+        {'x_test': x_test, 'acq_str': 'out', 'n_path': 50, 'viz_acq': True}
+    )
     x_next = acqopt.optimize(model, algo)
 
     # Update algo.init_x
