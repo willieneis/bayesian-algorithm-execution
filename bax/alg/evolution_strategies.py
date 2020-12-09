@@ -113,7 +113,7 @@ class SimpleMutator:
 
     def mutate_single(self, vec):
         """Mutate a single vector (stored as a list)."""
-        normal_scale = 0.3
+        normal_scale = 0.5
         vec_mut = []
         for num in vec:
             num_mut = np.random.normal(loc=num, scale=normal_scale)

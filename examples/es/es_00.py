@@ -23,7 +23,7 @@ ym = 2.0
               #ym * np.sin(2 * xm * np.pi * (x[0] + xa)) / 2.0
 
 # In this example, we will be maximizing f
-f = lambda x: -(0.1 * x[0] - 1)**2 + 2
+f = lambda x: 10 * (-(0.1 * x[0] - 1)**2) + 3.5
 
 # Set data for model
 data = Namespace()
@@ -43,21 +43,11 @@ y_test = [f(x) for x in x_test]
 
 # Set algorithm
 algo = EvolutionStrategies(
-    {'n_generation': 10, 'n_population': 5, 'samp_str': 'mut'}
+    {'n_generation': 15, 'n_population': 5, 'samp_str': 'mut'}
 ) # Code currently requires init to 0
 
-# -----
-#algo.print_str()
-
-#from bax.models.function import FunctionSample
-#fs = FunctionSample()
-#fs.set_model(model)
-
-#e, o = algo.run_algorithm_on_f(f)
-# -----
-
 # Pre-computed algorithm output on f:
-algo_output_f = 8.597
+algo_output_f = 10
 
 n_iter = 40
 
@@ -70,7 +60,7 @@ for i in range(n_iter):
     plt.ylabel('y')
 
     # Optimize acquisition function
-    acqopt = AcqOptimizer({'x_test': x_test, 'acq_str': 'out'})
+    acqopt = AcqOptimizer({'x_test': x_test, 'acq_str': 'out', 'n_path': 50})
     x_next = acqopt.optimize(model, algo)
 
     # Update algo.init_x
