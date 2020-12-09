@@ -27,11 +27,11 @@ f = lambda x: -(0.1 * x[0] - 1)**2 + 2
 
 # Set data for model
 data = Namespace()
-data.x = [[4.0]]
+data.x = [[0.0]]
 data.y = [f(x) for x in data.x]
 
 # Set model as a GP
-gp_params = {'ls': 1.0, 'alpha': 2.0, 'sigma': 1e-2}
+gp_params = {'ls': 3.0, 'alpha': 2.0, 'sigma': 1e-2}
 model = SimpleGp(gp_params)
 model.set_data(data)
 
@@ -43,7 +43,7 @@ y_test = [f(x) for x in x_test]
 
 # Set algorithm
 algo = EvolutionStrategies(
-    {'n_generation': 15, 'n_population': 5, 'samp_str': 'mut'}
+    {'n_generation': 10, 'n_population': 5, 'samp_str': 'mut'}
 ) # Code currently requires init to 0
 
 # -----
@@ -72,6 +72,9 @@ for i in range(n_iter):
     # Optimize acquisition function
     acqopt = AcqOptimizer({'x_test': x_test, 'acq_str': 'out'})
     x_next = acqopt.optimize(model, algo)
+
+    # Update algo.init_x
+    algo.params.init_x = data.x[np.argmax(data.y)]
 
     # Compute current expected output
     expected_output = np.mean(acqopt.get_last_output_list())
