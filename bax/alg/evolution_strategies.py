@@ -70,7 +70,7 @@ class EvolutionStrategies(Algorithm):
 
                 next_gen_list = self.params.sampler.ask()
                 next_gen_list = self.convert_next_gen_list(next_gen_list)
-                self.params.gen_list = next_gen_list
+                self.params.gen_list = copy.deepcopy(next_gen_list)
                 return self.params.gen_list.pop(0)
             else:
                 return None

@@ -45,7 +45,7 @@ class AcqOptimizer:
         self.params.n_path = getattr(params, "n_path", 100)
         default_x_test = [[x] for x in np.linspace(0.0, 40.0, 500)]
         self.params.x_test = getattr(params, "x_test", default_x_test)
-        self.params.viz_acq = getattr(params, "viz_acq", True)
+        self.params.viz_acq = getattr(params, "viz_acq", False)
 
     def optimize(self, model, algo):
         """Optimize acquisition function."""
