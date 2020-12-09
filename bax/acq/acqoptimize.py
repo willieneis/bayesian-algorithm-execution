@@ -7,7 +7,7 @@ import copy
 import numpy as np
 
 from .acquisition import AcqFunction
-from .visualize import AcqViz1D
+from .visualize import AcqViz1D, AcqViz2D
 from ..models.function import FunctionSample
 from ..util.misc_util import dict_to_namespace
 from ..util.timing import Timer
@@ -45,7 +45,8 @@ class AcqOptimizer:
         self.params.n_path = getattr(params, "n_path", 100)
         default_x_test = [[x] for x in np.linspace(0.0, 40.0, 500)]
         self.params.x_test = getattr(params, "x_test", default_x_test)
-        self.params.viz_acq = getattr(params, "viz_acq", False)
+        self.params.viz_acq = getattr(params, "viz_acq", True)
+        self.params.viz_dim = getattr(params, "viz_dim", 1)
 
     def optimize(self, model, algo):
         """Optimize acquisition function."""
@@ -139,7 +140,10 @@ class AcqOptimizer:
         # Optionally: visualize acqoptimizer
         if self.params.viz_acq:
             with Timer(f"Visualize acquisition function"):
-                vizzer = AcqViz1D()
+                if self.params.viz_dim == 1:
+                    vizzer = AcqViz1D()
+                elif self.params.viz_dim == 2:
+                    vizzer = AcqViz2D()
                 vizzer.plot_acqoptimizer_all(
                     model, exe_path_list, acq_list, x_test, mu, std, mu_list, std_list
                 )

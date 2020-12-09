@@ -156,3 +156,113 @@ class AcqViz1D:
 
         # Draw legend
         lgd = plt.legend(handles=h_list, loc=loc, bbox_to_anchor=bbta, ncol=ncol)
+
+
+class AcqViz2D:
+    """
+    Class to visualize acquisition function optimization for one-dimensional x.
+    """
+
+    def plot_acqoptimizer_all(
+        self, model, exe_path_list, acq_list, x_test, mu, std, mu_list, std_list
+    ):
+        """
+        Visualize the acquisition function, optimization, and related details, for a 1D
+        continuous domain.
+        """
+        # Plot various details
+        h0 = self.plot_exe_path_samples(exe_path_list)
+        #h1 = self.plot_postpred(x_test, mu, std)
+        # h1b = self.plot_post_f_samples(x_test, mu_list)
+        #h2 = self.plot_postpred_given_exe_path_samples(x_test, mu_list, std_list)
+        #h3 = self.plot_acqfunction(x_test, acq_list)
+        h4 = self.plot_model_data(model)
+        h5 = self.plot_acqoptima(acq_list, x_test)
+
+        ## Legend
+        #h_list = [h0[0], h4[0], h1, h2, h5[0], h3[0]]
+        h_list = [h0[0], h4[0], h5[0]]
+        self.make_legend(h_list)
+
+    def plot_exe_path_samples(self, exe_path_list):
+        """Plot execution path samples."""
+
+        # Plot exe_paths
+        for exe_path in exe_path_list:
+            x_list = [xin[0] for xin in exe_path.x]
+            y_list = [xin[1] for xin in exe_path.x]
+            h = plt.plot(
+                x_list,
+                y_list,
+                ".",
+                markersize=3,
+                linewidth=0.5,
+                label="$\{ \\tilde{e}_\mathcal{A}^j \} \sim p(e_\mathcal{A}(f) | \mathcal{D}_t)$",
+            )
+
+        # Plot exe_path start and end points
+        for exe_path in exe_path_list:
+            x_list = [xin[0] for xin in exe_path.x]
+            y_list = [xin[1] for xin in exe_path.x]
+            plt.plot(x_list[0], y_list[0], "o", color="k")
+            plt.plot(x_list[-1], y_list[-1], "*", color="k", markersize=8)
+
+        return h
+
+    def plot_post_f_samples(self, x_test, mu_list):
+        """Plot posterior function samples."""
+        # TODO: consider whether following are true posterior samples.
+        for mu_samp in mu_list:
+            h = plt.plot(
+                np.array(x_test).reshape(-1),
+                mu_samp,
+                "-",
+                alpha=0.75,
+                linewidth=0.5,
+                label="$\{\\tilde{f}\} \sim p(f | \mathcal{D}_t)$",
+            )
+        return h
+
+    def plot_model_data(self, model):
+        """Plot model.data."""
+        x_list = [xin[0] for xin in model.data.x]
+        y_list = [xin[1] for xin in model.data.x]
+        h = plt.plot(x_list, y_list, "o", color="deeppink", label="Observations")
+        # -----
+        # plt.plot([0, 20], [0,0], '--', color='k', linewidth=0.5)
+        # for x, y in zip(model.data.x, model.data.y):
+        # plt.plot([x, x], [0, y], '-', color='b', linewidth=0.5)
+        # h = plt.plot(model.data.x, model.data.y, 'o', color='b')
+        # -----
+        return h
+
+    def plot_acqoptima(self, acq_list, x_test):
+        """Plot optima of acquisition function."""
+        acq_opt = x_test[np.argmax(acq_list)]
+        h = plt.plot(
+            acq_opt[0],
+            acq_opt[1],
+            "x",
+            color="b",
+            markersize=10,
+            label="$x_t = $ argmax$_{x \in \mathcal{X}}$ $\\alpha_t(x)$",
+        )
+        return h
+
+    def make_legend(self, h_list):
+        """Make the legend."""
+
+        # For legend within axes
+        #bbta = None
+        #loc = 1
+        #ncol = 1
+
+        # For legend above axes
+        ax = plt.gca()
+        ax.set_position([0.1, 0.1, 0.85, 0.7])
+        bbta = (0.5, 1.24)
+        loc = "upper center"
+        ncol = 3
+
+        # Draw legend
+        lgd = plt.legend(handles=h_list, loc=loc, bbox_to_anchor=bbta, ncol=ncol)
