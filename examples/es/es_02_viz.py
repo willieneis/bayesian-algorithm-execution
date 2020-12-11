@@ -18,7 +18,7 @@ seed = 11
 np.random.seed(seed)
 
 # Set function
-f = lambda x: -1 * branin(x)
+f = branin
 domain = [[-5, 10], [0, 15]]
 init_x = [4.0, 14.0]
 #init_x = [7.0, 15.0]
@@ -45,8 +45,10 @@ for i in range(n_iter):
 
     # Plot setup
     fig = plt.figure(figsize=(6, 6))
-    plt.xlim([-5, 10])
-    plt.ylim([0, 15])
+
+    plt.xlim([-5.1, 10.1])
+    plt.ylim([-0.1, 15.1])
+
     plt.xlabel('x')
     plt.ylabel('y')
 
@@ -67,7 +69,7 @@ for i in range(n_iter):
     x_next = acqopt.optimize(model, algo)
 
     # Update algo.init_x
-    algo.params.init_x = data.x[np.argmax(data.y)]
+    algo.params.init_x = data.x[np.argmin(data.y)]
 
     # Compute current expected output
     expected_output = np.mean(acqopt.get_last_output_list(), 0)
