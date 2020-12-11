@@ -1,8 +1,12 @@
 """
 Code for visualizing acquisition functions and optimization.
 """
+
+import itertools
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import rcParams
+
 
 class AcqViz1D:
     """
@@ -10,7 +14,16 @@ class AcqViz1D:
     """
 
     def plot_acqoptimizer_all(
-        self, model, exe_path_list, acq_list, x_test, mu, std, mu_list, std_list
+        self,
+        model,
+        exe_path_list,
+        output_list,
+        acq_list,
+        x_test,
+        mu,
+        std,
+        mu_list,
+        std_list,
     ):
         """
         Visualize the acquisition function, optimization, and related details, for a 1D
@@ -164,14 +177,23 @@ class AcqViz2D:
     """
 
     def plot_acqoptimizer_all(
-        self, model, exe_path_list, acq_list, x_test, mu, std, mu_list, std_list
+        self,
+        model,
+        exe_path_list,
+        output_list,
+        acq_list,
+        x_test,
+        mu,
+        std,
+        mu_list,
+        std_list,
     ):
         """
         Visualize the acquisition function, optimization, and related details, for a 1D
         continuous domain.
         """
         # Plot various details
-        h0 = self.plot_exe_path_samples(exe_path_list)
+        h0 = self.plot_exe_path_samples(exe_path_list, output_list)
         #h1 = self.plot_postpred(x_test, mu, std)
         # h1b = self.plot_post_f_samples(x_test, mu_list)
         #h2 = self.plot_postpred_given_exe_path_samples(x_test, mu_list, std_list)
@@ -184,28 +206,49 @@ class AcqViz2D:
         h_list = [h0[0], h4[0], h5[0]]
         self.make_legend(h_list)
 
-    def plot_exe_path_samples(self, exe_path_list):
+    def plot_exe_path_samples(self, exe_path_list, output_list):
         """Plot execution path samples."""
+
+        # reset color cycle
+        clist = rcParams['axes.prop_cycle']
+        cgen = itertools.cycle(clist)
 
         # Plot exe_paths
         for exe_path in exe_path_list:
+            nextcolor = next(cgen)['color']
+
             x_list = [xin[0] for xin in exe_path.x]
             y_list = [xin[1] for xin in exe_path.x]
             h = plt.plot(
                 x_list,
                 y_list,
                 ".",
+                color=nextcolor,
                 markersize=3,
                 linewidth=0.5,
                 label="$\{ \\tilde{e}_\mathcal{A}^j \} \sim p(e_\mathcal{A}(f) | \mathcal{D}_t)$",
             )
 
-        # Plot exe_path start and end points
-        for exe_path in exe_path_list:
-            x_list = [xin[0] for xin in exe_path.x]
-            y_list = [xin[1] for xin in exe_path.x]
-            plt.plot(x_list[0], y_list[0], "o", color="k")
-            plt.plot(x_list[-1], y_list[-1], "*", color="k", markersize=8)
+            plt.plot(
+                x_list,
+                y_list,
+                "-",
+                color=nextcolor,
+                markersize=3,
+                linewidth=0.5,
+                alpha=0.2,
+            )
+
+        # Plot exe_paths start, end, and best points
+        plt.gca().set_prop_cycle(None)
+        for exe_path, output in zip(exe_path_list, output_list):
+            nextcolor = next(cgen)['color']
+            plt.plot(exe_path.x[0][0], exe_path.x[0][1], "o", color='black', markersize=8)
+            plt.plot(exe_path.x[0][0], exe_path.x[0][1], "o", color=nextcolor, markersize=7)
+            #plt.plot(x_list[-1], y_list[-1], "*", color='black', markersize=10)
+            #plt.plot(x_list[-1], y_list[-1], "*", color=nextcolor, markersize=6)
+            plt.plot(output[0], output[1], "*", color='black', markersize=10)
+            plt.plot(output[0], output[1], "*", color=nextcolor, markersize=6)
 
         return h
 
@@ -227,7 +270,9 @@ class AcqViz2D:
         """Plot model.data."""
         x_list = [xin[0] for xin in model.data.x]
         y_list = [xin[1] for xin in model.data.x]
-        h = plt.plot(x_list, y_list, "o", color="deeppink", label="Observations")
+        h = plt.plot(x_list, y_list, "o", color="white", label="Observations", markersize=8)
+        h = plt.plot(x_list, y_list, "o", color="deeppink", label="Observations",
+                markersize=5)
         # -----
         # plt.plot([0, 20], [0,0], '--', color='k', linewidth=0.5)
         # for x, y in zip(model.data.x, model.data.y):
@@ -243,8 +288,18 @@ class AcqViz2D:
             acq_opt[0],
             acq_opt[1],
             "x",
+            color="white",
+            markersize=10,
+            markeredgewidth=2,
+            label="$x_t = $ argmax$_{x \in \mathcal{X}}$ $\\alpha_t(x)$",
+        )
+        h = plt.plot(
+            acq_opt[0],
+            acq_opt[1],
+            "x",
             color="b",
             markersize=10,
+            markeredgewidth=1.5,
             label="$x_t = $ argmax$_{x \in \mathcal{X}}$ $\\alpha_t(x)$",
         )
         return h

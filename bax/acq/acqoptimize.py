@@ -145,7 +145,14 @@ class AcqOptimizer:
                 elif self.params.viz_dim == 2:
                     vizzer = AcqViz2D()
                 vizzer.plot_acqoptimizer_all(
-                    model, exe_path_list, acq_list, x_test, mu, std, mu_list, std_list
+                    model,
+                    exe_path_list,
+                    output_list,
+                    acq_list,
+                    x_test,
+                    mu, std,
+                    mu_list,
+                    std_list,
                 )
 
         # Return list of acquisition function on x in x_test
