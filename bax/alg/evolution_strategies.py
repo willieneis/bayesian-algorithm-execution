@@ -27,6 +27,7 @@ class EvolutionStrategies(Algorithm):
         self.params.n_population = getattr(params, "n_population", 5)
         self.params.n_generation = getattr(params, "n_generation", 3)
         self.params.samp_str = getattr(params, "samp_str", "cma")
+        self.params.opt_mode = getattr(params, "opt_mode", "min")
         self.params.n_dim = len(self.params.init_x)
         self.params.n_dim_es = self.params.n_dim if self.params.n_dim>1 else 2
 
@@ -45,7 +46,9 @@ class EvolutionStrategies(Algorithm):
             )
         elif self.params.samp_str == 'mut':
             self.params.sampler = SimpleMutator(
-                n_pop=self.params.n_population, init_list=[self.params.init_x]
+                n_pop=self.params.n_population,
+                init_list=[self.params.init_x],
+                opt_mode=self.params.opt_mode,
             )
 
         #self.params.gen_list = [self.params.init_x]
@@ -87,17 +90,23 @@ class EvolutionStrategies(Algorithm):
 
     def get_output_from_exe_path(self, exe_path):
         """Given an execution path, return algorithm output."""
-        return exe_path.x[-1]
+        if self.params.opt_mode == "min":
+            opt_idx = np.argmin(exe_path.y)
+        elif self.params.opt_mode == "max":
+            opt_idx = np.argmax(exe_path.y)
+
+        return exe_path.x[opt_idx]
 
 
 class SimpleMutator:
     """Class to perform simple mutation in evolutionary strategies."""
 
-    def __init__(self, n_pop, init_list):
+    def __init__(self, n_pop, init_list, opt_mode="min"):
         """Initalize."""
         self.n_pop = n_pop
         self.gen_list = copy.deepcopy(init_list)
         self.mut_list = []
+        self.opt_mode = opt_mode
 
     def ask(self):
         """Mutate self.gen_list and return n_pop mutations."""
@@ -123,6 +132,11 @@ class SimpleMutator:
     def tell(self, val_list):
         """Re-make self.gen_list, using val_list (associated with self.mut_list)."""
         keep_frac = 0.3
+
+        # If minimizing, reverse val_list
+        if self.opt_mode == "min":
+            val_list = -1 * np.array(val_list)
+
         keep_idx = np.argsort(val_list)[int((1 - keep_frac) * len(val_list)):]
         new_gen_list = [self.mut_list[i] for i in keep_idx[::-1]]
         self.gen_list = new_gen_list
