@@ -194,6 +194,7 @@ class AcqViz2D:
         """
         # Plot various details
         h0 = self.plot_exe_path_samples(exe_path_list, output_list)
+        h0b = self.plot_expected_output(output_list)
         #h1 = self.plot_postpred(x_test, mu, std)
         # h1b = self.plot_post_f_samples(x_test, mu_list)
         #h2 = self.plot_postpred_given_exe_path_samples(x_test, mu_list, std_list)
@@ -203,7 +204,7 @@ class AcqViz2D:
 
         ## Legend
         #h_list = [h0[0], h4[0], h1, h2, h5[0], h3[0]]
-        h_list = [h0[0], h4[0], h5[0]]
+        h_list = [h0[0], h4[0], h0b[0], h5[0]]
         self.make_legend(h_list)
 
     def plot_exe_path_samples(self, exe_path_list, output_list):
@@ -250,6 +251,26 @@ class AcqViz2D:
             plt.plot(output[0], output[1], "*", color='black', markersize=10)
             plt.plot(output[0], output[1], "*", color=nextcolor, markersize=6)
 
+        return h
+
+    def plot_expected_output(self, output_list):
+        """Plot expected output."""
+        expected_output = np.mean(output_list, 0)
+        plt.plot(
+            expected_output[0],
+            expected_output[1],
+            "*",
+            color='white',
+            markersize=12,
+        )
+        h = plt.plot(
+            expected_output[0],
+            expected_output[1],
+            "*",
+            color='black',
+            markersize=8,
+            label="$ \mathrm{E}[o_\mathcal{A}]$"
+        )
         return h
 
     def plot_post_f_samples(self, x_test, mu_list):
