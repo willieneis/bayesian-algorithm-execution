@@ -28,6 +28,7 @@ class EvolutionStrategies(Algorithm):
         self.params.n_generation = getattr(params, "n_generation", 3)
         self.params.samp_str = getattr(params, "samp_str", "cma")
         self.params.opt_mode = getattr(params, "opt_mode", "min")
+        self.params.domain = getattr(params, "domain", [[0, 10]])
         self.params.n_dim = len(self.params.init_x)
         self.params.n_dim_es = self.params.n_dim if self.params.n_dim>1 else 2
 
@@ -73,6 +74,7 @@ class EvolutionStrategies(Algorithm):
 
                 next_gen_list = self.params.sampler.ask()
                 next_gen_list = self.convert_next_gen_list(next_gen_list)
+                next_gen_list = self.project_to_domain(next_gen_list)
                 self.params.gen_list = copy.deepcopy(next_gen_list)
                 return self.params.gen_list.pop(0)
             else:
@@ -87,6 +89,19 @@ class EvolutionStrategies(Algorithm):
         if self.params.n_dim == 1:
             ngl = [[ng[0]] for ng in ngl]
         return ngl
+
+    def project_to_domain(self, next_gen_list):
+        """Project points in next_gen_list to be within self.params.domain."""
+        next_gen_mat = np.array(next_gen_list)
+        for col_idx in range(next_gen_mat.shape[1]):
+            dom_ub = self.params.domain[col_idx][1]
+            dom_lb = self.params.domain[col_idx][0]
+            col_arr = next_gen_mat[:, col_idx]
+            col_arr[col_arr > dom_ub] = dom_ub
+            col_arr[col_arr < dom_lb] = dom_lb
+
+        next_gen_list = next_gen_mat.tolist()
+        return next_gen_list
 
     def get_output_from_exe_path(self, exe_path):
         """Given an execution path, return algorithm output."""
