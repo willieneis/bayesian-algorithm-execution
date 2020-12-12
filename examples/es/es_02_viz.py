@@ -20,9 +20,10 @@ np.random.seed(seed)
 # Set function
 f = branin
 domain = [[-5, 10], [0, 15]]
-init_x = [4.0, 14.0]
-#init_x = [7.0, 15.0]
-#init_x = [0.0, 0.0]
+init_x = [4.8, 13.0]
+#init_x = [4.0, 14.0]
+#init_x = [5.7, 13.25]
+#init_x = [7.5, 13.0]
 
 # Set data for model
 data = Namespace()
@@ -36,7 +37,13 @@ model.set_data(data)
 
 # Set algorithm
 algo = EvolutionStrategies(
-    {'n_generation': 15, 'n_population': 8, 'samp_str': 'mut', 'init_x': init_x}
+    {
+        'n_generation': 15,
+        'n_population': 8,
+        'samp_str': 'mut',
+        'init_x': init_x,
+        'domain': domain,
+    }
 ) # Code currently requires init to 0
 
 n_iter = 25
@@ -55,6 +62,9 @@ for i in range(n_iter):
     im = plt.imread('examples/es/branin_contour.png')
     implot = plt.imshow(im, extent=[domain[0][0], domain[0][1], domain[1][0], domain[1][1]])
 
+    # Update algo.init_x
+    algo.params.init_x = data.x[np.argmin(data.y)]
+
     # Optimize acquisition function
     x_test = unif_random_sample_domain(domain, n=150)
     acqopt = AcqOptimizer(
@@ -67,9 +77,6 @@ for i in range(n_iter):
         }
     )
     x_next = acqopt.optimize(model, algo)
-
-    # Update algo.init_x
-    algo.params.init_x = data.x[np.argmin(data.y)]
 
     # Compute current expected output
     expected_output = np.mean(acqopt.get_last_output_list(), 0)
