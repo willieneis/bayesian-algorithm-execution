@@ -18,7 +18,7 @@ seed = 11
 np.random.seed(seed)
 
 # Set function
-f = lambda x: -1 * branin(x)
+f = branin
 domain = [[-5, 10], [0, 15]]
 init_x = [4.0, 14.0]
 #init_x = [7.0, 15.0]
@@ -36,8 +36,14 @@ model.set_data(data)
 
 # Set algorithm
 algo = EvolutionStrategies(
-    {'n_generation': 15, 'n_population': 8, 'samp_str': 'mut', 'init_x': init_x}
-) # Code currently requires init to 0
+    {
+        'n_generation': 15,
+        'n_population': 8,
+        'samp_str': 'mut',
+        'init_x': init_x,
+        'domain': domain,
+    }
+)
 
 n_iter = 40
 

@@ -44,7 +44,7 @@ algo = EvolutionStrategies(
         'init_x': init_x,
         'domain': domain,
     }
-) # Code currently requires init to 0
+)
 
 n_iter = 25
 
@@ -60,7 +60,9 @@ for i in range(n_iter):
     plt.ylabel('y')
 
     im = plt.imread('examples/es/branin_contour.png')
-    implot = plt.imshow(im, extent=[domain[0][0], domain[0][1], domain[1][0], domain[1][1]])
+    implot = plt.imshow(
+        im, extent=[domain[0][0], domain[0][1], domain[1][0], domain[1][1]]
+    )
 
     # Update algo.init_x
     algo.params.init_x = data.x[np.argmin(data.y)]

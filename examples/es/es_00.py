@@ -36,7 +36,7 @@ y_test = [f(x) for x in x_test]
 
 # Set algorithm
 algo = EvolutionStrategies(
-    {'n_generation': 15, 'n_population': 5, 'samp_str': 'mut'}
+    {'n_generation': 15, 'n_population': 5, 'samp_str': 'mut', 'opt_mode': 'max'}
 ) # Code currently requires init to 0
 
 # Pre-computed algorithm output on f:
