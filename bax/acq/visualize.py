@@ -35,7 +35,7 @@ class AcqViz1D:
         # h1b = self.plot_post_f_samples(x_test, mu_list)
         h2 = self.plot_postpred_given_exe_path_samples(x_test, mu_list, std_list)
         h3 = self.plot_acqfunction(x_test, acq_list)
-        h4 = self.plot_model_data(model)
+        h4 = self.plot_model_data(model.data)
         h5 = self.plot_acqoptima(acq_list, x_test)
 
         ## Legend
@@ -98,16 +98,14 @@ class AcqViz1D:
             )
         return h
 
-    def plot_model_data(self, model):
-        """Plot model.data."""
-        h = plt.plot(
-            model.data.x, model.data.y, "o", color="deeppink", label="Observations"
-        )
+    def plot_model_data(self, data):
+        """Plot data, assumed to have attributes x and y."""
+        h = plt.plot(data.x, data.y, "o", color="deeppink", label="Observations")
         # -----
         # plt.plot([0, 20], [0,0], '--', color='k', linewidth=0.5)
-        # for x, y in zip(model.data.x, model.data.y):
+        # for x, y in zip(data.x, data.y):
         # plt.plot([x, x], [0, y], '-', color='b', linewidth=0.5)
-        # h = plt.plot(model.data.x, model.data.y, 'o', color='b')
+        # h = plt.plot(data.x, data.y, 'o', color='b')
         # -----
         return h
 
@@ -173,7 +171,7 @@ class AcqViz1D:
 
 class AcqViz2D:
     """
-    Class to visualize acquisition function optimization for one-dimensional x.
+    Class to visualize acquisition function optimization for two-dimensional x.
     """
 
     def plot_acqoptimizer_all(
@@ -199,7 +197,7 @@ class AcqViz2D:
         # h1b = self.plot_post_f_samples(x_test, mu_list)
         #h2 = self.plot_postpred_given_exe_path_samples(x_test, mu_list, std_list)
         #h3 = self.plot_acqfunction(x_test, acq_list)
-        h4 = self.plot_model_data(model)
+        h4 = self.plot_model_data(model.data)
         h5 = self.plot_acqoptima(acq_list, x_test)
 
         ## Legend
@@ -287,18 +285,21 @@ class AcqViz2D:
             )
         return h
 
-    def plot_model_data(self, model):
-        """Plot model.data."""
-        x_list = [xin[0] for xin in model.data.x]
-        y_list = [xin[1] for xin in model.data.x]
-        h = plt.plot(x_list, y_list, "o", color="white", label="Observations", markersize=8)
-        h = plt.plot(x_list, y_list, "o", color="deeppink", label="Observations",
-                markersize=5)
+    def plot_model_data(self, data):
+        """Plot data, assumed to have attributes x and y."""
+        x_list = [xin[0] for xin in data.x]
+        y_list = [xin[1] for xin in data.x]
+        h = plt.plot(
+            x_list, y_list, "o", color="white", label="Observations", markersize=8
+        )
+        h = plt.plot(
+            x_list, y_list, "o", color="deeppink", label="Observations", markersize=5
+        )
         # -----
         # plt.plot([0, 20], [0,0], '--', color='k', linewidth=0.5)
-        # for x, y in zip(model.data.x, model.data.y):
+        # for x, y in zip(data.x, data.y):
         # plt.plot([x, x], [0, y], '-', color='b', linewidth=0.5)
-        # h = plt.plot(model.data.x, model.data.y, 'o', color='b')
+        # h = plt.plot(data.x, data.y, 'o', color='b')
         # -----
         return h
 
