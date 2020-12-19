@@ -15,16 +15,19 @@ class SimpleGp:
     Simple GP model without external backend.
     """
 
-    def __init__(self, params=None, verbose=True):
+    def __init__(self, params=None, data=None, verbose=True):
         """
         Parameters
         ----------
         params : Namespace_or_dict
             Namespace or dict of parameters for this model.
+        data : Namespace_or_dict
+            Namespace or dict of initial data, containing lists x and y.
         verbose : bool
             If True, print description string.
         """
         self.set_params(params)
+        self.set_data(data)
         if verbose:
             self.print_str()
 
@@ -37,18 +40,19 @@ class SimpleGp:
         self.params.name = getattr(params, 'name', 'SimpleGp')
         self.params.ls = getattr(params, 'ls', 3.7)
         self.params.alpha = getattr(params, 'alpha', 1.85)
-        self.params.sigma = getattr(params, 'sigma', 1e-5)
+        self.params.sigma = getattr(params, 'sigma', 1e-2)
         self.params.kernel = getattr(params, 'kernel', kern_exp_quad)
-
-        # Initialize self.data to be empty
-        self.data = Namespace()
-        self.data.x = []
-        self.data.y = []
 
     def set_data(self, data):
         """Set self.data."""
-        data = dict_to_namespace(data)
-        self.data = copy.deepcopy(data)
+        if data is None:
+            # Initialize self.data to be empty
+            self.data = Namespace()
+            self.data.x = []
+            self.data.y = []
+        else:
+            data = dict_to_namespace(data)
+            self.data = copy.deepcopy(data)
 
     def get_prior_mu_cov(self, x_list, full_cov=True):
         """
