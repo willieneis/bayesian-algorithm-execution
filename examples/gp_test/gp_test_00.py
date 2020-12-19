@@ -10,7 +10,7 @@ seed = 15
 np.random.seed(seed)
 
 # Instantiate GP
-gp = SimpleGp({'ls': 2.0, 'alpha': 1.5})
+gp = SimpleGp({'ls': 2.0, 'alpha': 1.5, 'sigma': 1e-5})
 
 # Set data
 data = {'x': [[1.0], [2.0], [3.0]], 'y': [-0.5, 0.0, 0.5]}

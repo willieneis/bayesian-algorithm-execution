@@ -100,7 +100,7 @@ with Timer(f'Compute acquisition at {n_test} test points'):
     plt.fill_between(np.array(x_test).reshape(-1), lcb, ucb, color='blue', alpha=0.1)
 
 # Compute acquisition function
-acqf = AcqFunction()
+acqf = AcqFunction({'acq_str': 'exe'})
 acq_list = acqf(std, std_list)
 acq_arr = np.array(acq_list)
 
