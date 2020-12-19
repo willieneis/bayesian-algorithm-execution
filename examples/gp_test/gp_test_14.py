@@ -57,8 +57,7 @@ for i in range(n_iter):
     plt.ylabel('y')
 
     # Optimize acquisition function
-    #acqopt = AcqOptimizer({'x_test': x_test, 'acq_str': 'out'})
-    acqopt = AcqOptimizer({'x_test': x_test, 'acq_str': 'exe'})
+    acqopt = AcqOptimizer({'x_test': x_test, 'acq_str': 'out'})
     x_next = acqopt.optimize(model, algo)
 
     # Compute current expected output
@@ -78,7 +77,7 @@ for i in range(n_iter):
     plt.plot(x_test, y_test, '-', color='k', linewidth=2)
 
     # Show plot
-    #neatplot.save_figure(f'gp_test_10_{i}')
+    #neatplot.save_figure(f'gp_test_14_{i}')
     plt.show()
 
     inp = input('Press enter to continue (any other key to stop): ')
