@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 #plt.ion()
 
 from bax.models.simple_gp import SimpleGp
+from bax.models.stan_gp import get_stangp_hypers
 from bax.alg.evolution_strategies import EvolutionStrategies
 from bax.acq.acqoptimize import AcqOptimizer
 from bax.util.domain_util import unif_random_sample_domain
@@ -32,7 +33,7 @@ data.x = [init_x]
 data.y = [f(x) for x in data.x]
 
 # Set model as a GP
-gp_params = {'ls': 3.0, 'alpha': 2.0, 'sigma': 1e-2}
+gp_params = get_stangp_hypers(f, domain=domain, n_samp=500)
 model = SimpleGp(gp_params)
 model.set_data(data)
 
@@ -45,7 +46,7 @@ algo = EvolutionStrategies(
         'init_x': init_x,
         'domain': domain,
         'normal_scale': 0.5,
-        'keep_frac': 0.3,
+        'keep_frac': 0.5,
     }
 )
 
