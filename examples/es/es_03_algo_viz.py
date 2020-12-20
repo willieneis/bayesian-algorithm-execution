@@ -8,10 +8,10 @@ from bax.models.simple_gp import SimpleGp
 from bax.alg.evolution_strategies import EvolutionStrategies
 from bax.acq.visualize import AcqViz2D
 
-from branin import branin, unif_random_sample_domain
+from branin import branin
 
 import neatplot
-#neatplot.set_style('fonts')
+neatplot.set_style('fonts')
 
 
 seed = 11
