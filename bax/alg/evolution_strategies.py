@@ -28,6 +28,8 @@ class EvolutionStrategies(Algorithm):
         self.params.n_generation = getattr(params, "n_generation", 3)
         self.params.samp_str = getattr(params, "samp_str", "cma")
         self.params.opt_mode = getattr(params, "opt_mode", "min")
+        self.params.normal_scale = getattr(params, "normal_scale", 0.5)
+        self.params.keep_frac = getattr(params, "keep_frac", 0.3)
         self.params.domain = getattr(params, "domain", [[0, 10]])
         self.params.n_dim = len(self.params.init_x)
         self.params.n_dim_es = self.params.n_dim if self.params.n_dim>1 else 2
@@ -50,6 +52,8 @@ class EvolutionStrategies(Algorithm):
                 n_pop=self.params.n_population,
                 init_list=[self.params.init_x],
                 opt_mode=self.params.opt_mode,
+                normal_scale=self.params.normal_scale,
+                keep_frac=self.params.keep_frac,
             )
 
         #self.params.gen_list = [self.params.init_x]
@@ -116,12 +120,16 @@ class EvolutionStrategies(Algorithm):
 class SimpleMutator:
     """Class to perform simple mutation in evolutionary strategies."""
 
-    def __init__(self, n_pop, init_list, opt_mode="min"):
+    def __init__(
+        self, n_pop, init_list, opt_mode="min", normal_scale=0.5, keep_frac=0.3
+    ):
         """Initalize."""
         self.n_pop = n_pop
         self.gen_list = copy.deepcopy(init_list)
         self.mut_list = []
         self.opt_mode = opt_mode
+        self.normal_scale = normal_scale
+        self.keep_frac = keep_frac
 
     def ask(self):
         """Mutate self.gen_list and return n_pop mutations."""
@@ -137,21 +145,19 @@ class SimpleMutator:
 
     def mutate_single(self, vec):
         """Mutate a single vector (stored as a list)."""
-        normal_scale = 0.5
         vec_mut = []
         for num in vec:
-            num_mut = np.random.normal(loc=num, scale=normal_scale)
+            num_mut = np.random.normal(loc=num, scale=self.normal_scale)
             vec_mut.append(num_mut)
         return vec_mut
 
     def tell(self, val_list):
         """Re-make self.gen_list, using val_list (associated with self.mut_list)."""
-        keep_frac = 0.3
 
         # If minimizing, reverse val_list
         if self.opt_mode == "min":
             val_list = -1 * np.array(val_list)
 
-        keep_idx = np.argsort(val_list)[int((1 - keep_frac) * len(val_list)):]
+        keep_idx = np.argsort(val_list)[int((1 - self.keep_frac) * len(val_list)):]
         new_gen_list = [self.mut_list[i] for i in keep_idx[::-1]]
         self.gen_list = new_gen_list
