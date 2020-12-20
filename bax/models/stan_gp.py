@@ -10,6 +10,7 @@ from .simple_gp import SimpleGp
 from .stan.gp_fixedsig import get_stanmodel
 from .gp.gp_utils import kern_exp_quad
 from ..util.misc_util import dict_to_namespace, suppress_stdout_stderr
+from ..util.domain_util import unif_random_sample_domain
 
 
 class StanGp(SimpleGp):
@@ -97,3 +98,21 @@ class StanGp(SimpleGp):
         print(f'  > ls pt est = {self.params.ls}')
         print(f'  > alpha pt est = {self.params.alpha}')
         print(f'  > sigma pt est = {self.params.sigma}')
+
+
+def get_stangp_hypers(f, domain=[[0.0, 10.0]], n_samp=200):
+    """Return hypers fit by StanGp, using n_samp random queries of function f."""
+
+    # Construct dataset with n_samp unif random samples
+    data = Namespace()
+    data.x = unif_random_sample_domain(domain, n=n_samp)
+    data.y = [f(x) for x in data.x]
+
+    # Fit params with StanGp on data
+    model = StanGp(data=data)
+    model.fit_hypers()
+    gp_hypers = {
+        'ls': model.params.ls, 'alpha': model.params.alpha, 'sigma': model.params.sigma
+    }
+
+    return gp_hypers
