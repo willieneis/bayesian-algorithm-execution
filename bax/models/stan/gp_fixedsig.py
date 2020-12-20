@@ -6,8 +6,11 @@ using a squared exponential kernel, and fixed sigma.
 import time
 import pickle
 import pathlib
-
 import pystan
+
+# To stop pystan-produced matplotlib logging output
+import logging
+logging.getLogger('matplotlib').setLevel(logging.WARNING)
 
 
 def get_stanmodel(recompile=False, verbose=True):

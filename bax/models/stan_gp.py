@@ -88,8 +88,8 @@ class StanGp(SimpleGp):
 
     def set_hypers_from_stanout(self, stanout):
         """Set hyperparameters given a stanout object."""
-        self.params.ls = stanout['rho']
-        self.params.alpha = stanout['alpha']
+        self.params.ls = float(stanout['rho'])
+        self.params.alpha = float(stanout['alpha'])
 
     def print_fit_result(self):
         """Print result of hyparparameter fitting."""

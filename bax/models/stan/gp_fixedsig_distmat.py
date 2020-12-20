@@ -8,6 +8,10 @@ import pickle
 import pathlib
 import pystan
 
+# To stop pystan-produced matplotlib logging output
+import logging
+logging.getLogger('matplotlib').setLevel(logging.WARNING)
+
 
 def get_stanmodel(recompile=False, print_status=True):
     """Return stan model. Recompile model if recompile is True."""
