@@ -4,14 +4,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 plt.ion()
 
-from bax.models.stan_gp import StanGp
 from bax.models.simple_gp import SimpleGp
+from bax.models.stan_gp import get_stangp_hypers
 from bax.alg.algorithms import AverageOutputs
 from bax.acq.acqoptimize import AcqOptimizer
 
 import neatplot
 neatplot.set_style('fonts')
-neatplot.update_rc('text.usetex', False)
 
 
 seed = 11
@@ -20,25 +19,13 @@ np.random.seed(seed)
 # Set function
 f = lambda x: 2 * np.sin(x[0])
 
-# Fit and fix GP hypers
-fit_data = Namespace()
-fit_x_list = list(range(20))
-fit_data.x = [[x] for x in fit_x_list]
-fit_data.y = [f(x) for x in fit_data.x]
-
-# Fit params with StanGp
-model = StanGp(data=fit_data)
-model.fit_hypers()
-gp_params = {
-    'ls': model.params.ls, 'alpha': model.params.alpha, 'sigma': model.params.sigma
-}
-
 # Set initial data
 data = Namespace()
 data.x = [[1.0]]
 data.y = [f(x) for x in data.x]
 
 # Set model
+gp_params = get_stangp_hypers(f, n_samp=200)
 model = SimpleGp(gp_params)
 model.set_data(data)
 
@@ -55,7 +42,8 @@ y_test = [f(x) for x in x_test]
 
 # Set algorithm
 algo = AverageOutputs({'x_path': x_path})
-algo_output_f = -0.9733
+#algo_output_f = -0.9733
+algo_output_f = 0.0455
 
 
 n_iter = 40
