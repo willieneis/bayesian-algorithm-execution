@@ -26,9 +26,10 @@ class SimpleGp:
         verbose : bool
             If True, print description string.
         """
+        self.verbose = verbose
         self.set_params(params)
         self.set_data(data)
-        if verbose:
+        if self.verbose:
             self.print_str()
 
     def set_params(self, params):
