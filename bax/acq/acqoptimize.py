@@ -45,7 +45,7 @@ class AcqOptimizer:
         self.params.x_test = getattr(params, "x_test", default_x_test)
         self.params.viz_acq = getattr(params, "viz_acq", True)
 
-    def optimize(self, model, algo):
+    def optimize(self, model, algo, x_test=None, return_argmax=False):
         """Optimize acquisition function."""
         # Set function sample with model
         fs = FunctionSample(verbose=False)
@@ -56,7 +56,8 @@ class AcqOptimizer:
         self.last_output_list = output_list
 
         # Define fixed set x_test over which we will optimize
-        x_test = self.params.x_test
+        if x_test is None:
+            x_test = self.params.x_test
 
         # Compute acquisition function on each x in x_test
         acq_list = self.get_acqfunction_list(
@@ -64,8 +65,10 @@ class AcqOptimizer:
         )
 
         # Return optimizer of acquisition function
-        acq_opt = x_test[np.argmax(acq_list)]
-        return acq_opt
+        if return_argmax:
+            return np.argmax(acq_list)
+        else:
+            return x_test[np.argmax(acq_list)]
 
     def get_exe_path_and_output_samples(self, fs, algo):
         """

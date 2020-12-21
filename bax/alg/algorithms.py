@@ -9,7 +9,7 @@ from abc import ABC, abstractmethod
 import heapq
 
 from ..util.misc_util import dict_to_namespace
-from ..util.graph import Vertex
+from ..util.graph import Vertex, backtrack
 
 
 class Algorithm(ABC):
@@ -265,15 +265,15 @@ class Dijkstras(Algorithm):
             while len(to_explore) > 0:
                 best_cost, current = heapq.heappop(to_explore)
                 if explored[current.index]:
-                    # our implemention could have the same node appear in the
-                    # pqueue multiple times with different costs
+                    # the same node could appear in the pqueue multiple times with different costs
                     continue
                 explored[current.index] = True
-                print(f"best_cost after exploring {i} vertices", best_cost)
                 i += 1
                 if current.index == goal.index:
-                    print("Found goal")
-                    return best_cost
+                    print(
+                        f"Found goal after visiting {i} vertices with estimated cost {best_cost}"
+                    )
+                    return best_cost, backtrack(current)
 
                 for neighbor in current.neighbors:
                     step_cost = distance(current, neighbor)
@@ -293,13 +293,13 @@ class Dijkstras(Algorithm):
                         neighbor.prev = current
 
             print("No path exists to goal")
-            return None
+            return float("inf"), []
 
-        # comment out version that stores extra info in each Vertex
         # reinitialize graph
         for v in self.params.vertices:
             if hasattr(v, "prev"):
                 del v.prev
+        # comment out version that stores extra info in each Vertex
         #    if hasattr(v, "explored"):
         #        del v.explored
         #    if hasattr(v, "min_cost"):
@@ -309,13 +309,14 @@ class Dijkstras(Algorithm):
 
         def distance(u: Vertex, v: Vertex):
             u_pos, v_pos = u.position, v.position
+
             fu, fv = f(u_pos), f(v_pos)
+            dist = abs(fv - fu)
 
             exe_path.x.append(u_pos)
             exe_path.x.append(v_pos)
             exe_path.y.append(fu)
             exe_path.y.append(fv)
-            dist = abs(fv - fu)
             return dist
 
         min_cost = dijkstras(self.params.start, self.params.goal)
@@ -323,4 +324,4 @@ class Dijkstras(Algorithm):
         return exe_path, min_cost
 
     def get_output_from_exe_path(self, exe_path):
-        return None
+        raise RuntimeError("Can't return output from execution path for Dijkstras")
