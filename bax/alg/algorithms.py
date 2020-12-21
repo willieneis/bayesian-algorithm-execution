@@ -7,9 +7,11 @@ import copy
 import numpy as np
 from abc import ABC, abstractmethod
 import heapq
+import random
+import time
 
 from ..util.misc_util import dict_to_namespace
-from ..util.graph import Vertex, backtrack
+from ..util.graph import Vertex, backtrack_indices
 
 
 class Algorithm(ABC):
@@ -257,9 +259,12 @@ class Dijkstras(Algorithm):
         self.params.vertices = getattr(params, "vertices", None)
 
     def run_algorithm_on_f(self, f):
+        np.random.seed()
+
         def dijkstras(start: Vertex, goal: Vertex):
             explored = [False for _ in range(len(self.params.vertices))]
             min_cost = [float("inf") for _ in range(len(self.params.vertices))]
+            prev = [None for _ in range(len(self.params.vertices))]
             to_explore = [(0, start)]  # initialize priority queue
             i = 0
             while len(to_explore) > 0:
@@ -273,7 +278,10 @@ class Dijkstras(Algorithm):
                     print(
                         f"Found goal after visiting {i} vertices with estimated cost {best_cost}"
                     )
-                    return best_cost, backtrack(current)
+                    # return best_cost, backtrack(current)
+                    best_path = backtrack_indices(current.index, prev)
+                    best_path = [self.params.vertices[i] for i in best_path]
+                    return best_cost, best_path
 
                 for neighbor in current.neighbors:
                     step_cost = distance(current, neighbor)
@@ -290,15 +298,16 @@ class Dijkstras(Algorithm):
                             to_explore, (best_cost + step_cost, neighbor)
                         )  # push by cost
                         min_cost[neighbor.index] = best_cost + step_cost
-                        neighbor.prev = current
+                        prev[neighbor.index] = current.index
+                        # neighbor.prev = current
 
             print("No path exists to goal")
             return float("inf"), []
 
         # reinitialize graph
-        for v in self.params.vertices:
-            if hasattr(v, "prev"):
-                del v.prev
+        # for v in self.params.vertices:
+        #    if hasattr(v, "prev"):
+        #        del v.prev
         # comment out version that stores extra info in each Vertex
         #    if hasattr(v, "explored"):
         #        del v.explored
@@ -325,3 +334,26 @@ class Dijkstras(Algorithm):
 
     def get_output_from_exe_path(self, exe_path):
         raise RuntimeError("Can't return output from execution path for Dijkstras")
+
+
+class Noop(Algorithm):
+    """"Dummy noop algorithm for debugging parallel code"""
+
+    def set_params(self, params):
+        """Set self.params, the parameters for the algorithm."""
+        super().set_params(params)
+        params = dict_to_namespace(params)
+
+    def run_algorithm_on_f(self, f):
+        np.random.seed()  # must reseed each time or else child process will have the same state as parent, resulting in the same randomness
+        output = 0
+        exe_path = Namespace(x=[], y=[])
+        wait_time = random.randint(1, 5)
+        rand = np.random.rand(1)
+        print(f"Got {rand}. Going to wait for {wait_time} seconds")
+        time.sleep(wait_time)
+        print(f"Finished waiting for {wait_time} seconds")
+        return exe_path, output
+
+    def get_output_from_exe_path(self, exe_path):
+        raise RuntimeError("Can't return output from execution path for Noop")

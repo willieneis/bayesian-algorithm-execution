@@ -56,6 +56,15 @@ def backtrack(goal: Vertex):
     return path[::-1]
 
 
+def backtrack_indices(goal: int, prev: List[int]):
+    v = goal
+    path = [v]
+    while prev[v] is not None:
+        path.append(prev[v])
+        v = prev[v]
+    return path[::-1]
+
+
 def valid_path(path: List[Vertex]):
     for i in range(1, len(path)):
         if path[i] not in path[i - 1].neighbors:

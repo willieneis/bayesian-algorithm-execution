@@ -32,7 +32,7 @@ class FunctionSample:
 
         # Set self.params
         self.params = Namespace()
-        self.params.name = getattr(params, 'name', 'FunctionSample')
+        self.params.name = getattr(params, "name", "FunctionSample")
 
     def set_model(self, model):
         """Set self.model, self.data, and reset self.query_history."""
@@ -93,7 +93,7 @@ class FunctionSample:
 
     def print_str(self):
         """Print a description string."""
-        print('*[INFO] ' + str(self))
+        print("*[INFO] " + str(self))
 
     def set_print_params(self):
         """Set self.print_params."""
@@ -101,4 +101,4 @@ class FunctionSample:
 
     def __str__(self):
         self.set_print_params()
-        return f'{self.params.name} with params={self.print_params}'
+        return f"{self.params.name} with params={self.print_params}"

@@ -11,6 +11,7 @@ from .visualize import AcqViz1D
 from ..models.function import FunctionSample
 from ..util.misc_util import dict_to_namespace
 from ..util.timing import Timer
+from multiprocessing import Pool
 
 
 class AcqOptimizer:
@@ -30,6 +31,7 @@ class AcqOptimizer:
         self.set_params(params)
         if verbose:
             self.print_str()
+        self.pool = Pool()
 
     def set_params(self, params):
         """Set self.params, the parameters for the AcqOptimizer."""
@@ -44,6 +46,7 @@ class AcqOptimizer:
         default_x_test = [[x] for x in np.linspace(0.0, 40.0, 500)]
         self.params.x_test = getattr(params, "x_test", default_x_test)
         self.params.viz_acq = getattr(params, "viz_acq", True)
+        self.params.parallel = getattr(params, "parallel", False)
 
     def optimize(self, model, algo, x_test=None, return_argmax=False):
         """Optimize acquisition function."""
@@ -75,17 +78,21 @@ class AcqOptimizer:
         Return exe_path_list and output_list respectively containing self.params.n_path
         exe path samples and associated outputs, given function sample fs and algo.
         """
-        exe_path_list = []
-        output_list = []
+        map_func = self.pool.map if self.params.parallel else map
+
         with Timer(f"Sample {self.params.n_path} execution paths"):
-            for _ in range(self.params.n_path):
-                exe_path, output = self.sample_exe_path_and_output(fs, algo)
-                exe_path_list.append(exe_path)
-                output_list.append(output)
+            exe_path_list, output_list = zip(
+                *self.pool.map(
+                    AcqOptimizer.sample_exe_path_and_output,
+                    [(fs, algo) for _ in range(self.params.n_path)],
+                )
+            )
         return exe_path_list, output_list
 
-    def sample_exe_path_and_output(self, fs, algo):
+    @staticmethod
+    def sample_exe_path_and_output(fs_algo):
         """Return execution path sample given a function sample and algorithm."""
+        fs, algo = fs_algo
         fs.reset_query_history()
         exe_path, output = algo.run_algorithm_on_f(fs)
         return exe_path, output
