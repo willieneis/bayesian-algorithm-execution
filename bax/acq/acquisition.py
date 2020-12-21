@@ -105,7 +105,7 @@ class AcqFunction:
         """
         if not isinstance(output_list[0], list):
             output_list = [[out] for out in output_list]
-        n_cluster_kmeans = np.min([self.params.n_cluster_kmeans, len(output_list)])
+        n_cluster_kmeans = min(self.params.n_cluster_kmeans, len(output_list))
         km = KMeans(n_clusters=n_cluster_kmeans)
         km.fit(output_list)
         lab = km.labels_
