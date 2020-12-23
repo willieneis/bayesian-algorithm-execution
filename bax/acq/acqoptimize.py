@@ -31,7 +31,6 @@ class AcqOptimizer:
         self.set_params(params)
         if verbose:
             self.print_str()
-        self.pool = Pool()
 
     def set_params(self, params):
         """Set self.params, the parameters for the AcqOptimizer."""
@@ -47,6 +46,7 @@ class AcqOptimizer:
         self.params.x_test = getattr(params, "x_test", default_x_test)
         self.params.viz_acq = getattr(params, "viz_acq", True)
         self.params.parallel = getattr(params, "parallel", False)
+        self.pool = Pool(2) if self.params.parallel else None
 
     def optimize(self, model, algo, x_test=None, return_argmax=False):
         """Optimize acquisition function."""
@@ -82,7 +82,7 @@ class AcqOptimizer:
 
         with Timer(f"Sample {self.params.n_path} execution paths"):
             exe_path_list, output_list = zip(
-                *self.pool.map(
+                *map_func(
                     AcqOptimizer.sample_exe_path_and_output,
                     [(fs, algo) for _ in range(self.params.n_path)],
                 )
