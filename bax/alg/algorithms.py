@@ -238,7 +238,7 @@ class OptRightScan(Algorithm):
         return exe_path.x[-1]
 
 
-class GlobalOptGrid(Algorithm):
+class GlobalOptValGrid(Algorithm):
     """
     Algorithm that scans over a grid of points, and as output returns the minimum
     function value over the grid.
@@ -256,11 +256,11 @@ class GlobalOptGrid(Algorithm):
     def get_output_from_exe_path(self, exe_path):
         """Given an execution path, return algorithm output."""
         if self.params.opt_mode == "min":
-            opt_idx = np.argmin(exe_path.y)
+            opt_val = np.min(exe_path.y)
         elif self.params.opt_mode == "max":
-            opt_idx = np.argmax(exe_path.y)
+            opt_val = np.max(exe_path.y)
 
-        return exe_path.x[opt_idx]
+        return opt_val
 
     def set_print_params(self):
         """Set self.print_params."""
