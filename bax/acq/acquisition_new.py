@@ -272,3 +272,33 @@ class BaxAcqFunction(AlgoAcqFunction):
         """Class is callable and returns acquisition function on x_list."""
         acq_list = self.get_acq_list_batch(x_list)
         return acq_list
+
+
+class MesAcqFunction(AlgoAcqFunction):
+    """
+    Class for computing BAX acquisition functions.
+    """
+
+    def set_params(self, params):
+        """Set self.params, the parameters for the AcqFunction."""
+        super().set_params(params)
+
+        params = dict_to_namespace(params)
+        self.params.name = getattr(params, 'name', 'MesAcqFunction')
+
+    def get_acq_list_batch(self, x_list):
+        """Return acquisition function for a batch of inputs x_list."""
+
+        with Timer(f"Compute acquisition function for a batch of {len(x_list)} points"):
+            # Compute entropies for posterior for x in x_list
+            mu, std = self.model.get_post_mu_cov(x_list, full_cov=False)
+            h_post = self.entropy_given_normal_std(std)
+
+        acq_list = None # TODO
+        return acq_list
+
+
+    def __call__(self, x_list):
+        """Class is callable and returns acquisition function on x_list."""
+        acq_list = self.get_acq_list_batch(x_list)
+        return acq_list
