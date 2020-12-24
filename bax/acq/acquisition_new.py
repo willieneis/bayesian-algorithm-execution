@@ -6,6 +6,7 @@ from argparse import Namespace
 import copy
 import numpy as np
 from sklearn.cluster import KMeans
+from scipy.stats import norm as sps_norm
 
 from ..util.misc_util import dict_to_namespace
 from ..util.timing import Timer
@@ -274,7 +275,7 @@ class BaxAcqFunction(AlgoAcqFunction):
         return acq_list
 
 
-class MesAcqFunction(AlgoAcqFunction):
+class MesAcqFunction(BaxAcqFunction):
     """
     Class for computing BAX acquisition functions.
     """
@@ -294,11 +295,20 @@ class MesAcqFunction(AlgoAcqFunction):
             mu, std = self.model.get_post_mu_cov(x_list, full_cov=False)
             h_post = self.entropy_given_normal_std(std)
 
-        acq_list = None # TODO
-        return acq_list
+            mc_list = []
+            for output in self.output_list:
+                gam = (output - np.array(mu)) / np.array(std)
+                t1 = gam * sps_norm.pdf(gam) / (2 * sps_norm.cdf(gam))
+                t2 = -np.log(sps_norm.cdf(gam))
+                mc_list.append(t1 - t2)
+            acq_list = (1 / len(mc_list)) * np.mean(mc_list, 0)
 
+        # Package and store acq_vars
+        self.acq_vars = {
+            "mu": mu,
+            "std": std,
+            "acq_list": acq_list,
+        }
 
-    def __call__(self, x_list):
-        """Class is callable and returns acquisition function on x_list."""
-        acq_list = self.get_acq_list_batch(x_list)
+        # Return list of acquisition function on x in x_list
         return acq_list
