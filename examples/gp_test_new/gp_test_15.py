@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 plt.ion()
 
-from bax.alg.algorithms import OptRightScan
+from bax.alg.algorithms import GlobalOptGrid 
 from bax.models.simple_gp import SimpleGp
 from bax.acq.acquisition_new import BaxAcqFunction
 from bax.acq.acqoptimize_new import AcqOptimizer
@@ -36,11 +36,13 @@ model = SimpleGp(gp_params, data)
 # Set arrays
 min_x = 3.5
 max_x = 20.0
+len_path = 100
+x_path = [[x] for x in np.linspace(min_x, max_x, len_path)]
 x_test = [[x] for x in np.linspace(0.0, max_x, 500)]
 y_test = [f(x) for x in x_test]
 
 # Set algorithm
-algo = OptRightScan({'x_grid_gap': 0.1, 'init_x': [4.0]})
+algo = GlobalOptGrid({"x_path": x_path})
 
 # Pre-computed algorithm output on f:
 algo_output_f = 8.597
