@@ -12,8 +12,6 @@ from ..models.function import FunctionSample
 from ..util.misc_util import dict_to_namespace
 from ..util.timing import Timer
 
-import neatplot
-
 
 class AcqOptimizer:
     """
