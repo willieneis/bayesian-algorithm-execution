@@ -236,3 +236,33 @@ class OptRightScan(Algorithm):
     def get_output_from_exe_path(self, exe_path):
         """Given an execution path, return algorithm output."""
         return exe_path.x[-1]
+
+
+class GlobalOptGrid(Algorithm):
+    """
+    Algorithm that scans over a grid of points, and as output returns the minimum
+    function value over the grid.
+    """
+
+    def set_params(self, params):
+        """Set self.params, the parameters for the algorithm."""
+        super().set_params(params)
+        params = dict_to_namespace(params)
+
+        self.params.name = getattr(params, "name", "GlobalOptGrid")
+        self.params.x_path = getattr(params, "x_path", [])
+        self.params.opt_mode = getattr(params, "opt_mode", "min")
+
+    def get_output_from_exe_path(self, exe_path):
+        """Given an execution path, return algorithm output."""
+        if self.params.opt_mode == "min":
+            opt_idx = np.argmin(exe_path.y)
+        elif self.params.opt_mode == "max":
+            opt_idx = np.argmax(exe_path.y)
+
+        return exe_path.x[opt_idx]
+
+    def set_print_params(self):
+        """Set self.print_params."""
+        self.print_params = copy.deepcopy(self.params)
+        delattr(self.print_params, "x_path")
