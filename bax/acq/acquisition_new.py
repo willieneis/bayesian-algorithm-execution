@@ -191,14 +191,17 @@ class BaxAcqFunction(AlgoAcqFunction):
         h_post = self.entropy_given_normal_std(post_std)
 
         # Get list of idx-list-per-cluster
-        samp_cluster_idx_list = self.get_samp_cluster_idx_list(output_list)
+        cluster_idx_list = self.get_cluster_idx_list(output_list)
 
         # Compute entropies for posterior predictive given execution path samples
-        h_samp_list = []
-        for idx_list in samp_cluster_idx_list:
+        h_cluster_list = []
+        std_cluster_list = []
+        mean_cluster_list = []
+        for idx_list in cluster_idx_list:
             # Mean of the mixture
             samp_mean_cluster_list = [samp_mean_list[idx] for idx in idx_list]
             samp_mean_cluster = np.mean(samp_mean_cluster_list, 0)
+            mean_cluster_list.append(samp_mean_cluster)
 
             # Std of the mixture
             samp_std_cluster_list = [samp_std_list[idx] for idx in idx_list]
@@ -208,16 +211,23 @@ class BaxAcqFunction(AlgoAcqFunction):
             samp_sec_moment_cluster = np.mean(sum_smcls_sscls, 0)
             samp_var_cluster = samp_sec_moment_cluster - samp_mean_cluster**2
             samp_std_cluster = np.sqrt(samp_var_cluster)
+            std_cluster_list.append(samp_std_cluster)
 
             # Entropy of the Gaussian approximation to the mixture
-            h_samp = self.entropy_given_normal_std(samp_std_cluster)
-            h_samp_list.extend([h_samp] * len(idx_list))
+            h_cluster = self.entropy_given_normal_std(samp_std_cluster)
+            h_cluster_list.extend([h_cluster] * len(idx_list))
 
-        avg_h_samp = np.mean(h_samp_list, 0)
-        acq_out = h_post - avg_h_samp
+        avg_h_cluster = np.mean(h_cluster_list, 0)
+        acq_out = h_post - avg_h_cluster
+
+        # Store variables
+        self.cluster_idx_list = cluster_idx_list
+        self.mean_cluster_list = mean_cluster_list
+        self.std_cluster_list = std_cluster_list
+
         return acq_out
 
-    def get_samp_cluster_idx_list(self, output_list):
+    def get_cluster_idx_list(self, output_list):
         """
         Cluster outputs in output_list and return list of idx-list-per-cluster.
         TODO: implement algorithm-specific output clustering in another file or class.
