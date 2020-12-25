@@ -299,9 +299,9 @@ class MesAcqFunction(BaxAcqFunction):
             for output in self.output_list:
                 gam = (output - np.array(mu)) / np.array(std)
                 t1 = gam * sps_norm.pdf(gam) / (2 * sps_norm.cdf(gam))
-                t2 = -np.log(sps_norm.cdf(gam))
+                t2 = np.log(sps_norm.cdf(gam))
                 mc_list.append(t1 - t2)
-            acq_list = (1 / len(mc_list)) * np.mean(mc_list, 0)
+            acq_list = np.mean(mc_list, 0)
 
         # Package and store acq_vars
         self.acq_vars = {
