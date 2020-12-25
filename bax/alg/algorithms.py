@@ -266,3 +266,19 @@ class GlobalOptValGrid(Algorithm):
         """Set self.print_params."""
         self.print_params = copy.deepcopy(self.params)
         delattr(self.print_params, "x_path")
+
+
+class GlobalOptGrid(GlobalOptValGrid):
+    """
+    Algorithm that scans over a grid of points, and as output returns the minimum
+    function input over the grid.
+    """
+
+    def get_output_from_exe_path(self, exe_path):
+        """Given an execution path, return algorithm output."""
+        if self.params.opt_mode == "min":
+            opt_idx = np.argmin(exe_path.y)
+        elif self.params.opt_mode == "max":
+            opt_idx = np.argmax(exe_path.y)
+
+        return exe_path.x[opt_idx]
