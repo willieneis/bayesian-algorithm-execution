@@ -2,9 +2,9 @@ import copy
 from argparse import Namespace
 import numpy as np
 import matplotlib.pyplot as plt
-plt.ion()
+#plt.ion()
 
-from bax.alg.algorithms import GlobalOptGrid 
+from bax.alg.algorithms import GlobalOptValGrid
 from bax.models.simple_gp import SimpleGp
 from bax.acq.acquisition_new import BaxAcqFunction
 from bax.acq.acqoptimize_new import AcqOptimizer
@@ -26,23 +26,29 @@ f = lambda x: ym * np.sin(np.pi * xm * (x[0] + xa)) + \
 
 # Set data for model
 data = Namespace()
-data.x = [[4.0]]
+data.x = [[4.0], [5.0], [7.3], [10.7], [11.8], [13.7], [15.4], [16.5], [17.6], [18.7]]
 data.y = [f(x) for x in data.x]
 
 # Set model as a GP
 gp_params = {"ls": 1.0, "alpha": 2.0, "sigma": 1e-2}
 model = SimpleGp(gp_params, data)
 
-# Set arrays
+# Set min/max x
 min_x = 3.5
 max_x = 20.0
-len_path = 100
+
+# Set x_path
+n_path = 300
+len_path = 30
 x_path = [[x] for x in np.linspace(min_x, max_x, len_path)]
-x_test = [[x] for x in np.linspace(0.0, max_x, 500)]
+
+# Set x_test
+n_test = 500
+x_test = [[x] for x in np.linspace(min_x, max_x, n_test)]
 y_test = [f(x) for x in x_test]
 
 # Set algorithm
-algo = GlobalOptGrid({"x_path": x_path})
+algo = GlobalOptValGrid({"x_path": x_path, "opt_mode": "max"})
 
 # Pre-computed algorithm output on f:
 algo_output_f = 8.597
@@ -51,7 +57,8 @@ n_iter = 40
 
 for i in range(n_iter):
     # Set and optimize acquisition function
-    acqfn = BaxAcqFunction({"acq_str": "out"}, model, algo)
+    acq_params = {"acq_str": "out", "n_path": n_path, "n_cluster_kmeans": 35}
+    acqfn = BaxAcqFunction(acq_params, model, algo)
     acqopt = AcqOptimizer({"x_batch": x_test})
     x_next = acqopt.optimize(acqfn)
 
