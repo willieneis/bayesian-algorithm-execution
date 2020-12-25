@@ -42,6 +42,38 @@ class AcqViz1D:
         h_list = [h0[0], h4[0], h1, h2, h5[0], h3[0]]
         self.make_legend(h_list)
 
+    def plot_acq_out_cluster(
+        self,
+        model,
+        exe_path_list,
+        output_list,
+        acq_list,
+        x_test,
+        mu,
+        std,
+        mu_list,
+        std_list,
+        cluster_idx_list,
+        mean_cluster_list,
+        std_cluster_list,
+    ):
+        """
+        Visualize the acquisition function, optimization, and related details, for a 1D
+        continuous domain.
+        """
+        # Plot various details
+        h1 = self.plot_postpred(x_test, mu, std)
+        h2 = self.plot_clusters(
+            x_test, cluster_idx_list, mean_cluster_list, std_cluster_list, exe_path_list
+        )
+        h3 = self.plot_acqfunction(x_test, acq_list)
+        h4 = self.plot_model_data(model.data)
+        h5 = self.plot_acqoptima(acq_list, x_test)
+
+        ## Legend
+        h_list = [h4[0], h1, h2[0], h5[0], h3[0]]
+        self.make_legend(h_list)
+
     def plot_exe_path_samples(self, exe_path_list):
         """Plot execution path samples."""
         for exe_path in exe_path_list:
@@ -83,6 +115,62 @@ class AcqViz1D:
                 label="$p(y|\mathcal{D}_t, \\tilde{e}_\mathcal{A}^j, x)$",
             )
         return h
+
+    def plot_clusters(
+        self,
+        x_test,
+        cluster_idx_list,
+        mean_cluster_list,
+        std_cluster_list,
+        exe_path_list,
+    ):
+        """Plot clusters of execution paths."""
+
+        # Reset color cycle
+        clist = rcParams['axes.prop_cycle']
+        cgen = itertools.cycle(clist)
+
+        # Loop through clusters
+        mean_std_idx_list = zip(mean_cluster_list, std_cluster_list, cluster_idx_list)
+        for mean_cluster, std_cluster, cluster_idx in mean_std_idx_list:
+            nextcolor = next(cgen)['color']
+
+            # Plot execution paths in each cluster
+            exe_path_subset = [exe_path_list[i] for i in cluster_idx]
+            x_offset = np.random.uniform(0, 0.2)
+            for exe_path in exe_path_subset:
+                plt.plot(
+                    np.array(exe_path.x) + x_offset,
+                    exe_path.y,
+                    ".",
+                    color=nextcolor,
+                    markersize=4,
+                    linewidth=0.5,
+                )
+
+            # Plot means of each cluster
+            h = plt.plot(
+                np.array(x_test).reshape(-1),
+                mean_cluster,
+                '--',
+                linewidth=0.1 * len(cluster_idx),
+                color=nextcolor,
+                label="Cluster posterior predictive",
+            )
+
+            # Plot stds of each cluster
+            #lcb = mean_cluster - 3 * std_cluster
+            #ucb = mean_cluster + 3 * std_cluster
+            #plt.fill_between(
+                #np.array(x_test).reshape(-1),
+                #lcb,
+                #ucb,
+                #alpha=0.1,
+                #color=nextcolor,
+                #label="Cluster posterior predictive",
+            #)
+        return h
+
 
     def plot_post_f_samples(self, x_test, mu_list):
         """Plot posterior function samples."""
