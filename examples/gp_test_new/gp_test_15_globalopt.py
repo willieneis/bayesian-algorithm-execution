@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 #plt.ion()
 
-from bax.alg.algorithms import GlobalOptValGrid
+from bax.alg.algorithms import GlobalOptGrid
 from bax.models.simple_gp import SimpleGp
 from bax.acq.acquisition_new import BaxAcqFunction
 from bax.acq.acqoptimize_new import AcqOptimizer
@@ -38,8 +38,8 @@ min_x = 3.5
 max_x = 20.0
 
 # Set x_path
-n_path = 300
-len_path = 30
+n_path = 200
+len_path = 75
 x_path = [[x] for x in np.linspace(min_x, max_x, len_path)]
 
 # Set x_test
@@ -48,28 +48,23 @@ x_test = [[x] for x in np.linspace(min_x, max_x, n_test)]
 y_test = [f(x) for x in x_test]
 
 # Set algorithm
-algo = GlobalOptValGrid({"x_path": x_path, "opt_mode": "max"})
-
-# Pre-computed algorithm output on f:
-algo_output_f = 8.597
+algo = GlobalOptGrid({"x_path": x_path, "opt_mode": "max"})
 
 n_iter = 40
 
 for i in range(n_iter):
     # Set and optimize acquisition function
-    acq_params = {"acq_str": "out", "n_path": n_path, "n_cluster_kmeans": 35}
+    acq_params = {"acq_str": "out", "n_path": n_path, "n_cluster_kmeans": 25}
     acqfn = BaxAcqFunction(acq_params, model, algo)
     acqopt = AcqOptimizer({"x_batch": x_test})
     x_next = acqopt.optimize(acqfn)
 
     # Compute current expected output
     expected_output = np.mean(acqfn.output_list)
-    out_abs_err = np.abs(algo_output_f - expected_output)
 
     # Print
     print(f"Acq optimizer x_next = {x_next}")
     print(f"Current expected_output = {expected_output}")
-    print(f"Current output abs. error = {out_abs_err}")
     print(f"Finished iter i = {i}")
 
     # Plot
@@ -80,7 +75,7 @@ for i in range(n_iter):
     plt.ylabel("y")
 
     vizzer = AcqViz1D()
-    vizzer.plot_acqoptimizer_all(
+    vizzer.plot_acq_out_cluster(
         model,
         acqfn.exe_path_list,
         acqfn.output_list,
@@ -90,10 +85,12 @@ for i in range(n_iter):
         acqfn.acq_vars["std"],
         acqfn.acq_vars["mu_list"],
         acqfn.acq_vars["std_list"],
+        acqfn.cluster_idx_list,
+        acqfn.mean_cluster_list,
+        acqfn.std_cluster_list,
     )
     plt.plot(x_test, y_test, "-", color="k", linewidth=2)
-
-    #neatplot.save_figure(f"gp_test_14_{i}")
+    plt.ylim([-12.0, 8.0])
     plt.show()
 
     # Pause
