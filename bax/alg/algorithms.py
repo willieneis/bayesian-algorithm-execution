@@ -55,6 +55,36 @@ class Algorithm(ABC):
         output = self.get_output_from_exe_path(exe_path)
         return exe_path, output
 
+    def run_algorithm_on_f_list(self, f_list, n_f):
+        """
+        Run the algorithm by sequentially querying f_list, which calls a list of n_f
+        functions given an x_list of n_f inputs. Return the lists of execution paths and
+        outputs.
+        """
+        # Initialize execution paths
+        exe_path_list = [Namespace(x=[], y=[]) for _ in range(n_f)]
+
+        # Step through algorithm
+        x_list = [self.get_next_x(exe_path) for exe_path in exe_path_list]
+        while any(x is not None for x in x_list):
+            y_list = f_list(x_list)
+            x_list_new = []
+            for exe_path, x, y in zip(exe_path_list, x_list, y_list):
+                exe_path.x.append(x)
+                exe_path.y.append(y)
+                x_next = None if exe_path.x[-1] is None else self.get_next_x(exe_path)
+                x_list_new.append(x_next)
+            x_list = x_list_new
+
+        # Remove Nones from execution path
+        exe_path_list = [self.crop_exe_path(exe_path) for exe_path in exe_path_list]
+
+        # Compute output_list from exe_path_list, and return both
+        output_list = [
+            self.get_output_from_exe_path(exe_path) for exe_path in exe_path_list
+        ]
+        return exe_path_list, output_list
+
     def get_next_x(self, exe_path):
         """
         Given the current execution path, return the next x in the execution path. If
@@ -66,6 +96,17 @@ class Algorithm(ABC):
         else:
             next_x = self.params.x_path[len_path]
         return next_x
+
+    def crop_exe_path(self, exe_path):
+        """Return execution path without any Nones at end."""
+        try:
+            final_idx = next(i for i, x in enumerate(exe_path.x) if x==None)
+        except StopIteration:
+            final_idx = len(exe_path.x)
+
+        del exe_path.x[final_idx:]
+        del exe_path.y[final_idx:]
+        return exe_path
 
     def print_str(self):
         """Print a description string."""

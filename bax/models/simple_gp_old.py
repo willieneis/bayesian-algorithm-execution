@@ -112,18 +112,13 @@ class SimpleGp:
             If full_cov is True, return the covariance matrix as a numpy ndarray
             (len(x_list) x len(x_list)).
         """
-        mu, cov = self.gp_post_wrapper(x_list, self.data, full_cov)
-        return mu, cov
-
-    def gp_post_wrapper(self, x_list, data, full_cov=True):
-        """Wrapper for gp_post given a list of x and data Namespace."""
-        if len(data.x) == 0:
+        if len(self.data.x) == 0:
             return self.get_prior_mu_cov(x_list, full_cov)
 
         # If data is not empty:
         mu, cov = gp_post(
-            data.x,
-            data.y,
+            self.data.x,
+            self.data.y,
             x_list,
             self.params.ls,
             self.params.alpha,
@@ -187,51 +182,6 @@ class SimpleGp:
             )
         x_list_sample_list = list(np.stack(sample_list).T)
         return x_list_sample_list
-
-    def initialize_function_sample_list(self, n_samp=1):
-        """Initialize a list of n_samp function samples."""
-        self.fsl_queries = [Namespace(x=[], y=[]) for _ in range(n_samp)]
-
-    def call_function_sample_list(self, x_list):
-        """Call a set of posterior function samples on respective x in x_list."""
-        y_list = []
-
-        for x, query_ns in zip(x_list, self.fsl_queries):
-            # Get y for a posterior function sample at x
-            comb_data = self.combine_data_namespaces(self.data, query_ns)
-
-            if x is not None:
-                mu, cov = self.gp_post_wrapper([x], comb_data, True)
-                y = self.get_normal_samples(mu, cov, 1, True)
-                y = y[0][0]
-
-                # Update query history
-                query_ns.x.append(x)
-                query_ns.y.append(y)
-            else:
-                y = None
-
-            y_list.append(y)
-
-        return y_list
-
-    def combine_data_namespaces(self, ns1, ns2):
-        """Combine two data Namespaces, with fields x and y."""
-        ns = Namespace()
-        ns.x = ns1.x + ns2.x
-        ns.y = ns1.y + ns2.y
-        return ns
-
-    def replace_x_list_none(self, x_list):
-        """Replace any Nones in x_list with first non-None value and return x_list."""
-
-        # Set new_val as first non-None element of x_list
-        new_val = next(x for x in x_list if x is not None)
-
-        # Replace all Nones in x_list with new_val
-        x_list_new = [new_val if x is None else x for x in x_list]
-
-        return x_list_new
 
     def print_str(self):
         """Print a description string."""

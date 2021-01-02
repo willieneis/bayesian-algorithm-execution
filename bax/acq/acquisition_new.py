@@ -125,7 +125,7 @@ class AlgoAcqFunction(AcqFunction):
         self.output_list = output_list
         #self.last_output_list = output_list # TODO do I need this anymore?
 
-    def get_exe_path_and_output_samples(self):
+    def get_exe_path_and_output_samples_loop(self):
         """
         Return exe_path_list and output_list respectively containing self.params.n_path
         exe_path samples and associated outputs, using self.model and self.algorithm.
@@ -139,6 +139,25 @@ class AlgoAcqFunction(AcqFunction):
                 exe_path, output = self.algorithm.run_algorithm_on_f(fs)
                 exe_path_list.append(exe_path)
                 output_list.append(output)
+
+        return exe_path_list, output_list
+
+    def get_exe_path_and_output_samples(self):
+        """
+        Return exe_path_list and output_list respectively containing self.params.n_path
+        exe_path samples and associated outputs, using self.model and self.algorithm.
+        """
+        exe_path_list = []
+        output_list = []
+        with Timer(f"Sample {self.params.n_path} execution paths"):
+            # Initialize model fsl
+            self.model.initialize_function_sample_list(self.params.n_path)
+
+            # Run algorithm on function sample list
+            f_list = self.model.call_function_sample_list
+            exe_path_list, output_list = self.algorithm.run_algorithm_on_f_list(
+                f_list, self.params.n_path
+            )
 
         return exe_path_list, output_list
 
@@ -253,11 +272,12 @@ class BaxAcqFunction(AlgoAcqFunction):
             mu_list = []
             std_list = []
             for exe_path in self.exe_path_list:
-                fs = FunctionSample(verbose=False)
-                fs.set_model(self.model)
-                fs.set_query_history(exe_path)
-
-                mu_samp, std_samp = fs.get_post_mean_std_list(x_list)
+                comb_data = Namespace()
+                comb_data.x = self.model.data.x + exe_path.x
+                comb_data.y = self.model.data.y + exe_path.y
+                mu_samp, std_samp = self.model.gp_post_wrapper(
+                    x_list, comb_data, full_cov=False
+                )
                 mu_list.append(mu_samp)
                 std_list.append(std_samp)
 
