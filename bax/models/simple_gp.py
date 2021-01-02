@@ -222,17 +222,6 @@ class SimpleGp:
         ns.y = ns1.y + ns2.y
         return ns
 
-    def replace_x_list_none(self, x_list):
-        """Replace any Nones in x_list with first non-None value and return x_list."""
-
-        # Set new_val as first non-None element of x_list
-        new_val = next(x for x in x_list if x is not None)
-
-        # Replace all Nones in x_list with new_val
-        x_list_new = [new_val if x is None else x for x in x_list]
-
-        return x_list_new
-
     def print_str(self):
         """Print a description string."""
         print('*[INFO] ' + str(self))
