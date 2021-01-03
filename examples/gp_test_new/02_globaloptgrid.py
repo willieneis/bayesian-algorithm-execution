@@ -2,10 +2,13 @@ import copy
 from argparse import Namespace
 import numpy as np
 import matplotlib.pyplot as plt
-#plt.ion()
+plt.ion()
+import tensorflow as tf
 
 from bax.alg.algorithms import GlobalOptGrid
+from bax.models.simple_gp import SimpleGp
 from bax.models.gpfs_gp import GpfsGp
+from bax.models.stan_gp import get_stangp_hypers
 from bax.acq.acquisition_new import BaxAcqFunction
 from bax.acq.acqoptimize_new import AcqOptimizer
 from bax.acq.visualize import AcqViz1D
@@ -16,6 +19,7 @@ neatplot.set_style("fonts")
 
 seed = 11
 np.random.seed(seed)
+tf.random.set_seed(seed)
 
 # Set function
 xm = 0.3
@@ -24,39 +28,42 @@ ym = 2.0
 f = lambda x: ym * np.sin(np.pi * xm * (x[0] + xa)) + \
               ym * np.sin(2 * xm * np.pi * (x[0] + xa)) / 2.0
 
+# Set algorithm details
+min_x = 3.5
+max_x = 20.0
+len_path = 75
+x_path = [[x] for x in np.linspace(min_x, max_x, len_path)]
+algo = GlobalOptGrid({"x_path": x_path, "opt_mode": "max"})
+
 # Set data for model
 data = Namespace()
 data.x = [[4.0], [5.0], [7.3], [10.7], [11.8], [13.7], [15.4], [16.5], [17.6], [18.7]]
 data.y = [f(x) for x in data.x]
 
-# Set model as a GP
+# Set model details
 gp_params = {"ls": 1.0, "alpha": 2.0, "sigma": 1e-2}
-model = GpfsGp(gp_params, data)
+#gp_params = get_stangp_hypers(f, n_samp=200) # NOTE: can use StanGp to fit hypers
+modelclass = GpfsGp
+#modelclass = SimpleGp # NOTE: can use SimpleGp model
 
-# Set min/max x
-min_x = 3.5
-max_x = 20.0
-
-# Set x_path
-n_path = 200
-len_path = 75
-x_path = [[x] for x in np.linspace(min_x, max_x, len_path)]
-
-# Set x_test
+# Set acquisition details
+acqfn_params = {"acq_str": "out", "n_path": 200, "n_cluster_kmeans": 25}
+#acqfn_params = {"acq_str": "exe", "n_path": 100} # NOTE: can use "exe" acqfn
 n_test = 500
 x_test = [[x] for x in np.linspace(min_x, max_x, n_test)]
 y_test = [f(x) for x in x_test]
+acqopt_params = {"x_batch": x_test}
 
-# Set algorithm
-algo = GlobalOptGrid({"x_path": x_path, "opt_mode": "max"})
-
+# Run BAX loop
 n_iter = 40
 
 for i in range(n_iter):
+    # Set model
+    model = modelclass(gp_params, data)
+
     # Set and optimize acquisition function
-    acq_params = {"acq_str": "out", "n_path": n_path, "n_cluster_kmeans": 25}
-    acqfn = BaxAcqFunction(acq_params, model, algo)
-    acqopt = AcqOptimizer({"x_batch": x_test})
+    acqfn = BaxAcqFunction(acqfn_params, model, algo)
+    acqopt = AcqOptimizer(acqopt_params)
     x_next = acqopt.optimize(acqfn)
 
     # Compute current expected output
@@ -90,7 +97,8 @@ for i in range(n_iter):
         acqfn.std_cluster_list,
     )
     plt.plot(x_test, y_test, "-", color="k", linewidth=2)
-    plt.ylim([-12.0, 8.0])
+
+    #neatplot.save_figure(f"02_{i}")
     plt.show()
 
     # Pause
@@ -103,6 +111,3 @@ for i in range(n_iter):
     y_next = f(x_next)
     data.x.append(x_next)
     data.y.append(y_next)
-
-    # Update model
-    model = GpfsGp(gp_params, data)
