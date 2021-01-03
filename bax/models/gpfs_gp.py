@@ -40,15 +40,17 @@ class GpfsGp(SimpleGp):
         self.params.kernel_str = getattr(params, 'kernel_str', 'rbf')
 
         ls = self.params.ls
-        alpha = self.params.alpha
+        kernvar = self.params.alpha**2
 
         if self.params.kernel_str == 'rbf':
-            gpf_kernel = kernels.SquaredExponential(variance=alpha, lengthscales=ls)
+            gpf_kernel = kernels.SquaredExponential(variance=kernvar, lengthscales=ls)
             kernel = getattr(params, 'kernel', kern_exp_quad)
         elif self.params.kernel_str == 'matern52':
-            gpf_kernel = kernels.Matern52(variance=alpha, lengthscales=ls)
+            gpf_kernel = kernels.Matern52(variance=kernvar, lengthscales=ls)
+            raise Exception('Matern 52 kernel is not yet supported.')
         elif self.params.kernel_str == 'matern32':
-            gpf_kernel = kernels.Matern32(variance=alpha, lengthscales=ls)
+            gpf_kernel = kernels.Matern32(variance=kernvar, lengthscales=ls)
+            raise Exception('Matern 32 kernel is not yet supported.')
 
         self.params.gpf_kernel = gpf_kernel
         self.params.kernel = kernel
