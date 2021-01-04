@@ -112,7 +112,10 @@ def get_stangp_hypers(f, domain=[[0.0, 10.0]], n_samp=200):
     model = StanGp(data=data)
     model.fit_hypers()
     gp_hypers = {
-        'ls': model.params.ls, 'alpha': model.params.alpha, 'sigma': model.params.sigma
+        'ls': model.params.ls,
+        'alpha': model.params.alpha,
+        'sigma': model.params.sigma,
+        'n_dimx': len(domain),
     }
 
     return gp_hypers
