@@ -257,9 +257,11 @@ class Dijkstras(Algorithm):
         self.params.start = getattr(params, "start", None)
         self.params.goal = getattr(params, "goal", None)
         self.params.vertices = getattr(params, "vertices", None)
+        self.params.cost_func = getattr(params, "cost_func", lambda u, v: 0)
+        self.params.true_cost = getattr(params, "true_cost", lambda u, v: 0)
 
     def run_algorithm_on_f(self, f):
-        np.random.seed()
+        np.random.seed()  # prevent parallel processes from sharing random state
 
         def dijkstras(start: Vertex, goal: Vertex):
             explored = [False for _ in range(len(self.params.vertices))]
@@ -279,18 +281,23 @@ class Dijkstras(Algorithm):
                         f"Found goal after visiting {i} vertices with estimated cost {best_cost}"
                     )
                     # return best_cost, backtrack(current)
-                    best_path = backtrack_indices(current.index, prev)
-                    best_path = [self.params.vertices[i] for i in best_path]
+                    best_path = [self.params.vertices[i] for i in backtrack_indices(current.index, prev)]
+                    assert best_path[0].index == start.index
+                    assert best_path[-1].index == goal.index
+
+                    def cost_of_path(path):
+                        cost = 0
+                        for i in range(len(path) - 1):
+                            #cost += self.params.true_cost(path[i], path[i + 1])[0]
+                            cost += distance(path[i], path[i+1])
+                        #print("true cost", cost)
+                        assert best_cost == cost
+
+                    cost_of_path(best_path)
                     return best_cost, best_path
 
                 for neighbor in current.neighbors:
                     step_cost = distance(current, neighbor)
-                    # comment out version that stores info in each Vertex
-                    # if not hasattr(neighbor, "explored"):
-                    # if (
-                    #    not hasattr(neighbor, "min_cost")
-                    #    or best_cost + step_cost < neighbor.min_cost
-                    # ):
                     if (not explored[neighbor.index]) and (
                         best_cost + step_cost < min_cost[neighbor.index]
                     ):
@@ -299,34 +306,19 @@ class Dijkstras(Algorithm):
                         )  # push by cost
                         min_cost[neighbor.index] = best_cost + step_cost
                         prev[neighbor.index] = current.index
-                        # neighbor.prev = current
 
             print("No path exists to goal")
             return float("inf"), []
 
-        # reinitialize graph
-        # for v in self.params.vertices:
-        #    if hasattr(v, "prev"):
-        #        del v.prev
-        # comment out version that stores extra info in each Vertex
-        #    if hasattr(v, "explored"):
-        #        del v.explored
-        #    if hasattr(v, "min_cost"):
-        #        del v.min_cost
-
         exe_path = Namespace(x=[], y=[])
 
         def distance(u: Vertex, v: Vertex):
-            u_pos, v_pos = u.position, v.position
+            cost, xs, ys = self.params.cost_func(u, v, f)
 
-            fu, fv = f(u_pos), f(v_pos)
-            dist = abs(fv - fu)
-
-            exe_path.x.append(u_pos)
-            exe_path.x.append(v_pos)
-            exe_path.y.append(fu)
-            exe_path.y.append(fv)
-            return dist
+            exe_path.x.extend(xs)
+            exe_path.y.extend(ys)
+            assert cost >= 0
+            return cost
 
         min_cost = dijkstras(self.params.start, self.params.goal)
 
