@@ -5,11 +5,12 @@ import matplotlib.pyplot as plt
 plt.ion()
 import tensorflow as tf
 
-from bax.alg.evolution_strategies_new import EvolutionStrategies
+#from bax.alg.evolution_strategies_new import EvolutionStrategiesVal
+from bax.alg.algorithms_new import GlobalOptUnifRandVal
 from bax.models.simple_gp import SimpleGp
 from bax.models.gpfs_gp import GpfsGp
 from bax.models.stan_gp import get_stangp_hypers
-from bax.acq.acquisition_new import BaxAcqFunction
+from bax.acq.acquisition_new import MesAcqFunction
 from bax.acq.acqoptimize_new import AcqOptimizer
 from bax.util.domain_util import unif_random_sample_domain
 from bax.acq.visualize import AcqViz2D
@@ -33,16 +34,8 @@ init_x = [4.8, 13.0]
 #init_x = [5.7, 13.25]
 #init_x = [7.5, 13.0]
 domain = [[-5, 10], [0, 15]]
-algo = EvolutionStrategies(
-    {
-        'n_generation': 15,
-        'n_population': 8,
-        'samp_str': 'mut',
-        'init_x': init_x,
-        'domain': domain,
-        'normal_scale': 0.5,
-        'keep_frac': 0.3,
-    }
+algo = GlobalOptUnifRandVal(
+    {"opt_mode": "min", "domain": domain, "n_samp": 100}
 )
 
 # Set data for model
@@ -51,15 +44,14 @@ data.x = [init_x]
 data.y = [f(x) for x in data.x]
 
 # Set model details
-gp_params = {"ls": 3.0, "alpha": 2.0, "sigma": 1e-2, "n_dimx": 2}
-#gp_params = get_stangp_hypers(f, domain=domain, n_samp=200) # NOTE: can use StanGp to fit hypers
+#gp_params = {"ls": 3.0, "alpha": 2.0, "sigma": 1e-2, "n_dimx": 2}
+gp_params = get_stangp_hypers(f, domain=domain, n_samp=200) # NOTE: can use StanGp to fit hypers
 modelclass = GpfsGp
 #modelclass = SimpleGp # NOTE: can use SimpleGp model
 
 # Set acquisition details
-acqfn_params = {"acq_str": "out", "n_path": 50}
-#acqfn_params = {"acq_str": "exe", "n_path": 50} # NOTE: can use "exe" acqfn
-n_rand_acqopt = 350
+acqfn_params = {"opt_mode": "min", "n_path": 50}
+n_rand_acqopt = 100
 
 # Run BAX loop
 n_iter = 25
@@ -68,17 +60,17 @@ for i in range(n_iter):
     # Set model
     model = modelclass(gp_params, data)
 
-    # Update algo.init_x
-    algo.params.init_x = data.x[np.argmin(data.y)]
-
     # Set and optimize acquisition function
-    acqfn = BaxAcqFunction(acqfn_params, model, algo)
+    acqfn = MesAcqFunction(acqfn_params, model, algo)
     x_test = unif_random_sample_domain(domain, n=n_rand_acqopt)
     acqopt = AcqOptimizer({"x_batch": x_test})
     x_next = acqopt.optimize(acqfn)
 
     # Compute current expected output
-    expected_output = np.mean(acqfn.output_list, 0)
+    output_xy_list = [
+        exe_path.x[np.argmin(exe_path.y)] for exe_path in acqfn.exe_path_list
+    ]
+    expected_output = np.mean(output_xy_list, 0)
     f_expected_output = f(expected_output)
 
     # Print
@@ -102,13 +94,13 @@ for i in range(n_iter):
     )
 
     vizzer = AcqViz2D()
-    h0 = vizzer.plot_output_samples(acqfn.output_list)
-    h0b = vizzer.plot_expected_output(acqfn.output_list)
+    h0 = vizzer.plot_output_samples(output_xy_list)
+    h0b = vizzer.plot_expected_output(output_xy_list)
     h4 = vizzer.plot_model_data(model.data)
     h_list = [h4[0], h0[0], h0b[0]]
     vizzer.make_legend(h_list)
 
-    #neatplot.save_figure(f"es_00_{i}")
+    #neatplot.save_figure(f"es_01_{i}")
     plt.show()
 
     # Pause
