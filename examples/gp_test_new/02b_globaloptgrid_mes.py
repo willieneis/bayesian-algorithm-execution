@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 plt.ion()
 import tensorflow as tf
 
-from bax.alg.algorithms import GlobalOptValGrid
+from bax.alg.algorithms_new import GlobalOptValGrid
 from bax.models.simple_gp import SimpleGp
 from bax.models.gpfs_gp import GpfsGp
 from bax.models.stan_gp import get_stangp_hypers

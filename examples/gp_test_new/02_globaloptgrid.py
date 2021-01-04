@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 plt.ion()
 import tensorflow as tf
 
-from bax.alg.algorithms import GlobalOptGrid
+from bax.alg.algorithms_new import GlobalOptGrid
 from bax.models.simple_gp import SimpleGp
 from bax.models.gpfs_gp import GpfsGp
 from bax.models.stan_gp import get_stangp_hypers
@@ -48,7 +48,6 @@ modelclass = GpfsGp
 
 # Set acquisition details
 acqfn_params = {"acq_str": "out", "n_path": 200, "n_cluster_kmeans": 25}
-#acqfn_params = {"acq_str": "exe", "n_path": 100} # NOTE: can use "exe" acqfn
 n_test = 500
 x_test = [[x] for x in np.linspace(min_x, max_x, n_test)]
 y_test = [f(x) for x in x_test]
