@@ -151,7 +151,7 @@ class AcqViz1D:
             #self.plot_cluster_stds(x_test, mean_cluster, std_cluster, nextcolor)
 
             # Plot cluster properties
-            #self.plot_cluster_property(cluster_idx, output_list, nextcolor)
+            self.plot_cluster_property(cluster_idx, output_list, nextcolor)
 
         return h
 
@@ -333,7 +333,10 @@ class AcqViz2D:
         self.make_legend(h_list)
 
     def plot_exe_path_samples(self, exe_path_list, output_list):
-        """Plot execution path samples."""
+        """
+        Plot execution path and output samples. This method assumes an optimization
+        algorithm that returns 2d locations.
+        """
 
         # reset color cycle
         clist = rcParams['axes.prop_cycle']
@@ -371,10 +374,33 @@ class AcqViz2D:
             nextcolor = next(cgen)['color']
             plt.plot(exe_path.x[0][0], exe_path.x[0][1], "o", color='black', markersize=8)
             plt.plot(exe_path.x[0][0], exe_path.x[0][1], "o", color=nextcolor, markersize=7)
-            #plt.plot(x_list[-1], y_list[-1], "*", color='black', markersize=10)
-            #plt.plot(x_list[-1], y_list[-1], "*", color=nextcolor, markersize=6)
             plt.plot(output[0], output[1], "*", color='black', markersize=10)
             plt.plot(output[0], output[1], "*", color=nextcolor, markersize=6)
+
+        return h
+
+    def plot_output_samples(self, output_list):
+        """
+        Plot algorithm outputs. This method assumes an optimization algorithm that
+        returns 2d locations.
+        """
+
+        # reset color cycle
+        clist = rcParams["axes.prop_cycle"]
+        cgen = itertools.cycle(clist)
+
+        plt.gca().set_prop_cycle(None)
+        for output in output_list:
+            nextcolor = next(cgen)["color"]
+            h = plt.plot(
+                output[0],
+                output[1],
+                "x",
+                color="blue",
+                #color=nextcolor,
+                markersize=4,
+                label="$\{ \\tilde{o}_\mathcal{A}^j \} \sim  p(o_\mathcal{A} | \mathcal{D}_t)$",
+            )
 
         return h
 
@@ -385,15 +411,19 @@ class AcqViz2D:
             expected_output[0],
             expected_output[1],
             "*",
-            color='white',
-            markersize=12,
+            color='black',
+            markersize=11,
+            #color='white',
+            #markersize=12,
         )
         h = plt.plot(
             expected_output[0],
             expected_output[1],
             "*",
-            color='black',
-            markersize=8,
+            color='green',
+            markersize=9,
+            #color='black',
+            #markersize=8,
             label="$ \mathrm{E}[o_\mathcal{A}]$"
         )
         return h
@@ -417,17 +447,14 @@ class AcqViz2D:
         x_list = [xin[0] for xin in data.x]
         y_list = [xin[1] for xin in data.x]
         h = plt.plot(
-            x_list, y_list, "o", color="white", label="Observations", markersize=8
+            x_list, y_list, "o", color="black", markersize=8
         )
+        #h = plt.plot(
+            #x_list, y_list, "o", color="white", markersize=8
+        #)
         h = plt.plot(
-            x_list, y_list, "o", color="deeppink", label="Observations", markersize=5
+            x_list, y_list, "o", color="deeppink", label="$\mathcal{D}_t = \{x_i, y_i\}_{i=1}^t$", markersize=7
         )
-        # -----
-        # plt.plot([0, 20], [0,0], '--', color='k', linewidth=0.5)
-        # for x, y in zip(data.x, data.y):
-        # plt.plot([x, x], [0, y], '-', color='b', linewidth=0.5)
-        # h = plt.plot(data.x, data.y, 'o', color='b')
-        # -----
         return h
 
     def plot_acqoptima(self, acq_list, x_test):
