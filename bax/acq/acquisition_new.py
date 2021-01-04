@@ -318,6 +318,7 @@ class MesAcqFunction(BaxAcqFunction):
 
         params = dict_to_namespace(params)
         self.params.name = getattr(params, 'name', 'MesAcqFunction')
+        self.params.opt_mode = getattr(params, "opt_mode", "max")
 
     def get_acq_list_batch(self, x_list):
         """Return acquisition function for a batch of inputs x_list."""
@@ -329,7 +330,10 @@ class MesAcqFunction(BaxAcqFunction):
 
             mc_list = []
             for output in self.output_list:
-                gam = (output - np.array(mu)) / np.array(std)
+                if self.params.opt_mode == "max":
+                    gam = (output - np.array(mu)) / np.array(std)
+                elif self.params.opt_mode == "min":
+                    gam = (np.array(mu) - output) / np.array(std)
                 t1 = gam * sps_norm.pdf(gam) / (2 * sps_norm.cdf(gam))
                 t2 = np.log(sps_norm.cdf(gam))
                 mc_list.append(t1 - t2)
