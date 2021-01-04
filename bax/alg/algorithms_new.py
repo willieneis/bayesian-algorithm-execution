@@ -8,6 +8,7 @@ import numpy as np
 from abc import ABC, abstractmethod
 
 from ..util.misc_util import dict_to_namespace
+from ..util.domain_util import unif_random_sample_domain
 
 
 class Algorithm(ABC):
@@ -298,6 +299,45 @@ class GlobalOptGrid(GlobalOptValGrid):
             opt_idx = np.argmax(self.exe_path.y)
 
         return self.exe_path.x[opt_idx]
+
+
+class GlobalOptUnifRandVal(Algorithm):
+    """
+    Algorithm that performs global optimization over a domain via uniform random
+    sampling.
+    """
+
+    def set_params(self, params):
+        """Set self.params, the parameters for the algorithm."""
+        super().set_params(params)
+        params = dict_to_namespace(params)
+
+        self.params.name = getattr(params, "name", "GlobalOptUnifRand")
+        self.params.opt_mode = getattr(params, "opt_mode", "min")
+        self.params.domain = getattr(params, "domain", [[0, 10]])
+        self.params.n_samp = getattr(params, "n_samp", 100)
+
+    def get_next_x(self):
+        """
+        Given the current execution path, return the next x in the execution path. If
+        the algorithm is complete, return None.
+        """
+        if len(self.exe_path.x) < self.params.n_samp:
+            # Return a random sample in domain
+            next_x = unif_random_sample_domain(self.params.domain)[0]
+        else:
+            next_x = None
+
+        return next_x
+
+    def get_output(self):
+        """Return output based on self.exe_path."""
+        if self.params.opt_mode == "min":
+            opt_val = np.min(self.exe_path.y)
+        elif self.params.opt_mode == "max":
+            opt_val = np.max(self.exe_path.y)
+
+        return opt_val
 
 
 class AlgorithmSet:

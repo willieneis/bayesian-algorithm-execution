@@ -13,8 +13,8 @@ from ..util.misc_util import dict_to_namespace
 
 class EvolutionStrategies(Algorithm):
     """
-    Evolution strategies for local minimization, computing a (local) optima in X as
-    output, starting from some initial point.
+    Evolution strategies for local minimization/maximization, computing a (local) optima
+    in X as output, starting from some initial point.
     """
 
     def set_params(self, params):
@@ -157,3 +157,18 @@ class SimpleMutator:
         keep_idx = np.argsort(val_list)[int((1 - self.keep_frac) * len(val_list)):]
         new_gen_list = [self.mut_list[i] for i in keep_idx[::-1]]
         self.gen_list = new_gen_list
+
+
+class EvolutionStrategiesVal(EvolutionStrategies):
+    """
+    A version of EvolutionStrategies that returns the value of the optimal point.
+    """
+
+    def get_output(self):
+        """Given an execution path, return algorithm output."""
+        if self.params.opt_mode == "min":
+            opt_val = np.min(self.exe_path.y)
+        elif self.params.opt_mode == "max":
+            opt_val = np.max(self.exe_path.y)
+
+        return opt_val
