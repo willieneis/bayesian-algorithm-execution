@@ -11,6 +11,7 @@ from scipy.stats import norm as sps_norm
 from ..util.misc_util import dict_to_namespace
 from ..util.timing import Timer
 from ..models.function import FunctionSample
+from ..alg.algorithms_new import AlgorithmSet
 
 
 class AcqFunction:
@@ -155,7 +156,8 @@ class AlgoAcqFunction(AcqFunction):
 
             # Run algorithm on function sample list
             f_list = self.model.call_function_sample_list
-            exe_path_list, output_list = self.algorithm.run_algorithm_on_f_list(
+            algoset = AlgorithmSet(self.algorithm)
+            exe_path_list, output_list = algoset.run_algorithm_on_f_list(
                 f_list, self.params.n_path
             )
 
