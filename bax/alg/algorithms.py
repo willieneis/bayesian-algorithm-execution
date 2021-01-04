@@ -278,22 +278,20 @@ class Dijkstras(Algorithm):
                 i += 1
                 if current.index == goal.index:
                     print(
-                        f"Found goal after visiting {i} vertices with estimated cost {best_cost}"
+                        f"Found goal after expanding {i} vertices with estimated cost {best_cost}"
                     )
-                    # return best_cost, backtrack(current)
-                    best_path = [self.params.vertices[i] for i in backtrack_indices(current.index, prev)]
-                    assert best_path[0].index == start.index
-                    assert best_path[-1].index == goal.index
+                    best_path = [
+                        self.params.vertices[i]
+                        for i in backtrack_indices(current.index, prev)
+                    ]
 
-                    def cost_of_path(path):
+                    def true_cost_of_path(path):
                         cost = 0
                         for i in range(len(path) - 1):
-                            #cost += self.params.true_cost(path[i], path[i + 1])[0]
-                            cost += distance(path[i], path[i+1])
-                        #print("true cost", cost)
-                        assert best_cost == cost
+                            cost += self.params.true_cost(path[i], path[i + 1])[0]
+                        print("true cost", cost)
 
-                    cost_of_path(best_path)
+                    true_cost_of_path(best_path)
                     return best_cost, best_path
 
                 for neighbor in current.neighbors:
