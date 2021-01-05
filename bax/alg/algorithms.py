@@ -268,17 +268,18 @@ class Dijkstras(Algorithm):
             min_cost = [float("inf") for _ in range(len(self.params.vertices))]
             prev = [None for _ in range(len(self.params.vertices))]
             to_explore = [(0, start)]  # initialize priority queue
-            i = 0
+            num_expansions = 0
+            num_queries = 0
             while len(to_explore) > 0:
                 best_cost, current = heapq.heappop(to_explore)
                 if explored[current.index]:
                     # the same node could appear in the pqueue multiple times with different costs
                     continue
                 explored[current.index] = True
-                i += 1
+                num_expansions += 1
                 if current.index == goal.index:
                     print(
-                        f"Found goal after expanding {i} vertices with estimated cost {best_cost}"
+                        f"Found goal after {num_expansions} expansions and {num_queries} queries with estimated cost {best_cost}"
                     )
                     best_path = [
                         self.params.vertices[i]
@@ -295,6 +296,7 @@ class Dijkstras(Algorithm):
                     return best_cost, best_path
 
                 for neighbor in current.neighbors:
+                    num_queries += 1
                     step_cost = distance(current, neighbor)
                     if (not explored[neighbor.index]) and (
                         best_cost + step_cost < min_cost[neighbor.index]
