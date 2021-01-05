@@ -21,3 +21,7 @@ def save_figure(file_name='figure', ext_list = ['pdf', 'png']):
         save_str = file_name + '.' + ext
         plt.savefig(save_str, bbox_inches='tight')
         print(f'Saved figure {save_str}')
+
+def update_rc(key_str, value):
+    """Update matplotlib rc params."""
+    plt.rcParams.update({key_str: value})

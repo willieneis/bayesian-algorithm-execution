@@ -7,7 +7,7 @@ import copy
 import numpy as np
 
 from .acquisition import AcqFunction
-from .visualize import AcqViz1D
+from .visualize import AcqViz1D, AcqViz2D
 from ..models.function import FunctionSample
 from ..util.misc_util import dict_to_namespace
 from ..util.timing import Timer
@@ -47,6 +47,7 @@ class AcqOptimizer:
         self.params.viz_acq = getattr(params, "viz_acq", True)
         self.params.parallel = getattr(params, "parallel", False)
         self.pool = Pool(2) if self.params.parallel else None
+        self.params.viz_dim = getattr(params, "viz_dim", 1)
 
     def optimize(self, model, algo, x_test=None, return_argmax=False):
         """Optimize acquisition function."""
@@ -63,8 +64,13 @@ class AcqOptimizer:
             x_test = self.params.x_test
 
         # Compute acquisition function on each x in x_test
-        acq_list = self.get_acqfunction_list(
+        acq_list, acq_vars = self.get_acqfunction_list(
             x_test, fs, model, exe_path_list, output_list
+        )
+
+        # Optionally visualize acqoptimizer
+        self.viz_acqoptimizer(
+            x_test, model, exe_path_list, output_list, acq_list, acq_vars
         )
 
         # Return optimizer of acquisition function
@@ -124,10 +130,8 @@ class AcqOptimizer:
 
     def get_acqfunction_list(self, x_test, fs, model, exe_path_list, output_list):
         """Compute acquisition function on each x in x_test."""
-
-        # Compute posterior, and post given each execution path, for x_test
-        with Timer(f"Pre-compute acquisition function at {len(x_test)} test points"):
-            # Compute mean and std arrays for posterior
+        with Timer(f"Compute acquisition function at {len(x_test)} test points"):
+            # Compute posterior, and post given each execution path sample, for x_test
             mu, std = model.get_post_mu_cov(x_test, full_cov=False)
 
             # Compute mean and std arrays for posterior given execution path samples
@@ -139,24 +143,41 @@ class AcqOptimizer:
                 mu_list.append(mu_samp)
                 std_list.append(std_samp)
 
-        # Compute acquisition function on x_test
         with Timer(f"Compute acquisition function at {len(x_test)} test points"):
+            # Compute acq_list, the acqfunction value for each x in x_test
             acqf = AcqFunction({"acq_str": self.params.acq_str})
             if self.params.acq_str == "exe":
                 acq_list = acqf(std, std_list)
             elif self.params.acq_str == "out":
                 acq_list = acqf(std, mu_list, std_list, output_list)
 
-        # Optionally: visualize acqoptimizer
+        # Package acq_vars
+        acq_vars = {"mu": mu, "std": std, "mu_list": mu_list, "std_list": std_list}
+
+        # Return list of acquisition function on x in x_test, and acq_vars
+        return acq_list, acq_vars
+
+    def viz_acqoptimizer(
+        self, x_test, model, exe_path_list, output_list, acq_list, acq_vars
+    ):
+        """Optionally visualize acqoptimizer."""
         if self.params.viz_acq:
             with Timer(f"Visualize acquisition function"):
-                vizzer = AcqViz1D()
+                if self.params.viz_dim == 1:
+                    vizzer = AcqViz1D()
+                elif self.params.viz_dim == 2:
+                    vizzer = AcqViz2D()
                 vizzer.plot_acqoptimizer_all(
-                    model, exe_path_list, acq_list, x_test, mu, std, mu_list, std_list
+                    model,
+                    exe_path_list,
+                    output_list,
+                    acq_list,
+                    x_test,
+                    acq_vars["mu"],
+                    acq_vars["std"],
+                    acq_vars["mu_list"],
+                    acq_vars["std_list"],
                 )
-
-        # Return list of acquisition function on x in x_test
-        return acq_list
 
     def get_last_output_list(self):
         """
