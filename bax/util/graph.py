@@ -91,3 +91,29 @@ def cost_of_path(path: List[Vertex], distance_func):
 def positions_of_path(path):
     positions = [v.position for v in path]
     return np.stack(positions)
+
+
+def make_grid(grid_size, x1_lims=(-1, 1), x2_lims=(-1, 1)):
+    x1, x2 = np.meshgrid(np.linspace(*x1_lims, grid_size), np.linspace(*x2_lims, grid_size))
+    positions = np.stack([x1.flatten(), x2.flatten()], axis=-1)
+    n = len(positions)
+
+    has_edge = [[False for _ in range(n)] for _ in range(n)]
+    for i in range(n):
+        for j in range(i + 1, n):
+            if ((abs(i - j) == 1) and (j % grid_size != 0)): # neighbors cardinal directions
+                has_edge[i][j] = True
+            elif (abs(i - j) == grid_size): # vertices on the edge of grid
+                has_edge[i][j] = True
+            elif (abs(j - i) == grid_size + 1) and (j % grid_size != 0): # diagonals
+                has_edge[i][j] = True
+            elif (abs(j - i) == grid_size - 1) and (i % grid_size != 0): # diagonals
+                has_edge[i][j] = True
+            else:
+                has_edge[i][j] = False
+    has_edge = np.array(has_edge)
+
+    vertices = make_vertices(positions, has_edge)
+    edges = make_edges(vertices)
+
+    return positions, vertices, edges
