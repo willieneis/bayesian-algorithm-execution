@@ -340,6 +340,37 @@ class GlobalOptUnifRandVal(Algorithm):
         return opt_val
 
 
+class Noop(Algorithm):
+    """"Dummy noop algorithm for debugging parallel code."""
+
+    def set_params(self, params):
+        """Set self.params, the parameters for the algorithm."""
+        super().set_params(params)
+        params = dict_to_namespace(params)
+        self.params.name = getattr(params, "name", "Noop")
+
+    def run_algorithm_on_f(self, f):
+        """
+        Run the dummy noop algorithm. Note that we must reseed each time or else child
+        process will have the same state as parent, resulting in the same randomness.
+        """
+        np.random.seed()
+        self.initialize()
+
+        output = 0
+        wait_time = random.randint(1, 5)
+        rand = np.random.rand(1)
+        print(f"Got {rand}. Going to wait for {wait_time} seconds")
+        time.sleep(wait_time)
+        print(f"Finished waiting for {wait_time} seconds")
+
+        return self.exe_path, output
+
+    def get_output(self):
+        """Return output based on self.exe_path."""
+        raise RuntimeError("Can't return output from execution path for Noop")
+
+
 class AlgorithmSet:
     """Wrapper that duplicates and manages a set of Algorithms."""
 
