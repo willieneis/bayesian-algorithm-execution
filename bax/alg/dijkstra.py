@@ -135,7 +135,7 @@ class Dijkstra(Algorithm):
 
         print_true_cost_of_path(self.best_path)
 
-    def run_algorithm_on_f(self, f):
+    def run_algorithm_on_f_standalone(self, f):
 
         # prevent parallel processes from sharing random state
         #np.random.seed()
