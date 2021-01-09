@@ -19,7 +19,7 @@ import neatplot
 neatplot.set_style('fonts')
 
 
-seed = 13
+seed = 11
 np.random.seed(seed)
 tf.random.set_seed(seed)
 
@@ -109,7 +109,6 @@ def plot_graph(ax, edges, start, goal):
     ax.scatter(*goal.position, color='r', label="Goal", s=100)
     
     ax.grid(False)
-    ax.legend()
     return
 
 def plot_contourf(fig, ax, x1_lims, x2_lims):
@@ -139,33 +138,28 @@ algo_copy = copy.deepcopy(algo)
 true_ep, true_output = algo_copy.run_algorithm_on_f(true_latent_f)
 
 # Set data for model
-data = Namespace()
-#data.x = [start.position]
-# -----
 n_init = 1
 edge_locs = [(e[0] + e[1]) / 2 for e in edges]
 x_init_args = np.random.choice(range(len(edge_locs)), n_init)
 x_init = [edge_locs[idx] for idx in x_init_args]
-#x_init = unif_random_sample_domain([x1_lims, x2_lims], n=n_init)
+data = Namespace()
 data.x = [np.array(x).reshape(-1) for x in x_init]
-# -----
 data.y = [true_latent_f(x) for x in data.x]
 
 # Set model details
-gp_params = {"ls": 0.8, "alpha": 4.3, "sigma": 1e-2, "n_dimx": 2}
+gp_params = {"ls": 0.3, "alpha": 4.3, "sigma": 1e-2, "n_dimx": 2}
+#gp_params = {"ls": 0.5, "alpha": 4.3, "sigma": 1e-2, "n_dimx": 2}
 #gp_params = get_stangp_hypers(true_latent_f, domain=[x1_lims, x2_lims], n_samp=400) # NOTE: can use StanGp to fit hypers
 modelclass = GpfsGp
 #modelclass = SimpleGp # NOTE: can use SimpleGp model
 
 # Set acquisition details
 acqfn_params = {"acq_str": "exe", "n_path": 20}
-#acqfn_params = {"acq_str": "out", "n_path": 20} # TODO: implement "out" acqfn 
 n_rand_acqopt = 350
 
 # Run BAX loop
-n_iter = 30
+n_iter = 60
 
-queried_xs = []
 for i in range(n_iter):
     plt.close()
     # Set model
@@ -173,44 +167,28 @@ for i in range(n_iter):
 
     # Set and optimize acquisition function
     acqfn = BaxAcqFunction(acqfn_params, model, algo)
-    #acqopt = AcqOptimizer({"x_batch": positions})
-    #x_unif = unif_random_sample_domain([x1_lims, x2_lims], n=500)
-    acqopt = AcqOptimizer({"x_batch": edge_locs})
+    acqopt = AcqOptimizer({"x_batch": edge_locs, "remove_x_dups": True})
     x_next = acqopt.optimize(acqfn)
-    #arg_x_next, _ = next(
-        #(i for i in enumerate(vertices) if all(i[1].position == x_next))
-    #)
-    # -----
     x_next = np.array(x_next).reshape(-1)
-    # -----
 
     sampled_outputs = acqfn.output_list
 
     # Check if x_next has been queried before
     if True in [all(x_next == x) for x in data.x]:
-        print('\n!!!!!!!!!!\nThe x_next has already been queried!\n!!!!!!!!!!\n')
+        print('\n!!!!!\nThe x_next has already been queried!\n!!!!!\n')
 
     # Query function, update data
     y_next = true_latent_f(x_next)
     data.x.append(x_next)
     data.y.append(y_next)
 
-    # Update physical path taken
-    #next_vertex = vertices[arg_x_next]
-    #queried_xs.append(next_vertex)
-
-    ## Print
-    #print(f'Acq optimizer x_next = {next_vertex}')
-    #print(f'With x_next.position = {next_vertex.position}')
-    #print(f'Finished iter i = {i}')
-
+    # Print
     print(f'Acq optimizer x_next = {x_next}')
     print(f'Finished iter i = {i}')
 
-    # plots
+    # Plot
     plot = True
     if plot:            
-        #fig, ax = plt.subplots(figsize=(9, 6))
         fig, ax = plt.subplots(figsize=(9, 7))
 
         plot_contourf(fig, ax, x1_lims, x2_lims)
@@ -226,28 +204,18 @@ for i in range(n_iter):
             label='True shortest path',
         )
 
-        #if len(queried_xs[:-1]) > 0:
-            #plot_vertices(ax, queried_xs[:-1], label='Given')
-
-        #plot_acqopt_vertex(ax, queried_xs[-1], label='Next query')
-
-        # -----
         for x in data.x[:-1]:
             ax.scatter(x[0], x[1], color=(0, 0, 0, 1))
 
         ax.scatter(data.x[-1][0], data.x[-1][1], color='blue', label='Next query')
-        # -----
        
         ax.set(ylim=[-1.2, 4.2], xlim=[-2.2, 2.2]) # TODO: replace hard coded values
-        ax.legend()
+        ax.legend(loc='lower left')
 
         min_costs, min_cost_paths = zip(*sampled_outputs)
         n = acqfn.params.n_path
         for path in min_cost_paths:
             plot_path(ax, path, path_color=(0, 0, 1, 1/n), linewidths=2, linestyle="-")
-
-        # make matplotlib plot within for loop. See: https://stackoverflow.com/questions/19766100/real-time-matplotlib-plot-is-not-working-while-still-in-a-loop
-        #plt.show()
 
         # Pause
         #inp = input("Press enter to continue (any other key to stop): ")
@@ -255,4 +223,10 @@ for i in range(n_iter):
             #break
         #plt.close()
 
-        plt.pause(0.0001)
+
+        # make matplotlib plot within for loop. See: https://stackoverflow.com/questions/19766100/real-time-matplotlib-plot-is-not-working-while-still-in-a-loop
+        #plt.show()
+
+        neatplot.save_figure(f'bax_{i}')
+        #plt.pause(0.0001)
+        #inp = input("Paused")
