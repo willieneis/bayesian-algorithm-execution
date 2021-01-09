@@ -241,6 +241,7 @@ class OptRightScan(Algorithm):
         self.params.x_grid_gap = getattr(params, "x_grid_gap", 0.1)
         self.params.conv_thresh = getattr(params, "conv_thresh", 0.2)
         self.params.max_iter = getattr(params, "max_iter", 100)
+        self.params.crop_str = getattr(params, "crop_str", "min")
 
     def get_next_x(self):
         """
@@ -264,9 +265,29 @@ class OptRightScan(Algorithm):
 
         return next_x
 
+    def get_exe_path_crop(self):
+        """
+        Return the minimal execution path for output, i.e. cropped execution path,
+        specific to this algorithm.
+        """
+        exe_path_crop = Namespace(x=[], y=[])
+        min_idx = np.argmin(self.exe_path.y)
+
+        if self.params.crop_str == "min":
+            exe_path_crop.x.append(self.exe_path.x[min_idx])
+            exe_path_crop.y.append(self.exe_path.y[min_idx])
+        elif self.params.crop_str == "minplus":
+            exe_path_crop.x.extend(self.exe_path.x[min_idx:])
+            exe_path_crop.y.extend(self.exe_path.y[min_idx:])
+        else:
+            exe_path_crop = self.exe_path
+
+        return exe_path_crop
+
     def get_output(self):
         """Return output based on self.exe_path."""
-        return self.exe_path.x[-1]
+        min_idx = np.argmin(self.exe_path.y)
+        return self.exe_path.x[min_idx]
 
 
 class GlobalOptValGrid(FixedPathAlgorithm):
