@@ -161,6 +161,9 @@ class AlgoAcqFunction(AcqFunction):
                 f_list, self.params.n_path
             )
 
+            # Get crop of each exe_path in exe_path_list
+            exe_path_list = algoset.get_exe_path_list_crop()
+
         return exe_path_list, output_list
 
 
