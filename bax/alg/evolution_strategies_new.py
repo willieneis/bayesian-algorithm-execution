@@ -33,6 +33,7 @@ class EvolutionStrategies(Algorithm):
         self.params.domain = getattr(params, "domain", [[0, 10]])
         self.params.n_dim = len(self.params.init_x)
         self.params.n_dim_es = self.params.n_dim if self.params.n_dim>1 else 2
+        self.params.crop = getattr(params, "crop", True)
 
     def initialize(self):
         """Initialize algorithm, reset execution path."""
@@ -103,14 +104,36 @@ class EvolutionStrategies(Algorithm):
         next_gen_list = next_gen_mat.tolist()
         return next_gen_list
 
-    def get_output(self):
-        """Given an execution path, return algorithm output."""
+    def get_exe_path_opt_idx(self):
+        """Return the index of the optimal point in execution path."""
         if self.params.opt_mode == "min":
             opt_idx = np.argmin(self.exe_path.y)
         elif self.params.opt_mode == "max":
             opt_idx = np.argmax(self.exe_path.y)
 
+        return opt_idx
+
+    def get_output(self):
+        """Given an execution path, return algorithm output."""
+        opt_idx = self.get_exe_path_opt_idx()
+
         return self.exe_path.x[opt_idx]
+
+    def get_exe_path_crop(self):
+        """
+        Return the minimal execution path for output, i.e. cropped execution path,
+        specific to this algorithm.
+        """
+        opt_idx = self.get_exe_path_opt_idx()
+        exe_path_crop = Namespace(x=[], y=[])
+
+        if self.params.crop:
+            exe_path_crop.x.append(self.exe_path.x[opt_idx])
+            exe_path_crop.y.append(self.exe_path.y[opt_idx])
+        else:
+            exe_path_crop = self.exe_path
+
+        return exe_path_crop
 
 
 class SimpleMutator:
