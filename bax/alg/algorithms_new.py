@@ -74,6 +74,14 @@ class Algorithm(ABC):
         # Return execution path and output
         return self.exe_path, self.get_output()
 
+    def get_exe_path_crop(self):
+        """
+        Return the minimal execution path for output, i.e. cropped execution path,
+        specific to this algorithm.
+        """
+        # As default, return untouched execution path
+        return self.exe_path
+
     @abstractmethod
     def get_output(self):
         """Return output based on self.exe_path."""
@@ -405,12 +413,24 @@ class AlgorithmSet:
                 x_list_new.append(x_next)
             x_list = x_list_new
 
+        # Store algo_list
+        self.algo_list = algo_list
+
         # Collect exe_path_list and output_list
         exe_path_list = [algo.exe_path for algo in algo_list]
         output_list = [algo.get_output() for algo in algo_list]
         return exe_path_list, output_list
 
-    def crop_exe_path(self, exe_path):
+    def get_exe_path_list_crop(self):
+        """Return get_exe_path_crop for each algo in self.algo_list."""
+        exe_path_list_crop = []
+        for algo in self.algo_list:
+            exe_path_crop = algo.get_exe_path_crop()
+            exe_path_list_crop.append(exe_path_crop)
+
+        return exe_path_list_crop
+
+    def crop_exe_path_old(self, exe_path):
         """Return execution path without any Nones at end."""
         try:
             final_idx = next(i for i, x in enumerate(exe_path.x) if x==None)
