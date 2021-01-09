@@ -203,6 +203,27 @@ class Dijkstra(Algorithm):
 
         return exe_path, min_cost
 
+    def get_exe_path_crop(self):
+        """
+        Return the minimal execution path for output, i.e. cropped execution path,
+        specific to this algorithm.
+        """
+        exe_path_crop = Namespace(x=[], y=[])
+
+        _, best_path = self.get_output()
+        for i in range(len(best_path) - 1):
+            vec_start_pos = best_path[i].position
+            vec_end_pos = best_path[i + 1].position
+            edge_pos = (vec_start_pos + vec_end_pos) / 2.0
+
+            exe_path_crop.x.append(edge_pos)
+            idx, pos = next(
+                (tup for tup in enumerate(self.exe_path.x) if all(tup[1] == edge_pos))
+            )
+            exe_path_crop.y.append(self.exe_path.y[idx])
+
+        return exe_path_crop
+
     def get_output(self):
         """Return best path."""
         return self.best_cost, self.best_path
