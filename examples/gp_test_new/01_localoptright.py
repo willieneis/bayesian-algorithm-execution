@@ -29,8 +29,8 @@ f = lambda x: ym * np.sin(np.pi * xm * (x[0] + xa)) + \
               ym * np.sin(2 * xm * np.pi * (x[0] + xa)) / 2.0
 
 # Set algorithm details
-algo = OptRightScan({"x_grid_gap": 0.1, "init_x": [4.0]})
-algo_output_f = 8.597
+algo = OptRightScan({"x_grid_gap": 0.1, "init_x": [4.0], "crop_str": "min"})
+algo_output_f = 8.2
 
 # Set data for model
 data = Namespace()
@@ -38,14 +38,14 @@ data.x = [[4.0]]
 data.y = [f(x) for x in data.x]
 
 # Set model details
-gp_params = {"ls": 1.0, "alpha": 2.0, "sigma": 1e-2}
-#gp_params = get_stangp_hypers(f, n_samp=200) # NOTE: can use StanGp to fit hypers
+#gp_params = {"ls": 1.0, "alpha": 2.0, "sigma": 1e-2}
+gp_params = get_stangp_hypers(f, n_samp=200) # NOTE: can use StanGp to fit hypers
 modelclass = GpfsGp
 #modelclass = SimpleGp # NOTE: can use SimpleGp model
 
 # Set acquisition details
-acqfn_params = {"acq_str": "out", "n_path": 100}
-#acqfn_params = {"acq_str": "exe", "n_path": 100} # NOTE: can use "exe" acqfn
+acqfn_params = {"acq_str": "exe", "n_path": 300}
+#acqfn_params = {"acq_str": "out", "n_path": 300} # NOTE: can use "out" acqfn
 min_x = 3.5
 max_x = 20.0
 x_test = [[x] for x in np.linspace(0.0, max_x, 500)]
