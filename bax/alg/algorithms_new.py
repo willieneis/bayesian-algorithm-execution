@@ -304,12 +304,33 @@ class GlobalOptValGrid(FixedPathAlgorithm):
         self.params.name = getattr(params, "name", "GlobalOptGrid")
         self.params.opt_mode = getattr(params, "opt_mode", "min")
 
+    def get_exe_path_opt_idx(self):
+        """Return the index of the optimal point in execution path."""
+        if self.params.opt_mode == "min":
+            opt_idx = np.argmin(self.exe_path.y)
+        elif self.params.opt_mode == "max":
+            opt_idx = np.argmax(self.exe_path.y)
+
+        return opt_idx
+
+    def get_exe_path_crop(self):
+        """
+        Return the minimal execution path for output, i.e. cropped execution path,
+        specific to this algorithm.
+        """
+        opt_idx = self.get_exe_path_opt_idx()
+
+        exe_path_crop = Namespace(x=[], y=[])
+        exe_path_crop.x.append(self.exe_path.x[opt_idx])
+        exe_path_crop.y.append(self.exe_path.y[opt_idx])
+
+        return exe_path_crop
+        #return self.exe_path
+
     def get_output(self):
         """Return output based on self.exe_path."""
-        if self.params.opt_mode == "min":
-            opt_val = np.min(self.exe_path.y)
-        elif self.params.opt_mode == "max":
-            opt_val = np.max(self.exe_path.y)
+        opt_idx = self.get_exe_path_opt_idx()
+        opt_val = self.exe_path.y[opt_idx]
 
         return opt_val
 
