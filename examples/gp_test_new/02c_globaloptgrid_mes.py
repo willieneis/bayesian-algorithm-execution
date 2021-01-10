@@ -2,7 +2,7 @@ import copy
 from argparse import Namespace
 import numpy as np
 import matplotlib.pyplot as plt
-plt.ion()
+#plt.ion()
 import tensorflow as tf
 
 from bax.alg.algorithms_new import GlobalOptValGrid
@@ -31,7 +31,7 @@ f = lambda x: ym * np.sin(np.pi * xm * (x[0] + xa)) + \
 # Set algorithm details
 min_x = 3.5
 max_x = 20.0
-len_path = 75
+len_path = 500
 x_path = [[x] for x in np.linspace(min_x, max_x, len_path)]
 algo = GlobalOptValGrid({"x_path": x_path, "opt_mode": "max"})
 
@@ -47,7 +47,7 @@ modelclass = GpfsGp
 #modelclass = SimpleGp # NOTE: can use SimpleGp model
 
 # Set acquisition details
-acqfn_params = {"n_path": 15}
+acqfn_params = {"n_path": 50}
 n_test = 500
 x_test = [[x] for x in np.linspace(min_x, max_x, n_test)]
 y_test = [f(x) for x in x_test]
