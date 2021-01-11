@@ -82,6 +82,10 @@ class Algorithm(ABC):
         # As default, return untouched execution path
         return self.exe_path
 
+    def get_copy(self):
+        """Return a copy of this algorithm."""
+        return copy.deepcopy(self)
+
     @abstractmethod
     def get_output(self):
         """Return output based on self.exe_path."""
@@ -434,7 +438,7 @@ class AlgorithmSet:
         functions given an x_list of n_f inputs. Return the lists of execution paths and
         outputs.
         """
-        algo_list = [copy.deepcopy(self.algo) for _ in range(n_f)]
+        algo_list = [self.algo.get_copy() for _ in range(n_f)]
 
         # Initialize each algo in list
         for algo in algo_list:
