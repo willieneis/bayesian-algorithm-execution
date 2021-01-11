@@ -17,15 +17,35 @@ class Dijkstra(Algorithm):
     Implments the shortest path or minimum cost algorithm using the Vertex class.
     """
 
+    def __init__(self, params=None, vertices=None, start=None, goal=None, verbose=True):
+        """
+        Parameters
+        ----------
+        params : Namespace_or_dict
+            Namespace or dict of parameters for the algorithm.
+        vertices : list
+            List of Vertex objects
+        start : Vertex
+            Start vertex.
+        goal : Vertex
+            Goal vertex.
+        verbose : bool
+            If True, print description string.
+        """
+        super().__init__()
+        self.set_params(params)
+        self.vertices = vertices
+        self.start = start
+        self.goal = goal
+        if verbose:
+            self.print_str()
+
     def set_params(self, params):
         """Set self.params, the parameters for the algorithm."""
         super().set_params(params)
         params = dict_to_namespace(params)
 
         self.params.name = getattr(params, "name", "Dijkstras")
-        self.params.start = getattr(params, "start", None)
-        self.params.goal = getattr(params, "goal", None)
-        self.params.vertices = getattr(params, "vertices", None)
         self.params.cost_func = getattr(params, "cost_func", lambda u, v: 0)
         self.params.true_cost = getattr(params, "true_cost", lambda u, v: 0)
 
@@ -34,15 +54,16 @@ class Dijkstra(Algorithm):
         super().initialize()
 
         # Set up Dijkstra's
-        self.explored = [False for _ in range(len(self.params.vertices))]
-        self.min_cost = [float("inf") for _ in range(len(self.params.vertices))]
-        self.prev = [None for _ in range(len(self.params.vertices))]
-        self.to_explore = [(0, self.params.start)]  # initialize priority queue
+        self.explored = [False for _ in range(len(self.vertices))]
+        self.min_cost = [float("inf") for _ in range(len(self.vertices))]
+        self.prev = [None for _ in range(len(self.vertices))]
+        self.to_explore = [(0, self.start)]  # initialize priority queue
         self.num_expansions = 0
         self.num_queries = 0
         self.best_cost = float("inf")
         self.best_path = []
         self.current = None
+        self.curr_neigh_idx = 0
         self.do_after_query = False
 
     def get_next_x(self):
@@ -68,7 +89,6 @@ class Dijkstra(Algorithm):
 
             # If self.current does not exist, set self.current and other variables
             self.best_cost, self.current = heapq.heappop(self.to_explore)
-            self.current = copy.deepcopy(self.current) # is this necessary?
             if self.explored[self.current.index]:
                 # the same node could appear in the pqueue multiple times with different costs
                 self.current = None
@@ -77,7 +97,7 @@ class Dijkstra(Algorithm):
             self.num_expansions += 1
 
             # If algorithm completes here, return None
-            if self.current.index == self.params.goal.index:
+            if self.current.index == self.goal.index:
                 self.finish_algorithm()
                 return None
 
@@ -87,7 +107,9 @@ class Dijkstra(Algorithm):
     def get_next_edge(self):
         """Return next edge. Assumes self.current is not None."""
         self.num_queries += 1
-        next_edge = (self.current.position + self.current.neighbors[0].position) / 2
+        current_pos = self.current.position
+        neighbor_pos = self.current.neighbors[self.curr_neigh_idx].position
+        next_edge = (current_pos + neighbor_pos) / 2
         self.do_after_query = True
         return next_edge
 
@@ -96,7 +118,8 @@ class Dijkstra(Algorithm):
         last_edge_y = self.exe_path.y[-1]
         step_cost = np.log1p(np.exp(last_edge_y))
         assert step_cost >= 0
-        neighbor = self.current.neighbors[0]
+        neighbor = self.current.neighbors[self.curr_neigh_idx]
+        self.curr_neigh_idx += 1
 
         if (not self.explored[neighbor.index]) and (
             self.best_cost + step_cost < self.min_cost[neighbor.index]
@@ -111,10 +134,10 @@ class Dijkstra(Algorithm):
         # Unset do_after_query
         self.do_after_query = False
 
-        # Remove self.current.neighbors[0] and possibly set self.current to None
-        del self.current.neighbors[0]
-        if not self.current.neighbors:
+        # Possibly set self.current to None and self.curr_neigh_idx back to 0
+        if self.curr_neigh_idx >= len(self.current.neighbors):
             self.current = None
+            self.curr_neigh_idx = 0
 
     def finish_algorithm(self):
         """To do if algorithm completes."""
@@ -123,8 +146,7 @@ class Dijkstra(Algorithm):
             f"{self.num_queries} queries with estimated cost {self.best_cost}"
         )
         self.best_path = [
-            self.params.vertices[i]
-            for i in backtrack_indices(self.current.index, self.prev)
+            self.vertices[i] for i in backtrack_indices(self.current.index, self.prev)
         ]
 
         def print_true_cost_of_path(path):
@@ -142,9 +164,9 @@ class Dijkstra(Algorithm):
 
         def dijkstras(start: Vertex, goal: Vertex):
             """Dijkstra's algorithm."""
-            explored = [False for _ in range(len(self.params.vertices))]
-            min_cost = [float("inf") for _ in range(len(self.params.vertices))]
-            prev = [None for _ in range(len(self.params.vertices))]
+            explored = [False for _ in range(len(self.vertices))]
+            min_cost = [float("inf") for _ in range(len(self.vertices))]
+            prev = [None for _ in range(len(self.vertices))]
             to_explore = [(0, start)]  # initialize priority queue
             num_expansions = 0
             num_queries = 0
@@ -161,8 +183,7 @@ class Dijkstra(Algorithm):
                         f"Found goal after {num_expansions} expansions and {num_queries} queries with estimated cost {best_cost}"
                     )
                     best_path = [
-                        self.params.vertices[i]
-                        for i in backtrack_indices(current.index, prev)
+                        self.vertices[i] for i in backtrack_indices(current.index, prev)
                     ]
 
                     def true_cost_of_path(path):
@@ -199,7 +220,7 @@ class Dijkstra(Algorithm):
             assert cost >= 0
             return cost
 
-        min_cost = dijkstras(self.params.start, self.params.goal)
+        min_cost = dijkstras(self.start, self.goal)
 
         return exe_path, min_cost
 
@@ -224,12 +245,32 @@ class Dijkstra(Algorithm):
 
         return exe_path_crop
 
+    def get_copy(self):
+        """Return a copy of this algorithm."""
+        # Cache the three Vertex attributes
+        vertices = self.vertices
+        start = self.start
+        goal = self.goal
+
+        # Delete the three Vertex attributes
+        del self.vertices
+        del self.start
+        del self.goal
+
+        # Copy the rest of this object then define the three Vertex attributes
+        algo_copy = copy.deepcopy(self)
+        algo_copy.vertices = vertices
+        algo_copy.start = start
+        algo_copy.goal = goal
+
+        # Re-define the three Vertex attributes in this object
+        self.vertices = vertices
+        self.start = start
+        self.goal = goal
+
+        # Return the copy
+        return algo_copy
+
     def get_output(self):
         """Return best path."""
         return self.best_cost, self.best_path
-        #raise RuntimeError("Can't return output from execution path for Dijkstras")
-
-    def set_print_params(self):
-        """Set self.print_params."""
-        super().set_print_params()
-        delattr(self.print_params, "vertices")
