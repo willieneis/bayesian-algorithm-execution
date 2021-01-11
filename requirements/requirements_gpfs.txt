@@ -1,0 +1,6 @@
+numpy>=1.19.0
+matplotlib>=3.2.2
+tensorflow==2.4.0
+tensorflow-probability==0.12.1
+gpflow==2.1.4
+-e git+https://github.com/j-wilson/GPflowSampling.git@bc9c553fe4d8f522726f002c18df9965246df345#egg=gpflow_sampling
