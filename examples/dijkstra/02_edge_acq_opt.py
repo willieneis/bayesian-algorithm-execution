@@ -105,8 +105,8 @@ def plot_graph(ax, edges, start, goal):
     ax.scatter(*positions.T, color=(0, 0, 0, 1), facecolors='none')
 
     # plot start and goal vertices
-    ax.scatter(*start.position, color='g', label="Start", s=100)
-    ax.scatter(*goal.position, color='r', label="Goal", s=100)
+    ax.scatter(*start.position, color='#9907E1', marker='s', label="Start", s=130)
+    ax.scatter(*goal.position, color='#F3C807', marker='s', label="Goal", s=130)
     
     ax.grid(False)
     return
@@ -155,7 +155,7 @@ acqfn_params = {"acq_str": "exe", "n_path": 20}
 n_rand_acqopt = 350
 
 # Run BAX loop
-n_iter = 60
+n_iter = 70
 
 for i in range(n_iter):
     plt.close()
@@ -204,15 +204,21 @@ for i in range(n_iter):
         for x in data.x[:-1]:
             ax.scatter(x[0], x[1], color=(0, 0, 0, 1))
 
-        ax.scatter(data.x[-1][0], data.x[-1][1], color='blue', label='Next query')
+        ax.scatter(
+            data.x[-1][0],
+            data.x[-1][1],
+            color='deeppink',
+            s=120,
+            label='Next query',
+        )
        
         ax.set(ylim=[-1.2, 4.2], xlim=[-2.2, 2.2]) # TODO: replace hard coded values
         ax.legend(loc='lower left')
 
         min_costs, min_cost_paths = zip(*sampled_outputs)
-        n = acqfn.params.n_path
+        weight = 0.1 # NOTE can also do: 1 / acqfn.params.n_path
         for path in min_cost_paths:
-            plot_path(ax, path, path_color=(0, 0, 1, 1/n), linewidths=2, linestyle="-")
+            plot_path(ax, path, path_color=(0, 0, 1, weight), linewidths=2, linestyle="-")
 
         # Pause
         #inp = input("Press enter to continue (any other key to stop): ")

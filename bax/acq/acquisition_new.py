@@ -303,6 +303,7 @@ class BaxAcqFunction(AlgoAcqFunction):
 
         # Return list of acquisition function on x in x_list
         return acq_list
+        #return [np.random.uniform() for _ in acq_list] # TODO: for random search
 
     def __call__(self, x_list):
         """Class is callable and returns acquisition function on x_list."""
