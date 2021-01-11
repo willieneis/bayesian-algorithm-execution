@@ -119,13 +119,10 @@ x2_lims = (-1, 4)
 positions, vertices, edges = make_grid(grid_size, x1_lims, x2_lims)
 start, goal = vertices[-grid_size], vertices[-1]
 algo_params = {
-    'start': start,
-    'goal': goal,
-    'vertices': vertices,
     'cost_func': lambda u, v, f: cost_func(u, v, f, latent_f=True),
     'true_cost': lambda u, v: cost_func(u, v, true_f, latent_f=False)
 }
-algo = Dijkstra(algo_params)
+algo = Dijkstra(algo_params, vertices, start, goal)
 
 # Set data for model
 data = Namespace()
@@ -133,7 +130,8 @@ data.x = [start.position]
 data.y = [true_latent_f(x) for x in data.x]
 
 # Set model details
-gp_params = {"ls": 0.75, "alpha": 4.3, "sigma": 1e-2, "n_dimx": 2}
+gp_params = {"ls": 0.3, "alpha": 4.3, "sigma": 1e-2, "n_dimx": 2}
+#gp_params = {"ls": 0.75, "alpha": 4.3, "sigma": 1e-2, "n_dimx": 2}
 #gp_params = get_stangp_hypers(true_latent_f, domain=[x1_lims, x2_lims], n_samp=400) # NOTE: can use StanGp to fit hypers
 modelclass = GpfsGp
 #modelclass = SimpleGp # NOTE: can use SimpleGp model
@@ -175,10 +173,10 @@ for i in range(n_iter):
     print(f'With x_next.position = {next_vertex.position}')
     print(f'Finished iter i = {i}')
 
-    # plots
+    # Plot
     plot = True
     if plot:            
-        fig, ax = plt.subplots(figsize=(9, 6))
+        fig, ax = plt.subplots(figsize=(9, 7))
 
         plot_contourf(fig, ax, x1_lims, x2_lims)
 

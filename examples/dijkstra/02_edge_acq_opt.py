@@ -125,16 +125,13 @@ x2_lims = (-1, 4)
 positions, vertices, edges = make_grid(grid_size, x1_lims, x2_lims)
 start, goal = vertices[-grid_size], vertices[-1]
 algo_params = {
-    'start': start,
-    'goal': goal,
-    'vertices': vertices,
     'cost_func': lambda u, v, f: cost_func(u, v, f, latent_f=True),
     'true_cost': lambda u, v: cost_func(u, v, true_f, latent_f=False)
 }
-algo = Dijkstra(algo_params)
+algo = Dijkstra(algo_params, vertices, start, goal)
 
 # Run algorithm on true function
-algo_copy = copy.deepcopy(algo)
+algo_copy = algo.get_copy()
 true_ep, true_output = algo_copy.run_algorithm_on_f(true_latent_f)
 
 # Set data for model
