@@ -113,7 +113,7 @@ class AlgoAcqFunction(AcqFunction):
         if not algorithm:
             raise ValueError("The algorithm input parameter cannot be None.")
         else:
-            self.algorithm = copy.deepcopy(algorithm)
+            self.algorithm = algorithm.get_copy()
 
     def initialize(self):
         """
