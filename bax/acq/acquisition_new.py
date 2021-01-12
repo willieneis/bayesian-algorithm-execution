@@ -303,8 +303,6 @@ class BaxAcqFunction(AlgoAcqFunction):
 
         # Return list of acquisition function on x in x_list
         return acq_list
-        #return [np.random.uniform() for _ in acq_list] # NOTE: for random search
-        #return std # NOTE: for uncertainty sampling
 
     def __call__(self, x_list):
         """Class is callable and returns acquisition function on x_list."""
@@ -352,4 +350,44 @@ class MesAcqFunction(BaxAcqFunction):
         }
 
         # Return list of acquisition function on x in x_list
+        return acq_list
+
+
+class RandBaxAcqFunction(BaxAcqFunction):
+    """
+    Wrapper on BaxAcqFunction for random search acquisition, when we still want various
+    BaxAcqFunction variables for visualizations.
+    """
+
+    def set_params(self, params):
+        """Set self.params, the parameters for the AcqFunction."""
+        super().set_params(params)
+
+        params = dict_to_namespace(params)
+        self.params.name = getattr(params, 'name', 'RandAcqFunction')
+
+    def __call__(self, x_list):
+        """Class is callable and returns acquisition function on x_list."""
+        acq_list = super().__call__(x_list) # NOTE: would super()(x_list) work?
+        acq_list = [np.random.uniform() for _ in acq_list]
+        return acq_list
+
+
+class UsBaxAcqFunction(BaxAcqFunction):
+    """
+    Wrapper on BaxAcqFunction for uncertainty sampling acquisition, when we still want
+    various BaxAcqFunction variables for visualizations.
+    """
+
+    def set_params(self, params):
+        """Set self.params, the parameters for the AcqFunction."""
+        super().set_params(params)
+
+        params = dict_to_namespace(params)
+        self.params.name = getattr(params, 'name', 'UsAcqFunction')
+
+    def __call__(self, x_list):
+        """Class is callable and returns acquisition function on x_list."""
+        super().__call__(x_list) # NOTE: would super()(x_list) work?
+        acq_list = self.acq_vars["std"]
         return acq_list
