@@ -70,7 +70,7 @@ class AcqViz1D:
         self.plot_model_data(model.data)
         self.plot_acqoptima(acq_list, x_test)
         self.plot_postpred_given_exe_path_samples(x_test, mu_list, std_list)
-        self.plot_post_f_samples(x_test, mu_list)
+        self.plot_post_f_samples(model, x_test, exe_path_list)
 
         self.make_legend()
         self.set_post_plot_details()
@@ -218,8 +218,37 @@ class AcqViz1D:
         self.h_list.append(h)
         return h
 
-    def plot_post_f_samples(self, x_test, mu_list):
-        """Plot posterior function samples."""
+    def plot_post_f_samples(self, model, x_test, exe_path_list):
+        """Compute and then plot posterior function samples."""
+
+        # Optionally crop, given self.n_path_max
+        exe_path_list = self.reduce_samp_list(exe_path_list)
+
+        for exe_path in exe_path_list:
+            comb_data = Namespace()
+            comb_data.x = model.data.x + exe_path.x
+            comb_data.y = model.data.y + exe_path.y
+            mu, cov = model.gp_post_wrapper(x_test, comb_data, full_cov=True)
+            f_sample = model.get_normal_samples(mu, cov, 1, full_cov=True)
+            f_sample = np.array(f_sample).reshape(-1)
+
+            h = self.ax.plot(
+                np.array(x_test).reshape(-1),
+                f_sample,
+                "-",
+                alpha=0.5,
+                linewidth=0.5,
+                label="$\{\\tilde{f}\} \sim p(f | \mathcal{D}_t)$",
+            )
+
+        #self.h_list.append(h[0])
+        return h
+
+    def plot_post_f_samples_exe_path_postpred_means(self, x_test, mu_list):
+        """
+        Plot execution path posterior predictive means as approximate posterior function
+        samples.
+        """
 
         # Optionally crop, given self.n_path_max
         mu_list = self.reduce_samp_list(mu_list)
