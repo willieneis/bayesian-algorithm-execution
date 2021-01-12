@@ -121,9 +121,10 @@ class AlgoAcqFunction(AcqFunction):
         samples of the execution path and algorithm output from functions sampled from
         the model.
         """
-        exe_path_list, output_list = self.get_exe_path_and_output_samples()
+        exe_path_list, output_list, full_list = self.get_exe_path_and_output_samples()
         self.exe_path_list = exe_path_list
         self.output_list = output_list
+        self.exe_path_full_list = full_list
         #self.last_output_list = output_list # TODO do I need this anymore?
 
     def get_exe_path_and_output_samples_loop(self):
@@ -157,14 +158,14 @@ class AlgoAcqFunction(AcqFunction):
             # Run algorithm on function sample list
             f_list = self.model.call_function_sample_list
             algoset = AlgorithmSet(self.algorithm)
-            exe_path_list, output_list = algoset.run_algorithm_on_f_list(
+            exe_path_full_list, output_list = algoset.run_algorithm_on_f_list(
                 f_list, self.params.n_path
             )
 
             # Get crop of each exe_path in exe_path_list
             exe_path_list = algoset.get_exe_path_list_crop()
 
-        return exe_path_list, output_list
+        return exe_path_list, output_list, exe_path_full_list
 
 
 class BaxAcqFunction(AlgoAcqFunction):
