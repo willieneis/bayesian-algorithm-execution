@@ -5,7 +5,6 @@ Acquisition functions.
 from argparse import Namespace
 import copy
 import numpy as np
-from sklearn.cluster import KMeans
 from scipy.stats import norm as sps_norm
 
 from ..util.misc_util import dict_to_namespace
@@ -107,6 +106,7 @@ class AlgoAcqFunction(AcqFunction):
         params = dict_to_namespace(params)
         self.params.name = getattr(params, 'name', 'AlgoAcqFunction')
         self.params.n_path = getattr(params, "n_path", 100)
+        self.params.crop = getattr(params, "crop", True)
 
     def set_algorithm(self, algorithm):
         """Set self.algorithm for this acquisition function."""
@@ -122,10 +122,15 @@ class AlgoAcqFunction(AcqFunction):
         the model.
         """
         exe_path_list, output_list, full_list = self.get_exe_path_and_output_samples()
-        self.exe_path_list = exe_path_list
+
+        # Set self.output_list
         self.output_list = output_list
-        self.exe_path_full_list = full_list
-        #self.last_output_list = output_list # TODO do I need this anymore?
+
+        # Set self.exe_path_list to list of full or cropped exe paths
+        if self.params.crop:
+            self.exe_path_list = exe_path_list
+        else:
+            self.exe_path_list = full_list
 
     def get_exe_path_and_output_samples_loop(self):
         """
@@ -180,7 +185,9 @@ class BaxAcqFunction(AlgoAcqFunction):
         params = dict_to_namespace(params)
         self.params.name = getattr(params, 'name', 'BaxAcqFunction')
         self.params.acq_str = getattr(params, "acq_str", "exe")
-        self.params.n_cluster_kmeans = getattr(params, 'n_cluster_kmeans', 35)
+        self.params.min_neighbors = getattr(params, "min_neighbors", 10)
+        self.params.max_neighbors = getattr(params, "max_neighbors", 30)
+        self.params.dist_thresh = getattr(params, "dist_thresh", 1.0)
 
     def entropy_given_normal_std(self, std_arr):
         """Return entropy given an array of 1D normal standard deviations."""
@@ -211,12 +218,26 @@ class BaxAcqFunction(AlgoAcqFunction):
         Algorithm-output-based acquisition function: EIG on the algorithm output, via
         predictive entropy, for normal posterior predictive distributions.
         """
-
         # Compute entropies for posterior predictive
         h_post = self.entropy_given_normal_std(post_std)
 
         # Get list of idx-list-per-cluster
         cluster_idx_list = self.get_cluster_idx_list(output_list)
+
+        # -----
+        print('\t- clust_idx_list details:')
+        len_list = [len(clust) for clust in cluster_idx_list]
+        print(f'\t- min len_list: {np.min(len_list)},  len(len_list): {len(len_list)}')
+        # -----
+
+        # Remove clusters that are too small
+        min_nn = self.params.min_neighbors
+        cluster_idx_list = [clust for clust in cluster_idx_list if len(clust) > min_nn]
+
+        # -----
+        len_list = [len(clust) for clust in cluster_idx_list]
+        print(f'\t- min len_list: {np.min(len_list)},  len(len_list): {len(len_list)}')
+        # -----
 
         # Compute entropies for posterior predictive given execution path samples
         h_cluster_list = []
@@ -240,7 +261,7 @@ class BaxAcqFunction(AlgoAcqFunction):
 
             # Entropy of the Gaussian approximation to the mixture
             h_cluster = self.entropy_given_normal_std(samp_std_cluster)
-            h_cluster_list.extend([h_cluster] * len(idx_list))
+            h_cluster_list.extend([h_cluster])
 
         avg_h_cluster = np.mean(h_cluster_list, 0)
         acq_out = h_post - avg_h_cluster
@@ -254,17 +275,31 @@ class BaxAcqFunction(AlgoAcqFunction):
 
     def get_cluster_idx_list(self, output_list):
         """
-        Cluster outputs in output_list and return list of idx-list-per-cluster.
-        TODO: implement algorithm-specific output clustering in another file or class.
+        Cluster outputs in output_list (based on nearest neighbors) and return list of
+        idx-list-per-cluster.
         """
-        if not isinstance(output_list[0], list):
-            output_list = [[out] for out in output_list]
-        n_cluster_kmeans = min(self.params.n_cluster_kmeans, len(output_list))
-        km = KMeans(n_clusters=n_cluster_kmeans)
-        km.fit(output_list)
-        lab = km.labels_
-        unq, unq_inv, unq_cnt = np.unique(lab, return_inverse=True, return_counts=True)
-        idx_arr_list = np.split(np.argsort(unq_inv), np.cumsum(unq_cnt[:-1]))
+
+        # Build distance matrix
+        dist_fn = self.algorithm.get_output_dist_fn()
+        dist_mat = [[dist_fn(o1, o2) for o1 in output_list] for o2 in output_list]
+
+        # Build idx_arr_list and dist_arr_list
+        idx_arr_list = []
+        dist_arr_list = []
+        for row in dist_mat:
+            idx_sort = np.argsort(row)
+            dist_sort = np.array([row[i] for i in idx_sort])
+
+            # Keep at most max_neighbors, as long as they are within dist_thresh
+            dist_sort = dist_sort[:self.params.max_neighbors]
+            row_idx_keep = np.where(dist_sort < self.params.dist_thresh)[0]
+
+            idx_arr = idx_sort[row_idx_keep]
+            idx_arr_list.append(idx_arr)
+
+            dist_arr = dist_sort[row_idx_keep]
+            dist_arr_list.append(dist_arr)
+
         return idx_arr_list
 
     def get_acq_list_batch(self, x_list):
