@@ -306,7 +306,18 @@ class OptRightScan(Algorithm):
     def get_output(self):
         """Return output based on self.exe_path."""
         min_idx = np.argmin(self.exe_path.y)
-        return self.exe_path.x[min_idx]
+        min_pair = [self.exe_path.x[min_idx], self.exe_path.y[min_idx]]
+        return min_pair
+
+    def get_output_dist_fn(self):
+        """Return distance function for pairs of outputs."""
+
+        def dist_fn(a, b):
+            a = np.array(a[0] + [a[1]])
+            b = np.array(b[0] + [b[1]])
+            return np.linalg.norm(a - b)
+
+        return dist_fn
 
 
 class GlobalOptValGrid(FixedPathAlgorithm):
