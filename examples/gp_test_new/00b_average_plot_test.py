@@ -46,7 +46,14 @@ modelclass = SimpleGp # NOTE: can use SimpleGp model
 
 # Set acquisition details
 acqfn_params = {"acq_str": "exe", "n_path": 100}
-#acqfn_params = {"acq_str": "out", "n_path": 600} # NOTE: can use "out" acqfn
+#acqfn_params = {        # NOTE: can use "out" acqfn
+    #"acq_str": "out",
+    #"crop": False,
+    #"n_path": 200,
+    #"min_neighbors": 10,
+    #"max_neighbors": 20,
+    #"dist_thresh": 0.05,
+#}
 x_test = [[x] for x in np.linspace(0.0, max_x, 500)]
 y_test = [f(x) for x in x_test]
 acqopt_params = {"x_batch": x_test}
@@ -77,7 +84,7 @@ for i in range(n_iter):
     vizzer = AcqViz1D({"lims": (0, max_x, -5.5, 6.5), "n_path_max": 50})
     ax_tup = vizzer.plot_acqoptimizer_all(
         model,
-        acqfn.exe_path_full_list,
+        acqfn.exe_path_list,
         acqfn.output_list,
         acqfn.acq_vars["acq_list"],
         x_test,

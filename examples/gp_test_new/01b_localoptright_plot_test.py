@@ -46,7 +46,14 @@ modelclass = GpfsGp
 
 # Set acquisition details
 acqfn_params = {"acq_str": "exe", "n_path": 300}
-#acqfn_params = {"acq_str": "out", "n_path": 300} # NOTE: can use "out" acqfn
+#acqfn_params = {        # NOTE: can use "out" acqfn
+    #"acq_str": "out",
+    #"crop": False,
+    #"n_path": 500,
+    #"min_neighbors": 10,
+    #"max_neighbors": 20,
+    #"dist_thresh": 0.25,
+#}
 min_x = 3.5
 max_x = 20.0
 x_test = [[x] for x in np.linspace(0.0, max_x, 500)]
@@ -66,7 +73,9 @@ for i in range(n_iter):
     x_next = acqopt.optimize(acqfn)
 
     # Compute current expected output
-    expected_output = np.mean(acqfn.output_list)
+    output_list = acqfn.output_list
+    output_list = [out[0] for out in output_list]
+    expected_output = np.mean(output_list)
     out_abs_err = np.abs(algo_output_f - expected_output)
 
     # Print
@@ -79,8 +88,8 @@ for i in range(n_iter):
     vizzer = AcqViz1D({"lims": (0, max_x, -7.0, 8.0), "n_path_max": 100})
     ax_tup = vizzer.plot_acqoptimizer_all(
         model,
-        acqfn.exe_path_full_list,
-        acqfn.output_list,
+        acqfn.exe_path_list,
+        output_list,
         acqfn.acq_vars["acq_list"],
         x_test,
         acqfn.acq_vars["mu"],
