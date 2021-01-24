@@ -117,3 +117,11 @@ def make_grid(grid_size, x1_lims=(-1, 1), x2_lims=(-1, 1)):
     edges = make_edges(vertices)
 
     return positions, vertices, edges
+
+
+def jaccard_similarity(list1, list2):
+    """Return jaccard similarity between two sets."""
+    s1 = set(list1)
+    s2 = set(list2)
+    jac_sim = float(len(s1.intersection(s2)) / len(s1.union(s2)))
+    return jac_sim

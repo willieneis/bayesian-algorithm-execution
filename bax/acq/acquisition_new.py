@@ -227,7 +227,7 @@ class BaxAcqFunction(AlgoAcqFunction):
         # -----
         print('\t- clust_idx_list details:')
         len_list = [len(clust) for clust in cluster_idx_list]
-        print(f'\t- min len_list: {np.min(len_list)},  len(len_list): {len(len_list)}')
+        print(f'\t- min len_list: {np.min(len_list)},  max len_list: {np.max(len_list)},  len(len_list): {len(len_list)}')
         # -----
 
         # Remove clusters that are too small
@@ -236,7 +236,7 @@ class BaxAcqFunction(AlgoAcqFunction):
 
         # -----
         len_list = [len(clust) for clust in cluster_idx_list]
-        print(f'\t- min len_list: {np.min(len_list)},  len(len_list): {len(len_list)}')
+        print(f'\t- min len_list: {np.min(len_list)},  max len_list: {np.max(len_list)},  len(len_list): {len(len_list)}')
         # -----
 
         # Compute entropies for posterior predictive given execution path samples
