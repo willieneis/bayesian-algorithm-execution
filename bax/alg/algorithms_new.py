@@ -95,6 +95,17 @@ class Algorithm(ABC):
         """Return distance function for pairs of outputs."""
         pass
 
+    def get_output_dist_fn(self):
+        """Return distance function for pairs of outputs."""
+
+        # Default dist_fn casts outputs to arrays and returns Euclidean distance
+        def dist_fn(a, b):
+            a_arr = np.array(a)
+            b_arr = np.array(b)
+            return np.linalg.norm(a_arr - b_arr)
+
+        return dist_fn
+
     def print_str(self):
         """Print a description string."""
         print("*[INFO] " + str(self))
@@ -341,14 +352,6 @@ class GlobalOptValGrid(FixedPathAlgorithm):
         opt_val = self.exe_path.y[opt_idx]
 
         return opt_val
-
-    def get_output_dist_fn(self):
-        """Return distance function for pairs of outputs."""
-
-        def dist_fn(a, b):
-            return np.linalg.norm(a - b)
-
-        return dist_fn
 
 
 class GlobalOptGrid(GlobalOptValGrid):
