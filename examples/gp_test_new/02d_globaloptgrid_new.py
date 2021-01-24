@@ -31,7 +31,7 @@ f = lambda x: ym * np.sin(np.pi * xm * (x[0] + xa)) + \
 # Set algorithm details
 min_x = 3.5
 max_x = 20.0
-len_path = 500
+len_path = 75
 x_path = [[x] for x in np.linspace(min_x, max_x, len_path)]
 algo = GlobalOptGrid({"x_path": x_path, "opt_mode": "max"})
 
@@ -47,7 +47,14 @@ modelclass = GpfsGp
 #modelclass = SimpleGp # NOTE: can use SimpleGp model
 
 # Set acquisition details
-acqfn_params = {"acq_str": "exe", "n_path": 500}
+acqfn_params = {
+    "acq_str": "out",
+    "crop": False,
+    "n_path": 500,
+    "min_neighbors": 10,
+    "max_neighbors": 30,
+    "dist_thresh": 1.0,
+}
 n_test = 500
 x_test = [[x] for x in np.linspace(min_x, max_x, n_test)]
 y_test = [f(x) for x in x_test]
@@ -83,7 +90,7 @@ for i in range(n_iter):
     plt.ylabel("y")
 
     vizzer = AcqViz1D()
-    vizzer.plot_acqoptimizer_all(
+    vizzer.plot_acq_out_cluster(
         model,
         acqfn.exe_path_list,
         output_list,
@@ -93,6 +100,9 @@ for i in range(n_iter):
         acqfn.acq_vars["std"],
         acqfn.acq_vars["mu_list"],
         acqfn.acq_vars["std_list"],
+        acqfn.cluster_idx_list,
+        acqfn.mean_cluster_list,
+        acqfn.std_cluster_list,
     )
     plt.plot(x_test, y_test, "-", color="k", linewidth=2)
 
@@ -104,6 +114,7 @@ for i in range(n_iter):
     if inp:
         break
     plt.close()
+    del vizzer
 
     # Query function, update data
     y_next = f(x_next)
