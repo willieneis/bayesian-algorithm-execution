@@ -304,13 +304,7 @@ class BaxAcqFunction(AlgoAcqFunction):
         return idx_arr_list
 
     def acq_is_normal(
-        self,
-        post_std,
-        samp_mean_list,
-        samp_mean_list_full,
-        samp_std_list,
-        samp_std_list_full,
-        output_list
+        self, post_std, samp_mean_list, samp_std_list, output_list, x_list
     ):
         """
         Algorithm-output-based acquisition function: EIG on the algorithm output, via
@@ -401,8 +395,8 @@ class BaxAcqFunction(AlgoAcqFunction):
             h_samp_list.append(h_samp)
 
         avg_h_samp = np.mean(h_samp_list, 0)
-        acq_exe = h_post - avg_h_samp
-        return acq_exe
+        acq_is = h_post - avg_h_samp
+        return acq_is
 
     def get_acq_list_batch(self, x_list):
         """Return acquisition function for a batch of inputs x_list."""
@@ -430,7 +424,9 @@ class BaxAcqFunction(AlgoAcqFunction):
             elif self.params.acq_str == 'out':
                 acq_list = self.acq_out_normal(std, mu_list, std_list, self.output_list)
             elif self.params.acq_str == 'is':
-                acq_list = self.acq_is_normal(std, mu_list, std_list, self.output_list)
+                acq_list = self.acq_is_normal(
+                    std, mu_list, std_list, self.output_list, x_list
+                )
 
         # Package and store acq_vars
         self.acq_vars = {
