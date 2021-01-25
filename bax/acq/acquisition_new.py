@@ -125,6 +125,7 @@ class AlgoAcqFunction(AcqFunction):
 
         # Set self.output_list
         self.output_list = output_list
+        self.exe_path_full_list = full_list
 
         # Set self.exe_path_list to list of full or cropped exe paths
         if self.params.crop:
@@ -302,6 +303,107 @@ class BaxAcqFunction(AlgoAcqFunction):
 
         return idx_arr_list
 
+    def acq_is_normal(
+        self,
+        post_std,
+        samp_mean_list,
+        samp_mean_list_full,
+        samp_std_list,
+        samp_std_list_full,
+        output_list
+    ):
+        """
+        Algorithm-output-based acquisition function: EIG on the algorithm output, via
+        the importance sampling strategy, for normal posterior predictive distributions.
+        """
+        # Compute list of means and stds for full execution path
+        samp_mean_list_full = []
+        samp_std_list_full = []
+        for exe_path in self.exe_path_full_list:
+            comb_data = Namespace()
+            comb_data.x = self.model.data.x + exe_path.x
+            comb_data.y = self.model.data.y + exe_path.y
+            samp_mean, samp_std = self.model.gp_post_wrapper(
+                x_list, comb_data, full_cov=False
+            )
+            samp_mean_list_full.append(samp_mean)
+            samp_std_list_full.append(samp_std)
+
+        # Compute entropies for posterior predictive
+        h_post = self.entropy_given_normal_std(post_std)
+
+        # Get list of idx-list-per-cluster
+        cluster_idx_list = self.get_cluster_idx_list(output_list)
+
+        # -----
+        print('\t- clust_idx_list details:')
+        len_list = [len(clust) for clust in cluster_idx_list]
+        print(f'\t- min len_list: {np.min(len_list)},  max len_list: {np.max(len_list)},  len(len_list): {len(len_list)}')
+        # -----
+
+        ## Remove clusters that are too small
+        #min_nn = self.params.min_neighbors
+        #cluster_idx_list = [clust for clust in cluster_idx_list if len(clust) > min_nn]
+
+        # -----
+        len_list = [len(clust) for clust in cluster_idx_list]
+        print(f'\t- min len_list: {np.min(len_list)},  max len_list: {np.max(len_list)},  len(len_list): {len(len_list)}')
+        # -----
+
+        # Compute entropies for posterior predictive given execution path samples
+        h_samp_list = []
+        #for samp_mean, samp_std in zip(samp_mean_list, samp_std_list):
+        for exe_idx in range(len(samp_mean_list)):
+            # Unpack
+            samp_mean = samp_mean_list[exe_idx]
+            samp_mean_full = samp_mean_list_full[exe_idx]
+            samp_std = samp_std_list[exe_idx]
+            samp_std_full = samp_std_list_full[exe_idx]
+            clust_idx = cluster_idx_list[exe_idx]
+
+            # Sample from proposal distribution
+            n_samp = 200
+            pow_fac = 0.001
+            samp_mat = np.random.normal(samp_mean, samp_std, (n_samp, len(samp_mean)))
+
+            # Compute importance weights denominators
+            mean_mat = np.vstack([samp_mean for _ in range(n_samp)])
+            std_mat = np.vstack([samp_std for _ in range(n_samp)])
+            pdf_mat = sps_norm.pdf(samp_mat, mean_mat, std_mat)
+            #weight_mat_den = np.ones(pdf_mat.shape)
+            weight_mat_den = pdf_mat
+
+            # Compute importance weights numerators
+            pdf_mat_sum = np.zeros(pdf_mat.shape)
+            for idx in clust_idx:
+                samp_mean_full = samp_mean_list_full[idx]
+                samp_std_full = samp_std_list_full[idx]
+
+                mean_mat = np.vstack([samp_mean_full for _ in range(n_samp)])
+                std_mat = np.vstack([samp_std_full for _ in range(n_samp)])
+                pdf_mat = sps_norm.pdf(samp_mat, mean_mat, std_mat)
+                pdf_mat_sum = pdf_mat_sum + pdf_mat
+
+            #weight_mat_num = np.ones(pdf_mat_sum.shape)
+            weight_mat_num = pdf_mat_sum / len(clust_idx)
+            weight_mat_num = weight_mat_num
+
+            # Compute and normalize importance weights
+            weight_mat = (weight_mat_num + 1e-50) / (weight_mat_den + 1.1e-50)
+            weight_mat_norm = weight_mat / np.sum(weight_mat, 0)
+            weight_mat_norm = (n_samp * weight_mat_norm) ** pow_fac
+
+            # Reweight samples and compute statistics
+            weight_samp = samp_mat * weight_mat_norm * n_samp
+            is_mean = np.mean(weight_samp, 0)
+            is_std = np.std(weight_samp, 0)
+            h_samp = self.entropy_given_normal_std(is_std)
+            h_samp_list.append(h_samp)
+
+        avg_h_samp = np.mean(h_samp_list, 0)
+        acq_exe = h_post - avg_h_samp
+        return acq_exe
+
     def get_acq_list_batch(self, x_list):
         """Return acquisition function for a batch of inputs x_list."""
 
@@ -327,6 +429,8 @@ class BaxAcqFunction(AlgoAcqFunction):
                 acq_list = self.acq_exe_normal(std, std_list)
             elif self.params.acq_str == 'out':
                 acq_list = self.acq_out_normal(std, mu_list, std_list, self.output_list)
+            elif self.params.acq_str == 'is':
+                acq_list = self.acq_is_normal(std, mu_list, std_list, self.output_list)
 
         # Package and store acq_vars
         self.acq_vars = {
