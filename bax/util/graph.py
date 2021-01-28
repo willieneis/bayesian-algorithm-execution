@@ -94,20 +94,24 @@ def positions_of_path(path):
 
 
 def make_grid(grid_size, x1_lims=(-1, 1), x2_lims=(-1, 1)):
-    x1, x2 = np.meshgrid(np.linspace(*x1_lims, grid_size), np.linspace(*x2_lims, grid_size))
+    x1, x2 = np.meshgrid(
+        np.linspace(*x1_lims, grid_size), np.linspace(*x2_lims, grid_size)
+    )
     positions = np.stack([x1.flatten(), x2.flatten()], axis=-1)
     n = len(positions)
 
     has_edge = [[False for _ in range(n)] for _ in range(n)]
     for i in range(n):
         for j in range(i + 1, n):
-            if ((abs(i - j) == 1) and (j % grid_size != 0)): # neighbors cardinal directions
+            if (abs(i - j) == 1) and (
+                j % grid_size != 0
+            ):  # neighbors cardinal directions
                 has_edge[i][j] = True
-            elif (abs(i - j) == grid_size): # vertices on the edge of grid
+            elif abs(i - j) == grid_size:  # vertices on the edge of grid
                 has_edge[i][j] = True
-            elif (abs(j - i) == grid_size + 1) and (j % grid_size != 0): # diagonals
+            elif (abs(j - i) == grid_size + 1) and (j % grid_size != 0):  # diagonals
                 has_edge[i][j] = True
-            elif (abs(j - i) == grid_size - 1) and (i % grid_size != 0): # diagonals
+            elif (abs(j - i) == grid_size - 1) and (i % grid_size != 0):  # diagonals
                 has_edge[i][j] = True
             else:
                 has_edge[i][j] = False
@@ -117,3 +121,49 @@ def make_grid(grid_size, x1_lims=(-1, 1), x2_lims=(-1, 1)):
     edges = make_edges(vertices)
 
     return positions, vertices, edges
+
+
+def shoelace(vertices: List[np.array]):
+    """Computes the shoelace algorithm on `vertices`
+    Assumes that `vertices` contains the vertices of a 2D polygon.
+    Here we take the absolute value of the result to be independent of
+    chirality (i.e. counter-clockwise vs clockwise).
+
+    See https://en.wikipedia.org/wiki/Shoelace_formula for more details
+    """
+    assert all(v.ndim == 1 for v in vertices)
+    positions = np.stack(vertices)
+    x, y = positions[:, 0], positions[:, 1]
+    return np.abs(np.sum(x * np.roll(y, 1) - np.roll(x, 1) * y)) / 2
+
+
+def area_of_polygons(path1: List[Vertex], path2: List[Vertex]):
+    """Computes the area of the polygons created by the area between two paths
+    from the same start and end node on a graph embedded in R^2.
+
+    We first find each polygon and then find each of the area using the shoelace algorithm.
+
+    Some polygons will have vertices listed clockwise and some will have vertices listed counterclockwise
+    """
+    assert len(path1) > 0 and len(path2) > 0
+    assert all(v.position.ndim == 1 for v in path1)
+    assert all(v.position.ndim == 1 for v in path2)
+    assert path1[0].index == path2[0].index
+    assert path1[-1].index == path2[-1].index
+
+    # find intersections in quadratic time
+    intersections = [
+        (i, j)
+        for i, u in enumerate(path1)
+        for j, v in enumerate(path2)
+        if v.index == u.index
+    ]
+    polygons = []
+    for k in range(len(intersections) - 1):
+        i, j = intersections[k]
+        i_, j_ = intersections[k + 1]
+        polygon = path1[i:i_] + path2[j_:j:-1]
+        polygons.append(polygon)
+
+    area = sum(shoelace([v.position for v in polygon]) for polygon in polygons)
+    return area
