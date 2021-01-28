@@ -433,6 +433,73 @@ class GlobalOptUnifRandVal(Algorithm):
         return opt_val
 
 
+class TopK(FixedPathAlgorithm):
+    """
+    Algorithm that scans over a set of points, and as output returns the K points with
+    highest value.
+    """
+
+    def set_params(self, params):
+        """Set self.params, the parameters for the algorithm."""
+        super().set_params(params)
+        params = dict_to_namespace(params)
+
+        self.params.name = getattr(params, "name", "TopK")
+        self.params.opt_mode = getattr(params, "opt_mode", "max")
+        self.params.k = getattr(params, "k", 3)
+
+    def get_exe_path_topk_idx(self):
+        """Return the index of the optimal point in execution path."""
+        if self.params.opt_mode == "min":
+            topk_idx = np.argsort(self.exe_path.y)[:self.params.k]
+        elif self.params.opt_mode == "max":
+            rev_exe_path_y = -np.array(self.exe_path.y)
+            topk_idx = np.argsort(rev_exe_path_y)[:self.params.k]
+
+        return topk_idx
+
+    def get_exe_path_crop(self):
+        """
+        Return the minimal execution path for output, i.e. cropped execution path,
+        specific to this algorithm.
+        """
+        topk_idx = self.get_exe_path_topk_idx()
+
+        exe_path_crop = Namespace()
+        exe_path_crop.x = [self.exe_path.x[idx] for idx in topk_idx]
+        exe_path_crop.y = [self.exe_path.y[idx] for idx in topk_idx]
+
+        return exe_path_crop
+
+    def get_output(self):
+        """Return output based on self.exe_path."""
+        topk_idx = self.get_exe_path_topk_idx()
+
+        out_ns = Namespace()
+        out_ns.x = [self.exe_path.x[idx] for idx in topk_idx]
+        out_ns.y = [self.exe_path.y[idx] for idx in topk_idx]
+
+        return out_ns
+
+    def get_output_dist_fn(self):
+        """Return distance function for pairs of outputs."""
+
+        def dist_fn(a, b):
+            a_list = []
+            list(map(a_list.extend, a.x))
+            a_list.extend(a.y)
+            a_arr = np.array(a_list)
+
+            b_list = []
+            list(map(b_list.extend, b.x))
+            b_list.extend(b.y)
+            b_arr = np.array(b_list)
+
+            return np.linalg.norm(a_arr - b_arr)
+
+        return dist_fn
+
+
 class Noop(Algorithm):
     """"Dummy noop algorithm for debugging parallel code."""
 
