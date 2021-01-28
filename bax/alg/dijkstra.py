@@ -9,7 +9,7 @@ import numpy as np
 
 from .algorithms_new import Algorithm
 from ..util.misc_util import dict_to_namespace
-from ..util.graph import Vertex, backtrack_indices
+from ..util.graph import Vertex, backtrack_indices, edges_of_path, jaccard_similarity
 
 
 class Dijkstra(Algorithm):
@@ -274,3 +274,37 @@ class Dijkstra(Algorithm):
     def get_output(self):
         """Return best path."""
         return self.best_cost, self.best_path
+
+    def get_output_dist_fn_path_cost(self):
+        """
+        Return distance function (based on difference in cost of shortest path) for
+        pairs of outputs.
+        """
+
+        # Default dist_fn casts outputs to arrays and returns Euclidean distance
+        def dist_fn(a, b):
+            a_arr = np.array(a[0])
+            b_arr = np.array(b[0])
+            return np.linalg.norm(a_arr - b_arr)
+
+        return dist_fn
+
+    def get_output_dist_fn(self):
+        """
+        Return distance function (based on overlap of edges in shortest path) for pairs
+        of outputs.
+        """
+
+        # Default dist_fn casts outputs to arrays and returns Euclidean distance
+        def dist_fn(a, b):
+            edges_a = edges_of_path(a[1])
+            edges_b = edges_of_path(b[1])
+
+            # convert to list of hashable types
+            edges_a = [tuple(list(e[0]) + list(e[1])) for e in edges_a]
+            edges_b = [tuple(list(e[0]) + list(e[1])) for e in edges_b]
+
+            dist = 1 - jaccard_similarity(edges_a, edges_b)
+            return dist
+
+        return dist_fn

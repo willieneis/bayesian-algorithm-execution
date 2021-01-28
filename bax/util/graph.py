@@ -167,3 +167,11 @@ def area_of_polygons(path1: List[Vertex], path2: List[Vertex]):
 
     area = sum(shoelace([v.position for v in polygon]) for polygon in polygons)
     return area
+
+
+def jaccard_similarity(list1, list2):
+    """Return jaccard similarity between two sets."""
+    s1 = set(list1)
+    s2 = set(list2)
+    jac_sim = float(len(s1.intersection(s2)) / len(s1.union(s2)))
+    return jac_sim

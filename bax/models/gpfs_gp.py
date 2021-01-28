@@ -31,7 +31,7 @@ class GpfsGp(SimpleGp):
         self.params.ls = getattr(params, 'ls', 3.7)
         self.params.alpha = getattr(params, 'alpha', 1.85)
         self.params.sigma = getattr(params, 'sigma', 1e-2)
-        self.params.n_bases = getattr(params, 'n_bases', 400)
+        self.params.n_bases = getattr(params, 'n_bases', 1000)
         self.params.n_dimx = getattr(params, 'n_dimx', 1)
         self.set_kernel(params)
 

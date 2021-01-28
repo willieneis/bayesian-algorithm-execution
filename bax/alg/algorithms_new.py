@@ -91,6 +91,21 @@ class Algorithm(ABC):
         """Return output based on self.exe_path."""
         pass
 
+    def get_output_dist_fn(self):
+        """Return distance function for pairs of outputs."""
+        pass
+
+    def get_output_dist_fn(self):
+        """Return distance function for pairs of outputs."""
+
+        # Default dist_fn casts outputs to arrays and returns Euclidean distance
+        def dist_fn(a, b):
+            a_arr = np.array(a)
+            b_arr = np.array(b)
+            return np.linalg.norm(a_arr - b_arr)
+
+        return dist_fn
+
     def print_str(self):
         """Print a description string."""
         print("*[INFO] " + str(self))
@@ -291,7 +306,18 @@ class OptRightScan(Algorithm):
     def get_output(self):
         """Return output based on self.exe_path."""
         min_idx = np.argmin(self.exe_path.y)
-        return self.exe_path.x[min_idx]
+        min_pair = [self.exe_path.x[min_idx], self.exe_path.y[min_idx]]
+        return min_pair
+
+    def get_output_dist_fn(self):
+        """Return distance function for pairs of outputs."""
+
+        def dist_fn(a, b):
+            a = np.array(a[0] + [a[1]])
+            b = np.array(b[0] + [b[1]])
+            return np.linalg.norm(a - b)
+
+        return dist_fn
 
 
 class GlobalOptValGrid(FixedPathAlgorithm):
@@ -352,7 +378,20 @@ class GlobalOptGrid(GlobalOptValGrid):
         elif self.params.opt_mode == "max":
             opt_idx = np.argmax(self.exe_path.y)
 
-        return self.exe_path.x[opt_idx]
+        # Set opt_pair as [list, float]
+        opt_pair = [self.exe_path.x[opt_idx], self.exe_path.y[opt_idx]]
+
+        return opt_pair
+
+    def get_output_dist_fn(self):
+        """Return distance function for pairs of outputs."""
+
+        def dist_fn(a, b):
+            a = np.array(a[0] + [a[1]])
+            b = np.array(b[0] + [b[1]])
+            return np.linalg.norm(a - b)
+
+        return dist_fn
 
 
 class GlobalOptUnifRandVal(Algorithm):

@@ -142,10 +142,10 @@ class AcqViz1D:
             nextcolor = next(cgen)['color']
 
             # Plot execution paths in each cluster
-            self.plot_cluster_exe_paths(cluster_idx, exe_path_list, nextcolor)
+            h = self.plot_cluster_exe_paths(cluster_idx, exe_path_list, nextcolor)
 
             # Plot means of each cluster
-            h = self.plot_cluster_means(x_test, mean_cluster, cluster_idx, nextcolor)
+            #h = self.plot_cluster_means(x_test, mean_cluster, cluster_idx, nextcolor)
 
             # Plot stds of each cluster
             #self.plot_cluster_stds(x_test, mean_cluster, std_cluster, nextcolor)
@@ -157,16 +157,18 @@ class AcqViz1D:
 
     def plot_cluster_exe_paths(self, cluster_idx, exe_path_list, color):
         """Plot execution paths for samples in each cluster."""
-        exe_path_subset = [exe_path_list[i] for i in cluster_idx]
+        #exe_path_subset = [exe_path_list[i] for i in cluster_idx]
+        exe_path_subset = [exe_path_list[cluster_idx[0]]]
         x_offset = np.random.uniform(-0.1, 0.1)
         for exe_path in exe_path_subset:
             h = plt.plot(
                 np.array(exe_path.x) + x_offset,
                 exe_path.y,
-                ".",
+                ".-",
                 color=color,
                 markersize=4,
                 linewidth=0.5,
+                label="Cluster exe path"
             )
         return h
 
@@ -199,7 +201,8 @@ class AcqViz1D:
 
     def plot_cluster_property(self, cluster_idx, output_list, color):
         """Plot property of interest for samples in each cluster."""
-        output_subset = [output_list[i] for i in cluster_idx]
+        #output_subset = [output_list[i] for i in cluster_idx]
+        output_subset = [output_list[cluster_idx[0]]]
         for output in output_subset:
             y_offset = np.random.uniform(-0.2, 0.2)
             h = plt.plot(

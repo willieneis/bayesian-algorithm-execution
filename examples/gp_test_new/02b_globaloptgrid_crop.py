@@ -47,8 +47,7 @@ modelclass = GpfsGp
 #modelclass = SimpleGp # NOTE: can use SimpleGp model
 
 # Set acquisition details
-acqfn_params = {"acq_str": "exe", "n_path": 200}
-#acqfn_params = {"acq_str": "out", "n_path": 200, "n_cluster_kmeans": 25}
+acqfn_params = {"acq_str": "exe", "n_path": 500}
 n_test = 500
 x_test = [[x] for x in np.linspace(min_x, max_x, n_test)]
 y_test = [f(x) for x in x_test]
@@ -67,7 +66,9 @@ for i in range(n_iter):
     x_next = acqopt.optimize(acqfn)
 
     # Compute current expected output
-    expected_output = np.mean(acqfn.output_list)
+    output_list = acqfn.output_list
+    output_list = [out[0] for out in output_list]
+    expected_output = np.mean(output_list)
 
     # Print
     print(f"Acq optimizer x_next = {x_next}")
@@ -85,7 +86,7 @@ for i in range(n_iter):
     vizzer.plot_acqoptimizer_all(
         model,
         acqfn.exe_path_list,
-        acqfn.output_list,
+        output_list,
         acqfn.acq_vars["acq_list"],
         x_test,
         acqfn.acq_vars["mu"],
