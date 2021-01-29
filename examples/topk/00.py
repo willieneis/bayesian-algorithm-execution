@@ -28,13 +28,13 @@ f = lambda x: 2 * np.sin(x[0])
 # Set algorithm  details
 min_x = 3.5
 max_x = 20.0
-len_path = 15
+len_path = 20
 x_path = [[x] for x in np.random.uniform(min_x, max_x, len_path)]
-algo = TopK({"x_path": x_path, "k": 3})
+algo = TopK({"x_path": x_path, "k": 2})
 
 # Set data for model
 data = Namespace()
-data.x = [[1.0], [3.3], [5.7], [10.0], [12.0], [16.0]]
+data.x = [[1.0], [4.05], [7.27], [10.3], [13.2], [17.0]]
 data.y = [f(x) for x in data.x]
 
 # Set model details
@@ -96,6 +96,13 @@ for i in range(n_iter):
         acqfn.acq_vars["std_list"],
     )
     ax_tup[0].plot(x_test, y_test, "-", color="k", linewidth=2)
+
+    # plot the algo path
+    ylims0 = ax_tup[0].get_ylim()
+    ylims1 = ax_tup[1].get_ylim()
+    for x in x_path:
+        ax_tup[0].plot([x[0], x[0]], [ylims0[0], ylims0[1]], '-', color=(0, 0, 0, 0.1), linewidth=5.0)
+        ax_tup[1].plot([x[0], x[0]], [ylims1[0], ylims1[1]], '-', color=(0, 0, 0, 0.1), linewidth=5.0)
 
     #neatplot.save_figure(f"00b_{i}")
     plt.show()
