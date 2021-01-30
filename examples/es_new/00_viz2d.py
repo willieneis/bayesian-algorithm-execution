@@ -29,10 +29,8 @@ f = branin
 
 # Set algorithm details
 init_x = [4.8, 13.0]
-#init_x = [4.0, 14.0]
-#init_x = [6.0, 10.0]
-#init_x = [5.7, 13.25]
-#init_x = [7.5, 13.0]
+#init_x = [6.0, 10.0] # Center-right start
+
 domain = [[-5, 10], [0, 15]]
 algo = EvolutionStrategies(
     {
@@ -54,14 +52,21 @@ data.x = [init_x]
 data.y = [f(x) for x in data.x]
 
 # Set model details
-gp_params = {"ls": 3.0, "alpha": 2.0, "sigma": 1e-2, "n_dimx": 2}
-#gp_params = get_stangp_hypers(f, domain=domain, n_samp=200) # NOTE: can use StanGp to fit hypers
+#gp_params = {"ls": 3.0, "alpha": 2.0, "sigma": 1e-2, "n_dimx": 2}
+gp_params = get_stangp_hypers(f, domain=domain, n_samp=200) # NOTE: can use StanGp to fit hypers
 modelclass = GpfsGp
 #modelclass = SimpleGp # NOTE: can use SimpleGp model
 
 # Set acquisition details
-acqfn_params = {"acq_str": "out", "n_path": 50}
-#acqfn_params = {"acq_str": "exe", "n_path": 50} # NOTE: can use "exe" acqfn
+acqfn_params = {"acq_str": "exe", "n_path": 100}
+#acqfn_params = {
+    #"acq_str": "out",
+    #"n_path": 200,
+    #"min_neighbors": 5,
+    #"max_neighbors": 10,
+    #"dist_thresh": 0.5,
+#}
+
 n_rand_acqopt = 350
 
 # Run BAX loop
