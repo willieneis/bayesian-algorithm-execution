@@ -93,10 +93,6 @@ class Algorithm(ABC):
 
     def get_output_dist_fn(self):
         """Return distance function for pairs of outputs."""
-        pass
-
-    def get_output_dist_fn(self):
-        """Return distance function for pairs of outputs."""
 
         # Default dist_fn casts outputs to arrays and returns Euclidean distance
         def dist_fn(a, b):
