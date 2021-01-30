@@ -35,7 +35,7 @@ init_x = [4.8, 13.0]
 #init_x = [7.5, 13.0]
 domain = [[-5, 10], [0, 15]]
 algo = GlobalOptUnifRandVal(
-    {"opt_mode": "min", "domain": domain, "n_samp": 100}
+    {"opt_mode": "min", "domain": domain, "n_samp": 300}
 )
 
 # Set data for model
@@ -51,7 +51,7 @@ modelclass = GpfsGp
 
 # Set acquisition details
 acqfn_params = {"opt_mode": "min", "n_path": 50}
-n_rand_acqopt = 100
+n_rand_acqopt = 350
 
 # Run BAX loop
 n_iter = 25
