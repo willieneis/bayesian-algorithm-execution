@@ -393,7 +393,7 @@ class GlobalOptGrid(GlobalOptValGrid):
 class GlobalOptUnifRandVal(Algorithm):
     """
     Algorithm that performs global optimization over a domain via uniform random
-    sampling.
+    sampling and returns value of best input.
     """
 
     def set_params(self, params):
@@ -401,7 +401,7 @@ class GlobalOptUnifRandVal(Algorithm):
         super().set_params(params)
         params = dict_to_namespace(params)
 
-        self.params.name = getattr(params, "name", "GlobalOptUnifRand")
+        self.params.name = getattr(params, "name", "GlobalOptUnifRandVal")
         self.params.opt_mode = getattr(params, "opt_mode", "min")
         self.params.domain = getattr(params, "domain", [[0, 10]])
         self.params.n_samp = getattr(params, "n_samp", 100)
@@ -419,14 +419,37 @@ class GlobalOptUnifRandVal(Algorithm):
 
         return next_x
 
+    def get_opt_idx(self):
+        """Return index of optimal point in self.exe_path."""
+        if self.params.opt_mode == "min":
+            opt_idx = np.argmin(self.exe_path.y)
+        elif self.params.opt_mode == "max":
+            opt_idx = np.argmax(self.exe_path.y)
+
+        return opt_idx
+
     def get_output(self):
         """Return output based on self.exe_path."""
-        if self.params.opt_mode == "min":
-            opt_val = np.min(self.exe_path.y)
-        elif self.params.opt_mode == "max":
-            opt_val = np.max(self.exe_path.y)
+        opt_idx = self.get_opt_idx()
+        return self.exe_path.y[opt_idx]
 
-        return opt_val
+
+class GlobalOptUnifRand(GlobalOptUnifRandVal):
+    """
+    Algorithm that performs global optimization over a domain via uniform random
+    sampling and returns best input.
+    """
+
+    def set_params(self, params):
+        """Set self.params, the parameters for the algorithm."""
+        super().set_params(params)
+        params = dict_to_namespace(params)
+        self.params.name = getattr(params, "name", "GlobalOptUnifRand")
+
+    def get_output(self):
+        """Return output based on self.exe_path."""
+        opt_idx = self.get_opt_idx()
+        return self.exe_path.x[opt_idx]
 
 
 class TopK(FixedPathAlgorithm):
