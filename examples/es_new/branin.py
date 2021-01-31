@@ -41,6 +41,11 @@ def branin(x):
             ).format(type(x))
         )
 
+@np.vectorize
+def branin_xy(x, y):
+    """Apply return branin function on input = (x, y)."""
+    return branin_single((x, y))
+
 
 def branin_on_matrix(X):
     """

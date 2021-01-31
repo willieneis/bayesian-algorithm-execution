@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 plt.ion()
 import tensorflow as tf
 
-#from bax.alg.evolution_strategies_new import EvolutionStrategiesVal
 from bax.alg.algorithms_new import GlobalOptUnifRandVal
 from bax.models.simple_gp import SimpleGp
 from bax.models.gpfs_gp import GpfsGp
@@ -21,7 +20,7 @@ import neatplot
 #neatplot.set_style('fonts')
 
 
-seed = 1112
+seed = 11
 np.random.seed(seed)
 tf.random.set_seed(seed)
 
