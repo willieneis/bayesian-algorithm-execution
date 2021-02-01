@@ -29,7 +29,7 @@ np.random.seed(args.seed)
 tf.random.set_seed(args.seed)
 
 # Set function
-n_dim = 20
+n_dim = 10
 f = Ackley(n_dim)
 
 # Set algorithm details
@@ -39,7 +39,7 @@ init_x = unif_random_sample_domain(domain, n=1)
 #init_x = [[0.5] *  n_dim]
 
 algo_params = {
-    'n_generation': 200,
+    'n_generation': 20,
     'n_population': 10,
     'samp_str': 'mut',
     'opt_mode': 'min',
@@ -47,8 +47,8 @@ algo_params = {
     'domain': domain,
     'normal_scale': 0.05,
     'keep_frac': 0.3,
-    'crop': False,
-    #'crop': True,
+    #'crop': False,
+    'crop': True,
 }
 algo = EvolutionStrategies(algo_params)
 
@@ -62,7 +62,7 @@ gp_params = get_stangp_hypers(f, domain=domain, n_samp=1000)
 modelclass = GpfsGp
 
 # Set acquisition details
-acqfn_params = {"acq_str": "exe", "n_path": 20}
+acqfn_params = {"acq_str": "exe", "n_path": 50}
 n_rand_acqopt = 1000
 
 # Set up results directory

@@ -23,7 +23,7 @@ print(f"*[INFO] Seed: {args.seed}")
 np.random.seed(args.seed)
 
 # Set function
-n_dim = 20
+n_dim = 10
 f = Ackley(n_dim)
 
 # Set algorithm details

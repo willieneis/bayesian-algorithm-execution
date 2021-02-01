@@ -24,7 +24,7 @@ np.random.seed(args.seed)
 tf.random.set_seed(args.seed)
 
 # Set function
-n_dim = 20
+n_dim = 10
 f = Ackley(n_dim)
 
 # Set algorithm details
@@ -50,7 +50,7 @@ results = Namespace(
 )
 
 # Run BAX loop
-n_iter = 1000
+n_iter = 2000
 x_all = unif_random_sample_domain(domain, n=n_iter)
 
 for i in range(n_iter):
