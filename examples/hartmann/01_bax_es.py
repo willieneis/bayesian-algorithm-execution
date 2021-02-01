@@ -19,7 +19,7 @@ import neatplot
 neatplot.set_style('fonts')
 
 
-seed = 11
+seed = 15
 np.random.seed(seed)
 tf.random.set_seed(seed)
 
@@ -41,22 +41,33 @@ n_dim = 6
 
 domain = [[0, 1]] * n_dim
 
-init_x = unif_random_sample_domain(domain, n=2)
+#init_x = unif_random_sample_domain(domain, n=1)
 #init_x = [[0.0] *  n_dim]
+init_x = [[0.5] *  n_dim]
 
 algo_params = {
-    #'n_generation': 50,
-    'n_generation': 20,
+    'n_generation': 50,
     'n_population': 10,
     'samp_str': 'mut',
     'opt_mode': 'min',
-    'init_x': init_x,
+    'init_x': init_x[0],
     'domain': domain,
     'normal_scale': 0.05,
     'keep_frac': 0.3,
     #'crop': False,
     'crop': True,
 }
+#algo_params = {
+    #'n_generation': 20,
+    #'n_population': 10,
+    #'samp_str': 'mut',
+    #'opt_mode': 'min',
+    #'init_x': init_x[0],
+    #'domain': domain,
+    #'normal_scale': 0.05,
+    #'keep_frac': 0.3,
+    #'crop': True,
+#}
 algo = EvolutionStrategies(algo_params)
 
 # Set data for model
@@ -72,7 +83,6 @@ modelclass = GpfsGp
 acqfn_params = {"acq_str": "exe", "n_path": 20}
 
 n_rand_acqopt = 350
-#expected_output = data.x[np.argmin(data.y)]
 
 # Namespace to save results
 results = Namespace(
@@ -91,7 +101,7 @@ for i in range(n_iter):
     model = modelclass(gp_params, data)
 
     # Update algo.init_x
-    algo.params.init_x = data.x[np.argmin(data.y)]
+    #algo.params.init_x = data.x[np.argmin(data.y)]
 
     # Set and optimize acquisition function
     acqfn = BaxAcqFunction(acqfn_params, model, algo)
@@ -105,7 +115,7 @@ for i in range(n_iter):
     # Compute output on mean function
     model_mf = modelclass(gp_params, data, verbose=False)
     algo_mf = EvolutionStrategies(algo_params, verbose=False)
-    algo_mf.params.init_x = data.x[np.argmin(data.y)]
+    #algo_mf.params.init_x = data.x[np.argmin(data.y)]
     exe_path_mf, output_mf = run_algo_on_mean_f(model_mf, algo_mf, acqfn.params.n_path)
 
     # Print
