@@ -1,9 +1,8 @@
 import copy
-from argparse import Namespace
+from argparse import Namespace, ArgumentParser
+from pathlib import Path
 import pickle
 import numpy as np
-import matplotlib.pyplot as plt
-#plt.ion()
 import tensorflow as tf
 
 from bax.alg.evolution_strategies_new import EvolutionStrategies
@@ -19,31 +18,25 @@ import neatplot
 neatplot.set_style('fonts')
 
 
-seed = 15
-np.random.seed(seed)
-tf.random.set_seed(seed)
+# Parse args
+parser = ArgumentParser()
+parser.add_argument("--seed", type=int, default=11)
+args = parser.parse_args()
 
-
-def run_algo_on_mean_f(model_mf, algo_mf, n_samp_mf):
-    """Run algorithm on posterior mean (via MC estimate with n_samp samples)."""
-    model_mf.initialize_function_sample_list(n_samp_mf)
-    f_list = model_mf.call_function_sample_list
-    f_mf = lambda x: np.mean(f_list([x for _ in range(n_samp_mf)]))
-    exe_path_mf, output_mf = algo_mf.run_algorithm_on_f(f_mf)
-    return exe_path_mf, output_mf
-
+# Set seeds
+print(f"*[INFO] Seed: {args.seed}")
+np.random.seed(args.seed)
+tf.random.set_seed(args.seed)
 
 # Set function
 f = hartmann6
 
 # Set algorithm details
 n_dim = 6
-
 domain = [[0, 1]] * n_dim
-
-#init_x = unif_random_sample_domain(domain, n=1)
+init_x = unif_random_sample_domain(domain, n=1)
 #init_x = [[0.0] *  n_dim]
-init_x = [[0.5] *  n_dim]
+#init_x = [[0.5] *  n_dim]
 
 algo_params = {
     'n_generation': 50,
@@ -76,13 +69,27 @@ data.x = init_x
 data.y = [f(x) for x in data.x]
 
 # Set model details
-gp_params = get_stangp_hypers(f, domain=domain, n_samp=200)
+gp_params = get_stangp_hypers(f, domain=domain, n_samp=500)
 modelclass = GpfsGp
 
 # Set acquisition details
 acqfn_params = {"acq_str": "exe", "n_path": 20}
-
 n_rand_acqopt = 350
+
+# Set up results directory
+results_dir = Path("examples/hartmann/results")
+results_dir.mkdir(parents=True, exist_ok=True)
+
+
+# Useful function
+def run_algo_on_mean_f(model_mf, algo_mf, n_samp_mf):
+    """Run algorithm on posterior mean (via MC estimate with n_samp samples)."""
+    model_mf.initialize_function_sample_list(n_samp_mf)
+    f_list = model_mf.call_function_sample_list
+    f_mf = lambda x: np.mean(f_list([x for _ in range(n_samp_mf)]))
+    exe_path_mf, output_mf = algo_mf.run_algorithm_on_f(f_mf)
+    return exe_path_mf, output_mf
+
 
 # Namespace to save results
 results = Namespace(
@@ -94,7 +101,7 @@ results = Namespace(
 )
 
 # Run BAX loop
-n_iter = 60
+n_iter = 80
 
 for i in range(n_iter):
     # Set model
@@ -140,10 +147,11 @@ for i in range(n_iter):
     data.x.append(x_next)
     data.y.append(y_next)
 
+# Save final data
+results.data = data
 
 # Pickle results
-save = True
-if save:
-    file_str = f"01_bax_seed_{seed}.pkl"
-    pickle.dump(results, open(file_str, "wb"))
-    print(f"Saved pickle file: {file_str}")
+file_str = f"bax_{args.seed}.pkl"
+with open(results_dir / file_str, "wb") as handle:
+    pickle.dump(results, handle)
+    print(f"Saved results file: {results_dir}/{file_str}")
