@@ -108,7 +108,7 @@ for i in range(n_iter):
     model = modelclass(gp_params, data)
 
     # Update algo.init_x
-    #algo.params.init_x = data.x[np.argmin(data.y)]
+    algo.params.init_x = data.x[np.argmin(data.y)]
 
     # Set and optimize acquisition function
     acqfn = BaxAcqFunction(acqfn_params, model, algo)
@@ -122,7 +122,7 @@ for i in range(n_iter):
     # Compute output on mean function
     model_mf = modelclass(gp_params, data, verbose=False)
     algo_mf = EvolutionStrategies(algo_params, verbose=False)
-    #algo_mf.params.init_x = data.x[np.argmin(data.y)]
+    algo_mf.params.init_x = data.x[np.argmin(data.y)]
     exe_path_mf, output_mf = run_algo_on_mean_f(model_mf, algo_mf, acqfn.params.n_path)
 
     # Print
