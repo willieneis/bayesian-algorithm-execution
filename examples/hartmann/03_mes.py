@@ -34,7 +34,7 @@ f = hartmann6
 # Set algorithm details
 n_dim = 6
 domain = [[0, 1]] * n_dim
-algo_params = {"opt_mode": "min", "domain": domain, "n_samp": 1000}
+algo_params = {"opt_mode": "min", "domain": domain, "n_samp": 1500}
 algo = GlobalOptUnifRandVal(algo_params)
 
 # Set data for model
@@ -43,12 +43,12 @@ data.x = unif_random_sample_domain(domain, n=1)
 data.y = [f(x) for x in data.x]
 
 # Set model details
-gp_params = get_stangp_hypers(f, domain=domain, n_samp=200)
+gp_params = get_stangp_hypers(f, domain=domain, n_samp=500)
 modelclass = GpfsGp
 
 # Set acquisition details
 acqfn_params = {"opt_mode": "min", "n_path": 20}
-n_rand_acqopt = 350
+n_rand_acqopt = 1500
 
 # Set up results directory
 results_dir = Path("examples/hartmann/results")
