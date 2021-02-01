@@ -52,9 +52,9 @@ seed_list = [11, 12, 13, 14, 15]
 
 # Parse methods' results
 rs_list, _, _  = parse_method('rs', seed_list)
-mes_list, _, _  = parse_method('mes3', seed_list)
+mes_list, _, _  = parse_method('mes', seed_list)
 es_list, _, _  = parse_method('es', seed_list)
-_, _, bax_list  = parse_method('bax2', seed_list)
+_, _, bax_list  = parse_method('bax', seed_list)
 
 results_list = [rs_list, es_list, mes_list, bax_list]
 label_list = [
@@ -95,8 +95,8 @@ ax.set_ylim((0.0189, 3.6))
 ax.set_xlim((1, 550))
 #ax.set_xlim((1, 1001))
 
-ax.set_xlabel('x')
-ax.set_ylabel('y')
+ax.set_xlabel('Iteration')
+ax.set_ylabel('Simple Regret')
 ax.set_title('Hartmann 6 Dimensions')
 
 neatplot.save_figure('hartmann')
