@@ -47,8 +47,8 @@ algo_params = {
     'domain': domain,
     'normal_scale': 0.05,
     'keep_frac': 0.3,
-    #'crop': False,
-    'crop': True,
+    'crop': False,
+    #'crop': True,
 }
 algo = EvolutionStrategies(algo_params)
 
