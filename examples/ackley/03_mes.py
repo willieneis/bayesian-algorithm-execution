@@ -75,7 +75,7 @@ results = Namespace(
 )
 
 # Run BAX loop
-n_iter = 80
+n_iter = 200
 
 for i in range(n_iter):
     # Set model
