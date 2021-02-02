@@ -87,14 +87,36 @@ for result in results_list:
     ub = avg_list + stderr_list
     ax.fill_between(iters, lb, ub, color=linecolor, alpha=0.1)
 
+
+
+# Vertical lines?
+ylim = ax.get_ylim()
+plt.plot((80, 80), ylim, '--', color="black", alpha=0.2)
+plt.plot((500, 500), ylim, '--', color="black", alpha=0.2)
+
+anno_1 = '$t=80$'
+ax.annotate(anno_1, (85, 0.035))
+#ax.annotate(anno_1, (50, 0.035))
+
+anno_2 = '$t=500$'
+ax.annotate(anno_2, (280, 0.035))
+anno_3 = '(algorithm\n complete)'
+ax.annotate(anno_3, (220, 0.021))
+
+
+
+# Legend
 ax.legend(handles=h_list, labels=label_list)
 ax.set_yscale('log')
 ax.set_xscale('log')
 
+# Lims
 ax.set_ylim((0.0189, 3.6))
-ax.set_xlim((1, 550))
+#ax.set_xlim((1, 550))
+ax.set_xlim((1, 650))
 #ax.set_xlim((1, 1001))
 
+# Axis labels/titles
 ax.set_xlabel('Iteration')
 ax.set_ylabel('Simple Regret')
 ax.set_title('Hartmann 6 Dimensions')

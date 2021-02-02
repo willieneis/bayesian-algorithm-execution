@@ -16,7 +16,7 @@ def parse_method(method_str, seed_list):
     for seed in seed_list:
 
         # Load results
-        file_str = f"examples/hartmann/results_plot/{method_str}_{seed}.pkl"
+        file_str = f"examples/ackley/results/{method_str}_{seed}.pkl"
         results = pickle.load(open(file_str, "rb"))
 
         n_iter = len(results.output_mf_list)
@@ -52,9 +52,9 @@ seed_list = [11, 12, 13, 14, 15]
 
 # Parse methods' results
 rs_list, _, _  = parse_method('rs', seed_list)
-mes_list, _, _  = parse_method('mes3', seed_list)
+mes_list, _, _ = parse_method('mes', seed_list)
 es_list, _, _  = parse_method('es', seed_list)
-_, _, bax_list  = parse_method('bax2', seed_list)
+_, _, bax_list  = parse_method('bax', seed_list)
 
 results_list = [rs_list, es_list, mes_list, bax_list]
 label_list = [
@@ -63,10 +63,6 @@ label_list = [
     'Max-value Entropy Search',
     'BAX-Evolutionary',
 ]
-
-# Re-scale results given Hartmann6 minimum = -3.322
-hartmann_min = -3.3224
-results_list = [subtract_min(res, hartmann_min) for res in results_list]
 
 # Plot
 fig, ax = plt.subplots(figsize=(8, 5))
@@ -87,18 +83,39 @@ for result in results_list:
     ub = avg_list + stderr_list
     ax.fill_between(iters, lb, ub, color=linecolor, alpha=0.1)
 
+
+
+# Vertical lines?
+ylim = ax.get_ylim()
+plt.plot((200, 200), ylim, '--', color="black", alpha=0.2)
+plt.plot((2000, 2000), ylim, '--', color="black", alpha=0.2)
+
+anno_1 = '$t=200$'
+ax.annotate(anno_1, (215, 2.05))
+
+anno_2 = '$t=2000$'
+ax.annotate(anno_2, (1000, 2.05))
+#anno_3 = '(algorithm\n complete)'
+#ax.annotate(anno_3, (1200, 0.021))
+
+
+
+
+# Legend
 ax.legend(handles=h_list, labels=label_list)
 ax.set_yscale('log')
 ax.set_xscale('log')
 
-ax.set_ylim((0.0189, 3.6))
-ax.set_xlim((1, 550))
-#ax.set_xlim((1, 1001))
+# Lims
+ax.set_ylim((1.8, 16.0))
+#ax.set_xlim((1, 550))
+ax.set_xlim((4, 2700))
 
-ax.set_xlabel('x')
-ax.set_ylabel('y')
-ax.set_title('Hartmann 6 Dimensions')
+# Axis labels/titles
+ax.set_xlabel('Iteration')
+ax.set_ylabel('Simple Regret')
+ax.set_title('Ackley 10 Dimensions')
 
-neatplot.save_figure('hartmann')
+neatplot.save_figure('ackley')
 
 plt.show()
