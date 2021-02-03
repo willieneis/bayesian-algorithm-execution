@@ -2,7 +2,7 @@ import copy
 from argparse import Namespace
 import numpy as np
 import matplotlib.pyplot as plt
-#plt.ion()
+plt.ion()
 #import tensorflow as tf
 
 from bax.alg.algorithms_new import TopK
@@ -35,7 +35,8 @@ algo = TopK({"x_path": x_path, "k": 2})
 # Set data for model
 data = Namespace()
 data.x = [[1.0], [4.05], [7.27], [10.3], [13.2], [17.0]]
-data.y = [f(x) for x in data.x]
+noise = 0.5
+data.y = [f(x) + noise * np.random.random() for x in data.x]
 
 # Set model details
 gp_params = {"ls": 2.0, "alpha": 2.0, "sigma": 1e-2}
@@ -44,76 +45,155 @@ gp_params = {"ls": 2.0, "alpha": 2.0, "sigma": 1e-2}
 modelclass = SimpleGp # NOTE: can use SimpleGp model
 
 # Set acquisition details
-acqfn_params = {"acq_str": "exe", "n_path": 100, "crop": True}
-#acqfn_params = {        # NOTE: can use "out" acqfn
+acqfn_params1 = {"acq_str": "exe", "n_path": 100, "crop": False}    # EIG 1
+acqfn_params2 = {                                                   # EIG 2
+    "acq_str": "out",
+    "crop": False,
+    "n_path": 500,
+    "min_neighbors": 5,
+    "max_neighbors": 20,
+    "dist_thresh": 0.05,
+}
+#acqfn_params2 = {                                                   # EIG 2
     #"acq_str": "out",
     #"crop": False,
-    #"n_path": 200,
-    #"min_neighbors": 10,
+    #"n_path": 20,
+    #"min_neighbors": 0,
     #"max_neighbors": 20,
-    #"dist_thresh": 0.05,
+    #"dist_thresh": 5.00,
 #}
+acqfn_params3 = {"acq_str": "exe", "n_path": 100, "crop": True}     # EIG 3
+acqfn_params_list = [acqfn_params1, acqfn_params2, acqfn_params3]
+#acqfn_params_list = [acqfn_params2]
+
 x_test = [[x] for x in np.linspace(0.0, max_x, 500)]
 y_test = [f(x) for x in x_test]
 acqopt_params = {"x_batch": x_test}
 
-# Run BAX loop
-n_iter = 40
 
-for i in range(n_iter):
-    # Set model
-    model = modelclass(gp_params, data)
 
-    # Set and optimize acquisition function
-    acqfn = BaxAcqFunction(acqfn_params, model, algo)
+
+
+
+#### ------------------------
+####        BAX BELOW
+#### ------------------------
+
+# Set model
+model = modelclass(gp_params, data)
+
+# Set and optimize acquisition function
+acqfn_list = []
+x_next_list = []
+for acqfn_params in acqfn_params_list:
+    acqfn_list.append(BaxAcqFunction(acqfn_params, model, algo))
     acqopt = AcqOptimizer(acqopt_params)
-    x_next = acqopt.optimize(acqfn)
+    x_next_list.append(acqopt.optimize(acqfn_list[-1]))
 
-    # Compute current expected output
-    xl_list = []
-    for output in acqfn.output_list:
-        xl = []
-        list(map(xl.extend, output.x))
-        xl_list.append(xl)
-    expected_output = np.mean(xl_list, 0)
 
-    # Print
-    print(f"Acq optimizer x_next = {x_next}")
-    print(f"Current expected_output = {expected_output}")
-    print(f"Finished iter i = {i}")
+# Normalize each acq_list to have minimum at 0
+al_list_orig = [acqfn.acq_vars["acq_list"] for acqfn in acqfn_list]
+al_list = []
+for al in al_list_orig:
+    al = np.array(al).reshape(-1)
+    al = (al - np.min(al))
+    al_list.append(al)
 
-    # Plot
-    vizzer = AcqViz1D({"lims": (0, max_x, -5.5, 6.5), "n_path_max": 50})
-    ax_tup = vizzer.plot_acqoptimizer_all(
-        model,
-        acqfn.exe_path_list,
-        acqfn.output_list,
-        acqfn.acq_vars["acq_list"],
-        x_test,
-        acqfn.acq_vars["mu"],
-        acqfn.acq_vars["std"],
-        acqfn.acq_vars["mu_list"],
-        acqfn.acq_vars["std_list"],
+# Set acqfn to be idx 2 in list (EIG 3)
+acqfn = acqfn_list[2]
+
+# Compute current expected output
+xl_list = []
+for output in acqfn.output_list:
+    xl = []
+    list(map(xl.extend, output.x))
+    xl_list.append(xl)
+expected_output = np.mean(xl_list, 0)
+
+# Plot
+exe_path_list = acqfn.exe_path_list
+exe_path_full_list = acqfn.exe_path_full_list
+output_list = acqfn.output_list
+mu = acqfn.acq_vars["mu"]
+std = acqfn.acq_vars["std"]
+mu_list = acqfn.acq_vars["mu_list"]
+std_list = acqfn.acq_vars["std_list"]
+
+lims = (0, max_x, -5.5, 6.5)
+
+vizzer_params = {"lims": lims, "n_path_max": 5, "figsize": (7, 2)}
+vizzer = AcqViz1D(vizzer_params)
+
+vizzer.plot_postpred(x_test, mu, std, noise=0.1)
+h_acq_1 = vizzer.plot_acqfunction(x_test, al_list[1])
+vizzer.plot_exe_path_samples(exe_path_full_list)
+vizzer.plot_exe_path_crop_samples(exe_path_list)
+vizzer.plot_postpred_given_exe_path_samples(x_test, mu_list, std_list)
+vizzer.plot_model_data(model.data)
+vizzer.plot_post_f_samples(model, x_test, exe_path_full_list)
+vizzer.set_post_plot_details()
+(fig, ax, ax_acq) = (vizzer.fig, vizzer.ax, vizzer.ax_acq)
+
+# Plot exe path grey vertical bars
+ylims_acq = ax_acq.get_ylim()
+for x in x_path:
+    ax.plot(
+        [x[0], x[0]], [lims[2], lims[3]], '-', color=(0, 0, 0, 0.1), linewidth=5.0, zorder=0,
     )
-    ax_tup[0].plot(x_test, y_test, "-", color="k", linewidth=2)
+    ax.plot(
+        [x[0], x[0]], [lims[2], lims[3]], '-', color=(0, 0, 0, 0.05), linewidth=5.0, zorder=10,
+    )
 
-    # plot the algo path
-    ylims0 = ax_tup[0].get_ylim()
-    ylims1 = ax_tup[1].get_ylim()
-    for x in x_path:
-        ax_tup[0].plot([x[0], x[0]], [ylims0[0], ylims0[1]], '-', color=(0, 0, 0, 0.1), linewidth=5.0)
-        ax_tup[1].plot([x[0], x[0]], [ylims1[0], ylims1[1]], '-', color=(0, 0, 0, 0.1), linewidth=5.0)
+# Plot additional acq functions
+h_acq_0 = ax_acq.plot(
+    np.array(x_test).reshape(-1),
+    al_list[0] * 0.8,   # Normalize scale slightly
+    "--",
+    color="green",
+    linewidth=1,
+    label="$\\alpha_t(x)$",
+)
 
-    #neatplot.save_figure(f"00b_{i}")
-    plt.show()
+h_acq_2 = ax_acq.plot(
+    np.array(x_test).reshape(-1),
+    al_list[2],
+    "--",
+    color="blue",
+    linewidth=1,
+    label="$\\alpha_t(x)$",
+)
 
-    # Pause
-    inp = input("Press enter to continue (any other key to stop): ")
-    if inp:
-        break
-    plt.close()
+# Afterwards, plot acq optima
+vizzer.plot_acqoptima(al_list[0], x_test)
+vizzer.plot_acqoptima(al_list[1], x_test)
+vizzer.plot_acqoptima(al_list[2], x_test)
 
-    # Query function, update data
-    y_next = f(x_next)
-    data.x.append(x_next)
-    data.y.append(y_next)
+# Legend for acq optima
+#ax_acq.legend(
+    #[h_acq_0[0], h_acq_1[0], h_acq_2[0]],
+    #['EIG 1', 'EIG 2', 'EIG 3'],
+    #loc='lower left',
+#)
+
+# Plot the true f
+ax.plot(x_test, y_test, "-", color="k", linewidth=2) # True f
+
+neatplot.save_figure(f"topk_viz", "pdf")
+plt.show()
+
+
+
+
+ # OLD PLOTTING CALL
+
+#(ax, ax_acq) = vizzer.plot_acqoptimizer_all(
+    #model,
+    #acqfn.exe_path_list,
+    #acqfn.output_list,
+    #acqfn.acq_vars["acq_list"],
+    #x_test,
+    #acqfn.acq_vars["mu"],
+    #acqfn.acq_vars["std"],
+    #acqfn.acq_vars["mu_list"],
+    #acqfn.acq_vars["std_list"],
+#)
