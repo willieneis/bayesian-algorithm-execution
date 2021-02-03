@@ -2,7 +2,8 @@ import copy
 from argparse import Namespace
 import numpy as np
 import matplotlib.pyplot as plt
-plt.ion()
+import matplotlib.patches as patches
+#plt.ion()
 #import tensorflow as tf
 
 from bax.alg.algorithms_new import TopK
@@ -18,7 +19,7 @@ neatplot.set_style("fonts")
 neatplot.update_rc("figure.dpi", 150)
 
 
-seed = 11
+seed = 12
 np.random.seed(seed)
 #tf.random.set_seed(seed)
 
@@ -35,6 +36,7 @@ algo = TopK({"x_path": x_path, "k": 2})
 # Set data for model
 data = Namespace()
 data.x = [[1.0], [4.05], [7.27], [10.3], [13.2], [17.0]]
+#data.x = [[1.0], [4.05], [7.1], [10.3], [13.5], [17.0]]
 noise = 0.5
 data.y = [f(x) + noise * np.random.random() for x in data.x]
 
@@ -45,26 +47,32 @@ gp_params = {"ls": 2.0, "alpha": 2.0, "sigma": 1e-2}
 modelclass = SimpleGp # NOTE: can use SimpleGp model
 
 # Set acquisition details
-acqfn_params1 = {"acq_str": "exe", "n_path": 100, "crop": False}    # EIG 1
-acqfn_params2 = {                                                   # EIG 2
-    "acq_str": "out",
-    "crop": False,
-    "n_path": 500,
-    "min_neighbors": 5,
-    "max_neighbors": 20,
-    "dist_thresh": 0.05,
-}
-#acqfn_params2 = {                                                   # EIG 2
-    #"acq_str": "out",
-    #"crop": False,
-    #"n_path": 20,
-    #"min_neighbors": 0,
-    #"max_neighbors": 20,
-    #"dist_thresh": 5.00,
-#}
-acqfn_params3 = {"acq_str": "exe", "n_path": 100, "crop": True}     # EIG 3
+fast = False
+if fast:
+    acqfn_params1 = {"acq_str": "exe", "n_path": 20, "crop": False}    # EIG 1
+    acqfn_params2 = {                                                   # EIG 2
+        "acq_str": "out",
+        "crop": False,
+        "n_path": 20,
+        "min_neighbors": 0,
+        "max_neighbors": 20,
+        "dist_thresh": 5.00,
+    }
+    acqfn_params3 = {"acq_str": "exe", "n_path": 20, "crop": True}     # EIG 3
+
+else:
+    acqfn_params1 = {"acq_str": "exe", "n_path": 100, "crop": False}    # EIG 1
+    acqfn_params2 = {                                                   # EIG 2
+        "acq_str": "out",
+        "crop": False,
+        "n_path": 500,
+        "min_neighbors": 5,
+        "max_neighbors": 20,
+        "dist_thresh": 0.05,
+    }
+    acqfn_params3 = {"acq_str": "exe", "n_path": 100, "crop": True}     # EIG 3
+
 acqfn_params_list = [acqfn_params1, acqfn_params2, acqfn_params3]
-#acqfn_params_list = [acqfn_params2]
 
 x_test = [[x] for x in np.linspace(0.0, max_x, 500)]
 y_test = [f(x) for x in x_test]
@@ -99,8 +107,9 @@ for al in al_list_orig:
     al = (al - np.min(al))
     al_list.append(al)
 
-# Set acqfn to be idx 2 in list (EIG 3)
+# Set acqfn to be EIG 3 (idx 2), and acqfn_full to be EIG 1 (idx 0)
 acqfn = acqfn_list[2]
+acqfn_full = acqfn_list[0]
 
 # Compute current expected output
 xl_list = []
@@ -119,37 +128,47 @@ std = acqfn.acq_vars["std"]
 mu_list = acqfn.acq_vars["mu_list"]
 std_list = acqfn.acq_vars["std_list"]
 
-lims = (0, max_x, -5.5, 6.5)
+#lims = (0, max_x, -5.5, 6.5)
+#lims = (0, max_x, -5.5, 8.5)
+lims = (0, max_x, -7.5, 6.0)
 
-vizzer_params = {"lims": lims, "n_path_max": 5, "figsize": (7, 2)}
+#vizzer_params = {"lims": lims, "n_path_max": 10, "figsize": (7, 2)}
+vizzer_params = {"lims": lims, "n_path_max": 6, "figsize": (7, 2)}
 vizzer = AcqViz1D(vizzer_params)
 
-vizzer.plot_postpred(x_test, mu, std, noise=0.1)
+h_postpred = vizzer.plot_postpred(x_test, mu, std, noise=0.1)
 h_acq_1 = vizzer.plot_acqfunction(x_test, al_list[1])
-vizzer.plot_exe_path_samples(exe_path_full_list)
-vizzer.plot_exe_path_crop_samples(exe_path_list)
-vizzer.plot_postpred_given_exe_path_samples(x_test, mu_list, std_list)
-vizzer.plot_model_data(model.data)
-vizzer.plot_post_f_samples(model, x_test, exe_path_full_list)
+h_fsamp = vizzer.plot_post_f_samples(model, x_test, exe_path_full_list)
+h_exepath = vizzer.plot_exe_path_samples(exe_path_full_list)
+h_output = vizzer.plot_exe_path_crop_samples(exe_path_list)
+#vizzer.plot_postpred_given_exe_path_samples(x_test, mu_list, std_list)
+h_data = vizzer.plot_model_data(model.data)
 vizzer.set_post_plot_details()
 (fig, ax, ax_acq) = (vizzer.fig, vizzer.ax, vizzer.ax_acq)
 
 # Plot exe path grey vertical bars
 ylims_acq = ax_acq.get_ylim()
 for x in x_path:
-    ax.plot(
-        [x[0], x[0]], [lims[2], lims[3]], '-', color=(0, 0, 0, 0.1), linewidth=5.0, zorder=0,
+    h_greybar = ax.plot(
+        #[x[0], x[0]], [lims[2], lims[3]], '-', color=(0, 0, 0, 0.075), linewidth=5.0, zorder=0,
+        [x[0], x[0]], [lims[2], -5], '-', color=(0, 0, 0, 0.075), linewidth=5.0, zorder=0,
     )
     ax.plot(
-        [x[0], x[0]], [lims[2], lims[3]], '-', color=(0, 0, 0, 0.05), linewidth=5.0, zorder=10,
+        [x[0], x[0]], [lims[2], -5], '-', color=(0, 0, 0, 0.02), linewidth=5.0, zorder=10,
     )
+
+
+# EIG-specific colors
+# yelloworange = "#ff7f0e"
+# red = "#d62728"
+color_list = ["#2ca02c", "#ff7f0e", "#1f77b4"]
 
 # Plot additional acq functions
 h_acq_0 = ax_acq.plot(
     np.array(x_test).reshape(-1),
     al_list[0] * 0.8,   # Normalize scale slightly
     "--",
-    color="green",
+    color=color_list[0],
     linewidth=1,
     label="$\\alpha_t(x)$",
 )
@@ -158,25 +177,82 @@ h_acq_2 = ax_acq.plot(
     np.array(x_test).reshape(-1),
     al_list[2],
     "--",
-    color="blue",
+    color=color_list[2],
     linewidth=1,
     label="$\\alpha_t(x)$",
 )
 
 # Afterwards, plot acq optima
-vizzer.plot_acqoptima(al_list[0], x_test)
-vizzer.plot_acqoptima(al_list[1], x_test)
-vizzer.plot_acqoptima(al_list[2], x_test)
+ylim_ax = ax.get_ylim()
+ylim_ax_acq = ax_acq.get_ylim()
+for idx in range(len(al_list)):
+    al = al_list[idx]
+    acq_opt = x_test[np.argmax(al)]
+    h = ax.plot(
+        [acq_opt, acq_opt],
+        ylim_ax,
+        '-',
+        #color="black",
+        color=color_list[idx],
+        label="$x_t = $ argmax$_{x \in \mathcal{X}}$ $\\alpha_t(x)$",
+    )
+    ax_acq.plot([acq_opt, acq_opt], ylim_ax_acq, '-', color=color_list[idx])
 
-# Legend for acq optima
-#ax_acq.legend(
-    #[h_acq_0[0], h_acq_1[0], h_acq_2[0]],
-    #['EIG 1', 'EIG 2', 'EIG 3'],
-    #loc='lower left',
-#)
+ax_acq.set_ylim(ylim_ax_acq)
 
 # Plot the true f
-ax.plot(x_test, y_test, "-", color="k", linewidth=2) # True f
+h_truef = ax.plot(x_test, y_test, "-", color="k", linewidth=2) # True f
+
+
+
+# Legend
+h_list = [
+    h_truef[0],
+    h_greybar[0],
+    h_data[0],
+    h_postpred,
+    h_fsamp[0],
+    h_exepath[0],
+    h_output[0],
+    h_acq_0[0],
+    h_acq_1[0],
+    h_acq_2[0],
+]
+
+label_list = [
+    '$f$',
+    '$(z_1, \ldots, z_{S_f})$',
+    '$(x, y_x) \in \mathcal{D}_t$',
+    '$p(y_x|\mathcal{D}_t)$',
+    '$\\widetilde{f} \sim p(f | \mathcal{D}_t)$',
+    '$\\widetilde{e}_\mathcal{A} \sim p(e_\mathcal{A} | \mathcal{D}_t)$',
+    '$\\widetilde{O}_\mathcal{A} \sim p(O_\mathcal{A} | \mathcal{D}_t)$',
+    'EIG$^e_t(x)$',
+    'EIG$_t(x)$',
+    'EIG$^v_t(x)$',
+]
+
+show_legend = False
+if show_legend:
+    leg = ax.legend(
+        h_list,
+        label_list,
+        #loc='center',
+        loc='lower left',
+        #ncol=3,
+        ncol=2,
+        #mode='expand',
+        bbox_to_anchor=(1.0, 1.0),
+    )
+    leg.set_zorder(100)
+    frame = leg.get_frame()
+    frame.set_facecolor('white')
+    frame.set_edgecolor('black')
+    frame.set_alpha(1)
+
+
+
+
 
 neatplot.save_figure(f"topk_viz", "pdf")
 plt.show()
