@@ -31,6 +31,7 @@ class AcqViz1D:
         self.fig = fig
         self.ax = ax
         self.h_list = []
+        self.clist = rcParams['axes.prop_cycle']
         if verbose:
             self.print_str()
 
@@ -82,20 +83,43 @@ class AcqViz1D:
 
         return ax_tup
 
-    def plot_postpred(self, x_test, mu, std):
+    def plot_postpred(self, x_test, mu, std, noise=0.0):
         """Plot posterior predictive distribution."""
+        std = std + noise
         lcb = mu - 3 * std
         ucb = mu + 3 * std
         h = self.ax.fill_between(
             np.array(x_test).reshape(-1),
             lcb,
             ucb,
-            color="orange",
-            #alpha=0.2,
-            alpha=0.18,
+            color=(1.0, 0.9255, 0.7961, 1.0),
+            #color="orange",
+            #alpha=0.18,
             label="$p(y|\mathcal{D}_t, x)$",
         )
         self.h_list.append(h)
+        return h
+
+    def plot_exe_path_crop_samples(self, exe_path_list):
+        """Plot execution path samples."""
+
+        # Optionally crop, given self.n_path_max
+        exe_path_list = self.reduce_samp_list(exe_path_list)
+
+        # Reset color cycle
+        cgen = itertools.cycle(self.clist)
+
+        for exe_path in exe_path_list:
+            h = self.ax.plot(
+                exe_path.x,
+                exe_path.y,
+                "x",
+                color=next(cgen)['color'],
+                markersize=10,
+                linewidth=0.1,
+                label="$\{ \\tilde{O}_\mathcal{A}^j \} \sim p(O_\mathcal{A}(f) | \mathcal{D}_t)$",
+            )
+        self.h_list.append(h[0])
         return h
 
     def plot_exe_path_samples(self, exe_path_list):
@@ -104,11 +128,15 @@ class AcqViz1D:
         # Optionally crop, given self.n_path_max
         exe_path_list = self.reduce_samp_list(exe_path_list)
 
+        # Reset color cycle
+        cgen = itertools.cycle(self.clist)
+
         for exe_path in exe_path_list:
             h = self.ax.plot(
                 exe_path.x,
                 exe_path.y,
                 ".",
+                color=next(cgen)['color'],
                 markersize=4,
                 linewidth=0.5,
                 label="$\{ \\tilde{e}_\mathcal{A}^j \} \sim p(e_\mathcal{A}(f) | \mathcal{D}_t)$",
@@ -120,7 +148,8 @@ class AcqViz1D:
         """Plot data, assumed to have attributes x and y."""
         label = "$\mathcal{D}_t = \{(x_i, y_i)\}_{i=1}^t$"
         #label = "Observations"
-        h = self.ax.plot(data.x, data.y, "o", color="deeppink", label=label)
+        #h = self.ax.plot(data.x, data.y, "o", color="deeppink", label=label)
+        h = self.ax.plot(data.x, data.y, "o", color="black", label=label)
         self.h_list.append(h[0])
         return h
 
@@ -224,6 +253,9 @@ class AcqViz1D:
         # Optionally crop, given self.n_path_max
         exe_path_list = self.reduce_samp_list(exe_path_list)
 
+        # Reset color cycle
+        cgen = itertools.cycle(self.clist)
+
         for exe_path in exe_path_list:
             comb_data = Namespace()
             comb_data.x = model.data.x + exe_path.x
@@ -236,6 +268,7 @@ class AcqViz1D:
                 np.array(x_test).reshape(-1),
                 f_sample,
                 "-",
+                color=next(cgen)['color'],
                 alpha=0.5,
                 linewidth=0.5,
                 label="$\{\\tilde{f}\} \sim p(f | \mathcal{D}_t)$",
@@ -315,8 +348,7 @@ class AcqViz1D:
         """Plot clusters of execution paths."""
 
         # Reset color cycle
-        clist = rcParams['axes.prop_cycle']
-        cgen = itertools.cycle(clist)
+        cgen = itertools.cycle(self.clist)
 
         # Loop through clusters
         mean_std_idx_list = zip(mean_cluster_list, std_cluster_list, cluster_idx_list)
