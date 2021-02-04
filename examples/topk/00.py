@@ -47,9 +47,9 @@ gp_params = {"ls": 2.0, "alpha": 2.0, "sigma": 1e-2}
 modelclass = SimpleGp # NOTE: can use SimpleGp model
 
 # Set acquisition details
-fast = False
+fast = True
 if fast:
-    acqfn_params1 = {"acq_str": "exe", "n_path": 20, "crop": False}    # EIG 1
+    acqfn_params1 = {"acq_str": "exe", "n_path": 20, "crop": False}     # EIG 1
     acqfn_params2 = {                                                   # EIG 2
         "acq_str": "out",
         "crop": False,
@@ -58,7 +58,7 @@ if fast:
         "max_neighbors": 20,
         "dist_thresh": 5.00,
     }
-    acqfn_params3 = {"acq_str": "exe", "n_path": 20, "crop": True}     # EIG 3
+    acqfn_params3 = {"acq_str": "exe", "n_path": 20, "crop": True}      # EIG 3
 
 else:
     acqfn_params1 = {"acq_str": "exe", "n_path": 100, "crop": False}    # EIG 1
@@ -232,22 +232,22 @@ label_list = [
     'EIG$^v_t(x)$',
 ]
 
-show_legend = False
+show_legend = True
 if show_legend:
     leg = ax.legend(
         h_list,
         label_list,
         #loc='center',
         loc='lower left',
-        #ncol=3,
-        ncol=2,
+        ncol=3,
+        #ncol=2,
         #mode='expand',
         bbox_to_anchor=(1.0, 1.0),
     )
     leg.set_zorder(100)
     frame = leg.get_frame()
     frame.set_facecolor('white')
-    frame.set_edgecolor('black')
+    frame.set_edgecolor((0.7, 0.7, 0.7, 1))
     frame.set_alpha(1)
 
 
