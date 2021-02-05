@@ -119,14 +119,14 @@ class AcqViz2D:
             expected_output[1],
             "*",
             color='black',
-            markersize=16,
+            markersize=36,
         )
         h = self.ax.plot(
             expected_output[0],
             expected_output[1],
             "*",
             color='deeppink',
-            markersize=13,
+            markersize=33,
             label="$O_\mathcal{A}(\mathrm{E}[f | \mathcal{D}_t])$"
         )
         self.h_list.append(h[0])
@@ -140,7 +140,7 @@ class AcqViz2D:
                 optima[1],
                 "s",
                 color="#F3C807",
-                markersize=6,
+                markersize=12,
                 label="$O_\mathcal{A}(f*)$",
             )
         self.h_list.append(h[0])
