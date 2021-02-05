@@ -17,6 +17,7 @@ from bax.util.graph import make_grid, edges_of_path, positions_of_path
 
 import neatplot
 neatplot.set_style('fonts')
+neatplot.update_rc('font.size', 20)
 
 
 seed = 11
@@ -230,11 +231,17 @@ for i in range(n_iter):
 
         # Plot title
         if method_str == 'bax':
-            ax.set_title("BAX-Dijkstra's")
+            ax.set_title("InfoBAX")
         elif method_str == 'rand':
             ax.set_title("Random Search")
         elif method_str == 'us':
             ax.set_title("Uncertainty Sampling")
+
+        # Turn off ticks and labels
+        ax.set_xticks([])
+        ax.set_yticks([])
+        ax.set_xticklabels([])
+        ax.set_yticklabels([])
 
         # Save
         if method_str == 'bax':
