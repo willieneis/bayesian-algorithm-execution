@@ -11,6 +11,7 @@ from branin import branin, branin_xy
 
 import neatplot
 neatplot.set_style('fonts')
+neatplot.update_rc('font.size', 20)
 
 
 seed = 11
@@ -61,7 +62,7 @@ ax.set_ylim((domain[1][0] - offset, domain[1][1] + offset))
 ax.set_aspect("equal", "box")
 ax.set_xlabel('x')
 ax.set_ylabel('y')
-ax.set_title("Evolution Strategy (at Convergence)")
+ax.set_title("Evolution Strategy (Full)")
 
 # Print
 min_idx = np.argmin(exe_path.y)
@@ -70,7 +71,7 @@ print(f'Value of best point so far f(x*): {exe_path.y[min_idx]}')
 print(f'Found at iter: {min_idx}')
 
 # Save plot
-neatplot.save_figure(f"es_exact_00")
+neatplot.save_figure(f"branin_evo", "pdf")
 
 # Show, pause, and close plot
 plt.show()

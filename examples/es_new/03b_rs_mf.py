@@ -18,6 +18,7 @@ from branin import branin, branin_xy
 
 import neatplot
 neatplot.set_style('fonts')
+neatplot.update_rc('font.size', 20)
 
 
 seed = 11
@@ -118,7 +119,7 @@ for i in range(n_iter):
     ax.set_title("Random Search")
 
     # Save plot
-    neatplot.save_figure(f"rs_00_{i}")
+    neatplot.save_figure(f"branin_rs_{i}", "pdf")
 
     # Show, pause, and close plot
     #plt.show()

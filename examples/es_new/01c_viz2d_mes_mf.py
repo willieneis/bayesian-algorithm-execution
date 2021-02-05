@@ -18,6 +18,7 @@ from branin import branin, branin_xy
 
 import neatplot
 neatplot.set_style('fonts')
+neatplot.update_rc('font.size', 20)
 
 
 seed = 11
@@ -115,10 +116,10 @@ for i in range(n_iter):
     ax.set_aspect("equal", "box")
     ax.set_xlabel('x')
     ax.set_ylabel('y')
-    ax.set_title("Bayesian Optimization (Max-value Entropy Search)")
+    ax.set_title("Max-value Entropy Search")
 
     # Save plot
-    neatplot.save_figure(f"mes_00_{i}")
+    neatplot.save_figure(f"branin_mes_{i}", "pdf")
 
     # Show, pause, and close plot
     #plt.show()
