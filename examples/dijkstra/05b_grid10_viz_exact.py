@@ -17,6 +17,7 @@ from bax.util.graph import make_grid, edges_of_path, positions_of_path
 
 import neatplot
 neatplot.set_style('fonts')
+neatplot.update_rc('font.size', 20)
 
 
 seed = 11
@@ -228,7 +229,13 @@ while dij_idx < len(true_ep.x):
         #for path in min_cost_paths:
             #plot_path(ax, path, path_color=(0, 0, 1, weight), linewidths=2, linestyle="-")
 
-        ax.set_title("Dijkstra's (at Convergence)")
+        ax.set_title("Dijkstra's (Full)")
+
+        # Turn off ticks and labels
+        ax.set_xticks([])
+        ax.set_yticks([])
+        ax.set_xticklabels([])
+        ax.set_yticklabels([])
 
         neatplot.save_figure(f'dij_results/exact_{i}', 'pdf')
 
@@ -282,6 +289,12 @@ weight = 0.1 # NOTE can also do: 1 / acqfn.params.n_path
     #label='True shortest path',
 #)
 
-ax.set_title("Dijkstra's (at Convergence)")
+ax.set_title("Dijkstra's (Full)")
+
+# Turn off ticks and labels
+ax.set_xticks([])
+ax.set_yticks([])
+ax.set_xticklabels([])
+ax.set_yticklabels([])
 
 neatplot.save_figure(f'dij_results/final_plot', 'pdf')
