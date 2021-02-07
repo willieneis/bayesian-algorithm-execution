@@ -36,18 +36,17 @@ algo = TopK({"x_path": x_path, "k": 2})
 # Set data for model
 data = Namespace()
 data.x = [[1.0], [4.05], [7.27], [10.3], [13.2], [17.0]]
-#data.x = [[1.0], [4.05], [7.1], [10.3], [13.5], [17.0]]
-noise = 0.5
-data.y = [f(x) + noise * np.random.random() for x in data.x]
+noise_scale = 0.1
+data.y = [f(x) + noise_scale * np.random.normal() for x in data.x]
 
 # Set model details
-gp_params = {"ls": 2.0, "alpha": 2.0, "sigma": 1e-2}
+gp_params = {"ls": 2.0, "alpha": 2.0, "sigma": noise_scale ** 2}
 #gp_params = get_stangp_hypers(f, n_samp=200) # NOTE: can use StanGp to fit hypers
 #modelclass = GpfsGp
 modelclass = SimpleGp # NOTE: can use SimpleGp model
 
 # Set acquisition details
-fast = True
+fast = False
 if fast:
     acqfn_params1 = {"acq_str": "exe", "n_path": 20, "crop": False}     # EIG 1
     acqfn_params2 = {                                                   # EIG 2
@@ -65,8 +64,8 @@ else:
     acqfn_params2 = {                                                   # EIG 2
         "acq_str": "out",
         "crop": False,
-        "n_path": 500,
-        "min_neighbors": 5,
+        "n_path": 1100,
+        "min_neighbors": 3,
         "max_neighbors": 20,
         "dist_thresh": 0.05,
     }
@@ -136,7 +135,7 @@ lims = (0, max_x, -7.5, 6.0)
 vizzer_params = {"lims": lims, "n_path_max": 6, "figsize": (7, 2)}
 vizzer = AcqViz1D(vizzer_params)
 
-h_postpred = vizzer.plot_postpred(x_test, mu, std, noise=0.1)
+h_postpred = vizzer.plot_postpred(x_test, mu, std, noise=noise_scale)
 h_acq_1 = vizzer.plot_acqfunction(x_test, al_list[1])
 h_fsamp = vizzer.plot_post_f_samples(model, x_test, exe_path_full_list)
 h_exepath = vizzer.plot_exe_path_samples(exe_path_full_list)
@@ -232,7 +231,7 @@ label_list = [
     'EIG$^v_t(x)$',
 ]
 
-show_legend = True
+show_legend = False
 if show_legend:
     leg = ax.legend(
         h_list,
