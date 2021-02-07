@@ -1,11 +1,10 @@
 import pickle
-import itertools
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib import rcParams
 
 import neatplot
 neatplot.set_style('fonts')
+neatplot.update_rc('font.size', 20)
 
 
 def parse_method(method_str, seed_list):
@@ -59,19 +58,21 @@ _, _, bax_list  = parse_method('bax', seed_list)
 results_list = [rs_list, es_list, mes_list, bax_list]
 label_list = [
     'Random Search',
-    'Evolutionary Strategy',
-    'Max-value Entropy Search',
-    'BAX-Evolutionary',
+    'Evolution Strategy',
+    'MV Entropy Search',
+    'InfoBAX',
 ]
+
+#color_list = ["#ff7f0e", "#d62728", "#2ca02c", "#1f77b4"]
+#color_list = ["#ff7f0e", "#1f77b4", "#2ca02c", "#d62728"]
+color_list = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728"] # Original colors
 
 # Plot
 fig, ax = plt.subplots(figsize=(8, 5))
-clist = rcParams['axes.prop_cycle']
-cgen = itertools.cycle(clist)
 
 h_list = []
-for result in results_list:
-    linecolor = next(cgen)['color']
+for idx, result in enumerate(results_list):
+    linecolor = color_list[idx]
 
     avg_list = np.mean(result, 0)
     stderr_list = np.std(result, 0) / np.sqrt(len(result))
@@ -91,18 +92,21 @@ plt.plot((200, 200), ylim, '--', color="black", alpha=0.2)
 plt.plot((2000, 2000), ylim, '--', color="black", alpha=0.2)
 
 anno_1 = '$t=200$'
-ax.annotate(anno_1, (215, 2.05))
+ax.annotate(anno_1, (215, 2.2), fontsize=15)
 
 anno_2 = '$t=2000$'
-ax.annotate(anno_2, (1000, 2.05))
+ax.annotate(anno_2, (870, 2.2), fontsize=15)
 #anno_3 = '(algorithm\n complete)'
 #ax.annotate(anno_3, (1200, 0.021))
+
+anno_3 = '(Full $\mathcal{A}$)'
+ax.annotate(anno_3, (950, 1.9), fontsize=14)
 
 
 
 
 # Legend
-ax.legend(handles=h_list, labels=label_list)
+#ax.legend(handles=h_list, labels=label_list)
 ax.set_yscale('log')
 ax.set_xscale('log')
 
@@ -116,6 +120,6 @@ ax.set_xlabel('Iteration')
 ax.set_ylabel('Simple Regret')
 ax.set_title('Ackley 10 Dimensions')
 
-neatplot.save_figure('ackley')
+neatplot.save_figure('ackley', 'pdf')
 
 plt.show()
