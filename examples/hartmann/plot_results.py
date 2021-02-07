@@ -1,11 +1,10 @@
 import pickle
-import itertools
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib import rcParams
 
 import neatplot
 neatplot.set_style('fonts')
+neatplot.update_rc('font.size', 20)
 
 
 def parse_method(method_str, seed_list):
@@ -59,10 +58,14 @@ _, _, bax_list  = parse_method('bax', seed_list)
 results_list = [rs_list, es_list, mes_list, bax_list]
 label_list = [
     'Random Search',
-    'Evolutionary Strategy',
-    'Max-value Entropy Search',
-    'BAX-Evolutionary',
+    'Evolution Strategy',
+    'MV Entropy Search',
+    'InfoBAX',
 ]
+
+#color_list = ["#ff7f0e", "#d62728", "#2ca02c", "#1f77b4"]
+#color_list = ["#ff7f0e", "#1f77b4", "#2ca02c", "#d62728"]
+color_list = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728"] # Original colors
 
 # Re-scale results given Hartmann6 minimum = -3.322
 hartmann_min = -3.3224
@@ -70,12 +73,10 @@ results_list = [subtract_min(res, hartmann_min) for res in results_list]
 
 # Plot
 fig, ax = plt.subplots(figsize=(8, 5))
-clist = rcParams['axes.prop_cycle']
-cgen = itertools.cycle(clist)
 
 h_list = []
-for result in results_list:
-    linecolor = next(cgen)['color']
+for idx, result in enumerate(results_list):
+    linecolor = color_list[idx]
 
     avg_list = np.mean(result, 0)
     stderr_list = np.std(result, 0) / np.sqrt(len(result))
@@ -95,13 +96,13 @@ plt.plot((80, 80), ylim, '--', color="black", alpha=0.2)
 plt.plot((500, 500), ylim, '--', color="black", alpha=0.2)
 
 anno_1 = '$t=80$'
-ax.annotate(anno_1, (85, 0.035))
+ax.annotate(anno_1, (85, 0.035), fontsize=15)
 #ax.annotate(anno_1, (50, 0.035))
 
 anno_2 = '$t=500$'
-ax.annotate(anno_2, (280, 0.035))
-anno_3 = '(algorithm\n complete)'
-ax.annotate(anno_3, (220, 0.021))
+ax.annotate(anno_2, (242, 0.035), fontsize=15)
+anno_3 = '(Full $\mathcal{A}$)'
+ax.annotate(anno_3, (242, 0.025), fontsize=14)
 
 
 
@@ -113,14 +114,14 @@ ax.set_xscale('log')
 # Lims
 ax.set_ylim((0.0189, 3.6))
 #ax.set_xlim((1, 550))
-ax.set_xlim((1, 650))
 #ax.set_xlim((1, 1001))
+ax.set_xlim((1, 650))
 
 # Axis labels/titles
 ax.set_xlabel('Iteration')
 ax.set_ylabel('Simple Regret')
 ax.set_title('Hartmann 6 Dimensions')
 
-neatplot.save_figure('hartmann')
+neatplot.save_figure('hartmann', 'pdf')
 
 plt.show()
