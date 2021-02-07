@@ -9,6 +9,7 @@ from abc import ABC, abstractmethod
 
 from ..util.misc_util import dict_to_namespace
 from ..util.domain_util import unif_random_sample_domain
+from ..util.graph import jaccard_similarity
 
 
 class Algorithm(ABC):
@@ -466,6 +467,7 @@ class TopK(FixedPathAlgorithm):
         self.params.name = getattr(params, "name", "TopK")
         self.params.opt_mode = getattr(params, "opt_mode", "max")
         self.params.k = getattr(params, "k", 3)
+        self.params.dist_str = getattr(params, "dist_str", "norm")
 
     def get_exe_path_topk_idx(self):
         """Return the index of the optimal point in execution path."""
@@ -502,21 +504,34 @@ class TopK(FixedPathAlgorithm):
 
     def get_output_dist_fn(self):
         """Return distance function for pairs of outputs."""
-
-        def dist_fn(a, b):
-            a_list = []
-            list(map(a_list.extend, a.x))
-            a_list.extend(a.y)
-            a_arr = np.array(a_list)
-
-            b_list = []
-            list(map(b_list.extend, b.x))
-            b_list.extend(b.y)
-            b_arr = np.array(b_list)
-
-            return np.linalg.norm(a_arr - b_arr)
+        if self.params.dist_str == "norm":
+            dist_fn = self.output_dist_fn_norm
+        elif self.params.dist_str == "jaccard":
+            dist_fn = self.output_dist_fn_jaccard
 
         return dist_fn
+
+    def output_dist_fn_norm(self, a, b):
+        """Output dist_fn based on concatenated vector norm."""
+        a_list = []
+        list(map(a_list.extend, a.x))
+        a_list.extend(a.y)
+        a_arr = np.array(a_list)
+
+        b_list = []
+        list(map(b_list.extend, b.x))
+        b_list.extend(b.y)
+        b_arr = np.array(b_list)
+
+        return np.linalg.norm(a_arr - b_arr)
+
+    def output_dist_fn_jaccard(self, a, b):
+        """Output dist_fn based on Jaccard similarity."""
+        a_x_tup = [tuple(x) for x in a.x]
+        b_x_tup = [tuple(x) for x in b.x]
+        jac_sim = jaccard_similarity(a_x_tup, b_x_tup)
+        dist = 1 - jac_sim
+        return dist
 
 
 class Noop(Algorithm):
