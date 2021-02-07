@@ -3,36 +3,45 @@ from argparse import Namespace, ArgumentParser
 from pathlib import Path
 import pickle
 import numpy as np
-import matplotlib.pyplot as plt
-#plt.ion()
 import tensorflow as tf
 
 from bax.alg.algorithms_new import TopK
 from bax.models.simple_gp import SimpleGp
 from bax.models.gpfs_gp import GpfsGp
 from bax.models.stan_gp import get_stangp_hypers
-from bax.acq.acquisition_new import BaxAcqFunction
+from bax.acq.acquisition_new import BaxAcqFunction, RandBaxAcqFunction
 from bax.acq.acqoptimize_new import AcqOptimizer
 from bax.acq.visualize_new import AcqViz1D
 from bax.util.domain_util import unif_random_sample_domain
 
-import neatplot
-neatplot.set_style("fonts")
-neatplot.update_rc("figure.dpi", 150)
 
+# Parse args
+parser = ArgumentParser()
+parser.add_argument("--seed", type=int, default=12)
+parser.add_argument("--n_init", type=int, default=10)
+parser.add_argument("--n_iter", type=int, default=70)
+parser.add_argument(
+    "--acq_str",
+    type=str,
+    default="eig3",
+    choices=["eig1", "eig2", "eig3", "rand", "uncert"],
+    help="Type of acquisition function. Choose one of eig1, eig2, eig3, rand, uncert.",
+)
+args = parser.parse_args()
 
-seed = 11
-np.random.seed(seed)
-tf.random.set_seed(seed)
+# Set seeds
+print(f"*[INFO] Seed: {args.seed}")
+np.random.seed(args.seed)
+tf.random.set_seed(args.seed)
 
 # Set function
-f_0 = lambda x: 2 * np.sin(x)
+f_0 = lambda x: 2 * x * np.sin(x)
 f = lambda x_list: np.sum([f_0(x) for x in x_list])
 
 # Set algorithm  details
 n_dim = 2
 domain = [[0, 10]] * n_dim
-len_path = 100
+len_path = 200
 k = 5
 x_path = unif_random_sample_domain(domain, len_path)
 algo = TopK({"x_path": x_path, "k": k})
@@ -47,13 +56,12 @@ print(f"Algorithm ground truth output is:\n{output_gt}")
 metric = lambda x: algo.output_dist_fn_jaccard(x, output_gt)
 
 # Set data for model
-n_init = 1
 data = Namespace()
-data.x = unif_random_sample_domain(domain, n_init)
+data.x = unif_random_sample_domain(domain, args.n_init)
 data.y = [f(x) for x in data.x]
 
 # Set model details
-stan_hypers = get_stangp_hypers(f, n_samp=500)
+stan_hypers = get_stangp_hypers(f, n_samp=1000)
 #gp_params = {"ls": 2.0, "alpha": 2.0, "sigma": 1e-2, "n_dimx": n_dim}
 gp_params = {
     "ls": stan_hypers["ls"],
@@ -65,21 +73,31 @@ gp_params = {
 modelclass = GpfsGp
 
 # Set acquisition details
-acqfn_params1 = {"acq_str": "exe", "n_path": 100, "crop": False}    # EIG 1
-acqfn_params2 = {                                                   # EIG 2
-    "acq_str": "out",
-    "crop": False,
-    "n_path": 500,
-    "min_neighbors": 5,
-    "max_neighbors": 20,
-    "dist_thresh": 0.05,
-}
-acqfn_params3 = {"acq_str": "exe", "n_path": 100, "crop": True}     # EIG 3
-#acqfn_params = acqfn_params1
-acqfn_params = acqfn_params3
+if args.acq_str == "eig1":
+    acqfn_params = {"acq_str": "exe", "n_path": 100, "crop": False}    # EIG 1
+    acq_cls = BaxAcqFunction
+elif args.acq_str == "eig2":
+    acqfn_params = {                                                   # EIG 2
+        "acq_str": "out",
+        "crop": False,
+        "n_path": 1000,
+        "min_neighbors": 3,
+        "max_neighbors": 20,
+        "dist_thresh": 1.0,
+    }
+    acq_cls = BaxAcqFunction
+elif args.acq_str == "eig3":
+    acqfn_params = {"acq_str": "exe", "n_path": 100, "crop": True}     # EIG 3
+    acq_cls = BaxAcqFunction
+elif args.acq_str == "rand":
+    acq_cls = RandBaxAcqFunction
+    acqfn_params = {}
 
 # Set acqopt details
-n_acqopt = 1000
+if args.acq_str == "eig2":
+    n_acqopt = 1000
+else:
+    n_acqopt = 1500
 
 # Set up results directory
 results_dir = Path("examples/topk/results")
@@ -90,14 +108,12 @@ results = Namespace(expected_metric_list = [])
 
 
 # Run BAX loop
-n_iter = 50
-
-for i in range(n_iter):
+for i in range(args.n_iter):
     # Set model
     model = modelclass(gp_params, data)
 
     # Set and optimize acquisition function
-    acqfn = BaxAcqFunction(acqfn_params, model, algo)
+    acqfn = acq_cls(acqfn_params, model, algo)
     x_test = unif_random_sample_domain(domain, n=n_acqopt)
     acqopt = AcqOptimizer({"x_batch": x_test})
     x_next = acqopt.optimize(acqfn)
@@ -132,7 +148,7 @@ for i in range(n_iter):
 results.data = data
 
 # Pickle results
-file_str = f"bax_{args.seed}.pkl"
+file_str = f"bax_{args.acq_str}_{args.seed}.pkl"
 with open(results_dir / file_str, "wb") as handle:
     pickle.dump(results, handle)
     print(f"Saved results file: {results_dir}/{file_str}")
