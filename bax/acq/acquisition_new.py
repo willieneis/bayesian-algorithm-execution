@@ -74,6 +74,27 @@ class AcqFunction:
         return f'{self.params.name} with params={self.print_params}'
 
 
+class RandAcqFunction(AcqFunction):
+    """
+    Class for random search acquisition functions.
+    """
+
+    def set_params(self, params):
+        """Set self.params, the parameters for the AcqFunction."""
+        super().set_params(params)
+
+        params = dict_to_namespace(params)
+        self.params.name = getattr(params, 'name', 'RandAcqFunction')
+
+    def __call__(self, x_list):
+        """Class is callable and returns acquisition function on x_list."""
+
+        # Random acquisition function
+        acq_list = [np.random.random() for x in x_list]
+
+        return acq_list
+
+
 class AlgoAcqFunction(AcqFunction):
     """
     Class for computing acquisition functions involving algorithms, such as entropy
@@ -500,7 +521,7 @@ class RandBaxAcqFunction(BaxAcqFunction):
         super().set_params(params)
 
         params = dict_to_namespace(params)
-        self.params.name = getattr(params, 'name', 'RandAcqFunction')
+        self.params.name = getattr(params, 'name', 'RandBaxAcqFunction')
 
     def __call__(self, x_list):
         """Class is callable and returns acquisition function on x_list."""
@@ -520,7 +541,7 @@ class UsBaxAcqFunction(BaxAcqFunction):
         super().set_params(params)
 
         params = dict_to_namespace(params)
-        self.params.name = getattr(params, 'name', 'UsAcqFunction')
+        self.params.name = getattr(params, 'name', 'UsBaxAcqFunction')
 
     def __call__(self, x_list):
         """Class is callable and returns acquisition function on x_list."""
