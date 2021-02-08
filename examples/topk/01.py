@@ -17,8 +17,8 @@ from bax.util.domain_util import unif_random_sample_domain
 
 # Parse args
 parser = ArgumentParser()
-parser.add_argument("--seed", type=int, default=12)
-parser.add_argument("--n_init", type=int, default=10)
+parser.add_argument("--seed", type=int, default=1)
+parser.add_argument("--n_init", type=int, default=20)
 parser.add_argument("--n_iter", type=int, default=70)
 parser.add_argument(
     "--acq_str",
@@ -35,12 +35,12 @@ np.random.seed(args.seed)
 tf.random.set_seed(args.seed)
 
 # Set function
-f_0 = lambda x: 2 * x * np.sin(x)
+f_0 = lambda x: 2 * np.abs(x) * np.sin(x)
 f = lambda x_list: np.sum([f_0(x) for x in x_list])
 
 # Set algorithm  details
 n_dim = 2
-domain = [[0, 10]] * n_dim
+domain = [[-10, 10]] * n_dim
 len_path = 200
 k = 5
 x_path = unif_random_sample_domain(domain, len_path)
