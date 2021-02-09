@@ -23,8 +23,8 @@ neatplot.set_style("fonts")
 # Parse args
 parser = ArgumentParser()
 parser.add_argument("--seed", type=int, default=1)
-parser.add_argument("--n_init", type=int, default=20)
-parser.add_argument("--n_iter", type=int, default=70)
+parser.add_argument("--n_init", type=int, default=10)
+parser.add_argument("--n_iter", type=int, default=100)
 parser.add_argument(
     "--acq_str",
     type=str,
@@ -52,8 +52,7 @@ def f_vec(x, y):
 # Set algorithm  details
 n_dim = 2
 domain = [[-10, 10]] * n_dim
-#len_path = 200
-len_path = 100
+len_path = 150
 k = 10
 x_path = unif_random_sample_domain(domain, len_path)
 algo = TopK({"x_path": x_path, "k": k})
@@ -81,9 +80,7 @@ data.y = [f(x) for x in data.x]
     #"n_dimx": n_dim,
 #}
 #gp_params = {"ls": 0.75, "alpha": 5.87, "sigma": 1e-2, "n_dimx": n_dim}
-#gp_params = {"ls": 3.5, "alpha": 5.87, "sigma": 1e-2, "n_dimx": n_dim}
-#gp_params = {"ls": 4.5, "alpha": 5.87, "sigma": 1e-2, "n_dimx": n_dim}
-gp_params = {"ls": 5.5, "alpha": 8.87, "sigma": 1e-2, "n_dimx": n_dim}
+gp_params = {"ls": 2.5, "alpha": 20.0, "sigma": 1e-2, "n_dimx": n_dim}
 #modelclass = SimpleGp
 modelclass = GpfsGp
 
@@ -163,20 +160,22 @@ for i in range(args.n_iter):
     ax.contour(X, Y, Z, 20, cmap=cm.Greens_r, zorder=0)
     # -- plot top_k
     topk_arr = np.array(output_gt.x)
-    ax.plot(topk_arr[:, 0], topk_arr[:, 1], '*', marker='*', markersize=13, color='gold', zorder=1)
+    ax.plot(topk_arr[:, 0], topk_arr[:, 1], '*', marker='*', markersize=20, color='gold', zorder=1)
     # -- plot x_path
     x_path_arr = np.array(x_path)
-    ax.plot(x_path_arr[:, 0], x_path_arr[:, 1], 'o')
+    ax.plot(x_path_arr[:, 0], x_path_arr[:, 1], 'o', markersize=5)
     # -- plot observations
     for x in data.x:
         ax.scatter(x[0], x[1], color=(0, 0, 0, 1), s=80)
     # -- plot x_next
-    ax.scatter(x_next[0], x_next[1], color='deeppink', s=80)
+    ax.scatter(x_next[0], x_next[1], color='deeppink', s=80, zorder=10)
     # -- plot estimated output
     out_arr1 = np.array(acqfn.output_list[0].x)
     out_arr2 = np.array(acqfn.output_list[1].x)
     ax.plot(out_arr1[:, 0], out_arr1[:, 1], 'x', markersize=10, color='k')
     ax.plot(out_arr2[:, 0], out_arr2[:, 1], '+', markersize=10, color='k')
+    # -- lims, labels, etc
+    ax.set(xlim=domain[0], ylim=domain[1], xlabel='x', ylabel='y')
 
     # Save plot
     neatplot.save_figure(f'topk_{i}', 'pdf')
