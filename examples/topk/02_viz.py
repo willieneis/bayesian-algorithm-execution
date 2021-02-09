@@ -115,6 +115,10 @@ else:
 results_dir = Path("examples/topk/results")
 results_dir.mkdir(parents=True, exist_ok=True)
 
+# Set up img directory
+img_dir = results_dir /  f'{args.acq_str}_{args.seed}'
+img_dir.mkdir(parents=True, exist_ok=True)
+
 # Namespace to save results
 results = Namespace(
     expected_metric_jacc_list = [], expected_metric_norm_list = []
@@ -178,7 +182,8 @@ for i in range(args.n_iter):
     ax.set(xlim=domain[0], ylim=domain[1], xlabel='x', ylabel='y')
 
     # Save plot
-    neatplot.save_figure(f'topk_{i}', 'pdf')
+    img_path = img_dir / f'topk_{i}'
+    neatplot.save_figure(str(img_path), 'pdf')
 
     # Show, pause, and close plot
     #plt.show()
@@ -196,7 +201,7 @@ for i in range(args.n_iter):
 results.data = data
 
 # Pickle results
-#file_str = f"bax_{args.acq_str}_{args.seed}.pkl"
-#with open(results_dir / file_str, "wb") as handle:
-    #pickle.dump(results, handle)
-    #print(f"Saved results file: {results_dir}/{file_str}")
+file_str = f"topk_{args.acq_str}_{args.seed}.pkl"
+with open(results_dir / file_str, "wb") as handle:
+    pickle.dump(results, handle)
+    print(f"Saved results file: {results_dir}/{file_str}")
