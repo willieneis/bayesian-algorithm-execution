@@ -210,6 +210,7 @@ class BaxAcqFunction(AlgoAcqFunction):
         self.params.min_neighbors = getattr(params, "min_neighbors", 10)
         self.params.max_neighbors = getattr(params, "max_neighbors", 30)
         self.params.dist_thresh = getattr(params, "dist_thresh", 1.0)
+        self.params.min_n_clust = getattr(params, "min_n_clust", 5)
 
     def entropy_given_normal_std(self, std_arr):
         """Return entropy given an array of 1D normal standard deviations."""
@@ -252,9 +253,13 @@ class BaxAcqFunction(AlgoAcqFunction):
         print(f'\t- min len_list: {np.min(len_list)},  max len_list: {np.max(len_list)},  len(len_list): {len(len_list)}')
         # -----
 
-        # Remove clusters that are too small
+        # Filter clusters that are too small
         min_nn = self.params.min_neighbors
-        cluster_idx_list = [clust for clust in cluster_idx_list if len(clust) > min_nn]
+        cluster_idx_list_new = [clust for clust in cluster_idx_list if len(clust) > min_nn]
+
+        # Only remove small clusters if there are enough big clusters
+        if len(cluster_idx_list_new) > self.params.min_n_clust:
+            cluster_idx_list = cluster_idx_list_new
 
         # -----
         len_list = [len(clust) for clust in cluster_idx_list]
