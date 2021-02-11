@@ -11,7 +11,7 @@ from bax.alg.algorithms_new import TopK
 from bax.models.simple_gp import SimpleGp
 from bax.models.gpfs_gp import GpfsGp
 from bax.models.stan_gp import get_stangp_hypers
-from bax.acq.acquisition_new import BaxAcqFunction, RandBaxAcqFunction
+from bax.acq.acquisition_new import BaxAcqFunction, UsBaxAcqFunction, RandBaxAcqFunction
 from bax.acq.acqoptimize_new import AcqOptimizer
 from bax.acq.visualize_new import AcqViz1D
 from bax.util.domain_util import unif_random_sample_domain
@@ -108,6 +108,9 @@ elif args.acq_str == "eig3":
 elif args.acq_str == "rand":
     acq_cls = RandBaxAcqFunction
     acqfn_params = {}
+elif args.acq_str == "uncert":
+    acq_cls = UsBaxAcqFunction
+    acqfn_params = {}
 
 # Set acqopt details
 if args.acq_str == "eig2":
@@ -195,6 +198,8 @@ for i in range(args.n_iter):
         ax.set_title("EIG$^v_t(x)$, Eq. (9)")
     elif args.acq_str == 'rand':
         ax.set_title("Random Search")
+    elif args.acq_str == 'uncert':
+        ax.set_title("Uncertainty Sampling")
 
     # Save plot
     img_path = img_dir / f'topk_{i}'
