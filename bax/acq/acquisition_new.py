@@ -210,6 +210,8 @@ class BaxAcqFunction(AlgoAcqFunction):
         self.params.min_neighbors = getattr(params, "min_neighbors", 10)
         self.params.max_neighbors = getattr(params, "max_neighbors", 30)
         self.params.dist_thresh = getattr(params, "dist_thresh", 1.0)
+        self.params.dist_thresh_init = getattr(params, "dist_thresh_init", 20.0)
+        self.params.dist_thresh_inc = getattr(params, "dist_thresh_inc", 0.5)
         self.params.min_n_clust = getattr(params, "min_n_clust", 5)
 
     def entropy_given_normal_std(self, std_arr):
@@ -245,25 +247,50 @@ class BaxAcqFunction(AlgoAcqFunction):
         h_post = self.entropy_given_normal_std(post_std)
 
         # Get list of idx-list-per-cluster
-        cluster_idx_list = self.get_cluster_idx_list(output_list)
+        dist_thresh = self.params.dist_thresh_init
+        cluster_idx_list = self.get_cluster_idx_list(output_list, dist_thresh)
 
         # -----
-        print('\t- clust_idx_list details:')
+        print('\t- clust_idx_list initial details:')
         len_list = [len(clust) for clust in cluster_idx_list]
-        print(f'\t- min len_list: {np.min(len_list)},  max len_list: {np.max(len_list)},  len(len_list): {len(len_list)}')
+        print(f'\t\t- min len_list: {np.min(len_list)},  max len_list: {np.max(len_list)},  len(len_list): {len(len_list)}')
         # -----
 
-        # Filter clusters that are too small
+        # Filter clusters that are too small (looping to find optimal dist_thresh)
         min_nn = self.params.min_neighbors
-        cluster_idx_list_new = [clust for clust in cluster_idx_list if len(clust) > min_nn]
+        min_n_clust = self.params.min_n_clust
+        min_dist_thresh = self.params.dist_thresh
 
-        # Only remove small clusters if there are enough big clusters
-        if len(cluster_idx_list_new) > self.params.min_n_clust:
-            cluster_idx_list = cluster_idx_list_new
+        cluster_idx_list_new = [clust for clust in cluster_idx_list if len(clust) > min_nn]
+        # -----
+        print('\t- clust_idx_list_NEW details:')
+        len_list = [len(clust) for clust in cluster_idx_list_new]
+        print(f'\t\t- min len_list: {np.min(len_list)},  max len_list: {np.max(len_list)},  len(len_list): {len(len_list)}')
+        # -----
+        while len(cluster_idx_list_new) > min_n_clust and dist_thresh >= min_dist_thresh:
+            cluster_idx_list_keep = cluster_idx_list_new
+            dist_thresh -= self.params.dist_thresh_inc
+            print(f'NOTE: dist_thresh = {dist_thresh}')
+            cluster_idx_tmp = self.get_cluster_idx_list(output_list, dist_thresh)
+            cluster_idx_list_new = [clust for clust in cluster_idx_tmp if len(clust) > min_nn]
+
+        try:
+            cluster_idx_list = cluster_idx_list_keep
+        except UnboundLocalError:
+            print(
+                'WARNING: cluster_idx_list_keep not assigned, using cluster_idx_list.'
+            )
+            pass
+
+        ## Only remove small clusters if there are enough big clusters
+        #if len(cluster_idx_list_new) > self.params.min_n_clust:
+            #cluster_idx_list = cluster_idx_list_new
 
         # -----
         len_list = [len(clust) for clust in cluster_idx_list]
-        print(f'\t- min len_list: {np.min(len_list)},  max len_list: {np.max(len_list)},  len(len_list): {len(len_list)}')
+        print('\t- clust_idx_list final details:')
+        print(f'\t\t- min len_list: {np.min(len_list)},  max len_list: {np.max(len_list)},  len(len_list): {len(len_list)}')
+        print(f'\t\tFound dist_thresh: {dist_thresh}')
         # -----
 
         # Compute entropies for posterior predictive given execution path samples
@@ -300,10 +327,10 @@ class BaxAcqFunction(AlgoAcqFunction):
 
         return acq_out
 
-    def get_cluster_idx_list(self, output_list):
+    def get_cluster_idx_list(self, output_list, dist_thresh):
         """
-        Cluster outputs in output_list (based on nearest neighbors) and return list of
-        idx-list-per-cluster.
+        Cluster outputs in output_list (based on nearest neighbors, and using
+        dist_thresh as a nearness threshold) and return list of idx-list-per-cluster.
         """
 
         # Build distance matrix
@@ -319,7 +346,7 @@ class BaxAcqFunction(AlgoAcqFunction):
 
             # Keep at most max_neighbors, as long as they are within dist_thresh
             dist_sort = dist_sort[:self.params.max_neighbors]
-            row_idx_keep = np.where(dist_sort < self.params.dist_thresh)[0]
+            row_idx_keep = np.where(dist_sort < dist_thresh)[0]
 
             idx_arr = idx_sort[row_idx_keep]
             idx_arr_list.append(idx_arr)
@@ -353,7 +380,9 @@ class BaxAcqFunction(AlgoAcqFunction):
         h_post = self.entropy_given_normal_std(post_std)
 
         # Get list of idx-list-per-cluster
-        cluster_idx_list = self.get_cluster_idx_list(output_list)
+        cluster_idx_list = self.get_cluster_idx_list(
+            output_list, self.params.dist_thresh
+        )
 
         # -----
         print('\t- clust_idx_list details:')
