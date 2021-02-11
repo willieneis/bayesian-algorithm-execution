@@ -96,6 +96,9 @@ elif args.acq_str == "eig2":
         "min_neighbors": 3,
         "max_neighbors": 20,
         "dist_thresh": 1.0,
+        "dist_thresh_init": 20.0,
+        "dist_thresh_inc": 1.0,
+        "min_n_clust": 50,
     }
     acq_cls = BaxAcqFunction
 elif args.acq_str == "eig3":
