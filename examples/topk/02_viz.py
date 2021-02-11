@@ -18,6 +18,7 @@ from bax.util.domain_util import unif_random_sample_domain
 
 import neatplot
 neatplot.set_style("fonts")
+neatplot.update_rc('font.size', 20)
 
 
 # Parse args
@@ -167,22 +168,33 @@ for i in range(args.n_iter):
     ax.contour(X, Y, Z, 20, cmap=cm.Greens_r, zorder=0)
     # -- plot top_k
     topk_arr = np.array(output_gt.x)
-    ax.plot(topk_arr[:, 0], topk_arr[:, 1], '*', marker='*', markersize=20, color='gold', zorder=1)
+    ax.plot(topk_arr[:, 0], topk_arr[:, 1], '*', marker='*', markersize=30,
+            color='gold', markeredgecolor='black', markeredgewidth=0.05, zorder=1)
     # -- plot x_path
     x_path_arr = np.array(x_path)
-    ax.plot(x_path_arr[:, 0], x_path_arr[:, 1], 'o', markersize=5)
+    ax.plot(x_path_arr[:, 0], x_path_arr[:, 1], '.', color='#C0C0C0', markersize=8)
     # -- plot observations
     for x in data.x:
         ax.scatter(x[0], x[1], color=(0, 0, 0, 1), s=80)
     # -- plot x_next
     ax.scatter(x_next[0], x_next[1], color='deeppink', s=80, zorder=10)
     # -- plot estimated output
-    out_arr1 = np.array(acqfn.output_list[0].x)
-    out_arr2 = np.array(acqfn.output_list[1].x)
-    ax.plot(out_arr1[:, 0], out_arr1[:, 1], 'x', markersize=10, color='k')
-    ax.plot(out_arr2[:, 0], out_arr2[:, 1], '+', markersize=10, color='k')
-    # -- lims, labels, etc
-    ax.set(xlim=domain[0], ylim=domain[1], xlabel='x', ylabel='y')
+    for out in acqfn.output_list:
+        out_arr = np.array(out.x)
+        ax.plot(
+            out_arr[:, 0], out_arr[:, 1], 's', markersize=8, color='blue', alpha=0.02
+        )
+    # -- lims, labels, titles, etc
+    ax.set(xlim=domain[0], ylim=domain[1])
+
+    if args.acq_str == 'eig1':
+        ax.set_title("EIG$^e_t(x)$, Eq. (4)")
+    elif args.acq_str == 'eig2':
+        ax.set_title("EIG$_t(x)$, Eq. (8)")
+    elif args.acq_str == 'eig3':
+        ax.set_title("EIG$^v_t(x)$, Eq. (9)")
+    elif args.acq_str == 'rand':
+        ax.set_title("Random Search")
 
     # Save plot
     img_path = img_dir / f'topk_{i}'
