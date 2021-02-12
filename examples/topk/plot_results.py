@@ -14,7 +14,7 @@ def parse_method(method_str, seed_list):
     for seed in seed_list:
 
         # Load results
-        file_str = f"examples/topk/results_plot/03/topk_{method_str}_{seed}.pkl"
+        file_str = f"examples/topk/results_plot/topk_{method_str}_{seed}.pkl"
         results = pickle.load(open(file_str, "rb"))
 
         eml = results.expected_metric_jacc_list
@@ -37,23 +37,25 @@ seed_list = [1, 2, 3, 4, 5]
 
 # Parse methods' results
 eig1_list  = parse_method('eig1', seed_list)
-#eig2_list = parse_method('eig2', seed_list)
+eig2_list = parse_method('eig2', seed_list)
 eig3_list  = parse_method('eig3', seed_list)
 rand_list  = parse_method('rand', seed_list)
+uncert_list  = parse_method('uncert', seed_list)
 
 #results_list = [eig1_list, eig2_list, eig3_list, rand_list]
-results_list = [eig1_list, eig3_list, rand_list]
+results_list = [rand_list, uncert_list, eig1_list, eig2_list, eig3_list]
 label_list = [
-    'EIG$^e_t(x)$ (4)',
-    #'EIG$_t(x)$ (8)',
-    'EIG$^v_t(x)$ (9)',
     'Random Search',
+    'Uncertainty Sampling',
+    'EIG$^e_t(x)$, Eq. (4)',
+    'EIG$_t(x)$, Eq. (8)',
+    'EIG$^v_t(x)$, Eq. (9)',
     'Top-$k$ algorithm (full)',
 ]
 
 #color_list = ["#ff7f0e", "#d62728", "#2ca02c", "#1f77b4"]
 #color_list = ["#ff7f0e", "#1f77b4", "#2ca02c", "#d62728"]
-color_list = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728"] # Original colors
+color_list = ["#1f77b4", "#8c564b", "#ff7f0e", "#2ca02c", "#9467bd", "#d62728"] # Original colors
 
 # Plot
 fig, ax = plt.subplots(figsize=(8, 5))
@@ -89,6 +91,12 @@ ax.legend(handles=h_list, labels=label_list)
 
 #ax.set_yscale('log')
 ax.set_xscale('log')
+
+# Add specific ticks and ticklabels
+ticks = [10, 50, 100, 150]
+ticklabels = ["10", "50", "100", "150"]
+ax.set_xticks(ticks)
+ax.set_xticklabels(ticklabels)
 
 # Lims
 ax.set(xlim=(2, 160), ylim=(-0.05, 1.0))
