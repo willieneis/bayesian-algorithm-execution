@@ -53,6 +53,8 @@ args = parser.parse_args()
 
 exp_dir = Path(args.save_dir) / args.acq_func / f"seed_{args.seed}"
 exp_dir.mkdir(parents=True, exist_ok=True)
+img_dir = Path(args.save_dir) / args.acq_func / f"img_seed_{args.seed}"
+img_dir.mkdir(parents=True, exist_ok=True)
 
 with open(exp_dir / "settings.pkl", "wb") as handle:
     pickle.dump(vars(args), handle, protocol=pickle.HIGHEST_PROTOCOL)
@@ -325,6 +327,6 @@ for i in range(n_iter):
         # make matplotlib plot within for loop. See: https://stackoverflow.com/questions/19766100/real-time-matplotlib-plot-is-not-working-while-still-in-a-loop
         # plt.show()
 
-        neatplot.save_figure((exp_dir / f"bax_{i}").as_posix())
+        neatplot.save_figure((img_dir / f"bax_{i}").as_posix(), 'pdf')
         # plt.pause(0.0001)
         # inp = input("Paused")
