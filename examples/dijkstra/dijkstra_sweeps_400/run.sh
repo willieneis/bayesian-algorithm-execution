@@ -1,5 +1,5 @@
 #!/bin/bash
-for seed in 1 2 3 4 5 do
+for seed in 1 2 3 4 5
 do
     for acq_func in "bax" "rand" "uncert"
     do
