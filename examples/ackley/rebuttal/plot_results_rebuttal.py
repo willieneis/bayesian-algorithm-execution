@@ -7,7 +7,7 @@ neatplot.set_style('fonts')
 neatplot.update_rc('font.size', 22)
 
 
-def parse_method(method_str, seed_list):
+def parse_method(method_str, seed_list, dir_id=1):
     bsf_list = []
     mf_list = []
     eo_list = []
@@ -15,7 +15,10 @@ def parse_method(method_str, seed_list):
     for seed in seed_list:
 
         # Load results
-        file_str = f"examples/ackley/results/{method_str}_{seed}.pkl"
+        if dir_id == 1:
+            file_str = f"examples/ackley/results/{method_str}_{seed}.pkl"
+        elif dir_id == 2:
+            file_str = f"examples/ackley/rebuttal/results/{method_str}_{seed}.pkl"
         results = pickle.load(open(file_str, "rb"))
 
         n_iter = len(results.output_mf_list)
@@ -54,18 +57,23 @@ rs_list, _, _  = parse_method('rs', seed_list)
 mes_list, _, _ = parse_method('mes', seed_list)
 es_list, _, _  = parse_method('es', seed_list)
 _, _, bax_list  = parse_method('bax', seed_list)
+_, _, eig1_list  = parse_method('eig1', [11, 12, 13], dir_id=2)
+_, _, eig2_list  = parse_method('eig2', [11, 12, 13], dir_id=2)
 
-results_list = [rs_list, es_list, mes_list, bax_list]
+results_list = [rs_list, es_list, mes_list, eig1_list, eig2_list, bax_list]
 label_list = [
     'Random Search',
     'Evolution Strategy',
     'MV Entropy Search',
-    'InfoBAX',
+    'EIG$^e_t(x)$, Eq. (4)',
+    'EIG$_t(x)$, Eq. (8)',
+    'EIG$^v_t(x)$, Eq. (9)',
 ]
 
 #color_list = ["#ff7f0e", "#d62728", "#2ca02c", "#1f77b4"]
 #color_list = ["#ff7f0e", "#1f77b4", "#2ca02c", "#d62728"]
-color_list = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728"] # Original colors
+#color_list = ["#1f77b4", "#ff7f0e", "#8c564b", "#2ca02c", "#d62728", "#9467bd"] # Original colors
+color_list = ["#1f77b4", "#ff7f0e", "#8c564b", "#2ca02c", "#d62728", "#9467bd"] # Original colors
 
 # Plot
 fig, ax = plt.subplots(figsize=(8, 7))
@@ -111,9 +119,11 @@ ax.set_yscale('log')
 ax.set_xscale('log')
 
 # Lims
-ax.set_ylim((1.8, 16.0))
+#ax.set_ylim((1.8, 16.0))
+ax.set_ylim((1.8, 17.0))
 #ax.set_xlim((1, 550))
-ax.set_xlim((1, 2700))
+#ax.set_xlim((1, 2700))
+ax.set_xlim((1.0, 2700))
 
 # Axis labels/titles
 ax.set_xlabel('Iteration')
