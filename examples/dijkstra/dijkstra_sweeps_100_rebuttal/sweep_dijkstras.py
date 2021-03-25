@@ -14,7 +14,9 @@ from bax.alg.dijkstra import Dijkstra
 from bax.models.simple_gp import SimpleGp
 from bax.models.gpfs_gp import GpfsGp
 from bax.models.stan_gp import get_stangp_hypers
-from bax.acq.acquisition_new import BaxAcqFunction, RandBaxAcqFunction, UsBaxAcqFunction
+from bax.acq.acquisition_new import (
+    BaxAcqFunction, UsBaxAcqFunction, EigfBaxAcqFunction, RandBaxAcqFunction
+)
 from bax.acq.acqoptimize_new import AcqOptimizer
 from bax.util.domain_util import unif_random_sample_domain
 from bax.util.graph import make_grid, edges_of_path, positions_of_path, area_of_polygons
@@ -45,8 +47,8 @@ parser.add_argument(
 parser.add_argument(
     "--acq_func",
     type=str,
-    choices=["eig1", "eig2", "eig3", "rand", "uncert"],
-    help="Type of acquisition function. Choose one of BAX, random search, and uncertainty sampling.",
+    choices=["eig1", "eig2", "eig3", "rand", "uncert", "eigf"],
+    help="Type of acquisition function.",
 )
 parser.add_argument("--save_dir", type=str, default="./")
 args = parser.parse_args()
@@ -224,6 +226,8 @@ elif args.acq_func == "eig2":
     }
 elif args.acq_func == "eig3":
     acqfn_params = {"acq_str": "exe", "n_path": args.n_path, "crop": True}
+else:
+    acqfn_params = {"acq_str": "exe", "n_path": args.n_path}
 
 # Run BAX loop
 n_iter = args.n_iter
@@ -244,6 +248,7 @@ for i in range(n_iter):
         "eig3": BaxAcqFunction,
         "rand": RandBaxAcqFunction,
         "uncert": UsBaxAcqFunction,
+        "eigf": EigfBaxAcqFunction,
     }
     acqfn = acqfn_cls[args.acq_func](acqfn_params, model, algo)
     acqopt = AcqOptimizer({"x_batch": edge_locs, "remove_x_dups": args.can_requery})
