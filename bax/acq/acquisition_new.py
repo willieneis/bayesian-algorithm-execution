@@ -582,3 +582,24 @@ class UsBaxAcqFunction(BaxAcqFunction):
         super().__call__(x_list) # NOTE: would super()(x_list) work?
         acq_list = self.acq_vars["std"]
         return acq_list
+
+
+class EigfBaxAcqFunction(BaxAcqFunction):
+    """
+    Wrapper on BaxAcqFunction for EIG-on-f acquisition function, when we still want
+    various BaxAcqFunction variables for visualizations.
+    """
+
+    def set_params(self, params):
+        """Set self.params, the parameters for the AcqFunction."""
+        super().set_params(params)
+
+        params = dict_to_namespace(params)
+        self.params.name = getattr(params, 'name', 'EigfBaxAcqFunction')
+
+    def __call__(self, x_list):
+        """Class is callable and returns acquisition function on x_list."""
+        super().__call__(x_list) # NOTE: would super()(x_list) work?
+        std_list = self.acq_vars["std"]
+        acq_list = self.entropy_given_normal_std(std_list)
+        return acq_list
