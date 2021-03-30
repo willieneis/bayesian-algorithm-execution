@@ -43,15 +43,17 @@ eig2_list = parse_method('eig2', seed_list)
 eig3_list  = parse_method('eig3', seed_list)
 rand_list  = parse_method('rand', seed_list)
 uncert_list  = parse_method('uncert', seed_list)
+eigf_list  = parse_method('eigf', [1, 2, 3])
 
 #results_list = [eig1_list, eig2_list, eig3_list, rand_list]
-results_list = [rand_list, uncert_list, eig1_list, eig2_list, eig3_list]
+results_list = [rand_list, uncert_list, eig1_list, eig2_list, eig3_list, eigf_list]
 label_list = [
     'Random Search',
     'Uncertainty Sampling',
     'EIG$^e_t(x)$, Eq. (4)',
     'EIG$_t(x)$, Eq. (8)',
     'EIG$^v_t(x)$, Eq. (9)',
+    'MI$_f$',
     'Top-$k$ algorithm (full)',
 ]
 
@@ -77,7 +79,7 @@ for result in results_list:
     ax.fill_between(iters, lb, ub, color=linecolor, alpha=0.1)
 
 # Top-k algorithm dot
-linecolor = next(cgen)['color']
+linecolor = "teal"
 len_path = 150
 h = ax.plot([len_path], [0.0], 'o', markersize=10, color=linecolor)
 h_list.append(h[0])
@@ -102,7 +104,7 @@ ax.set_xticks(ticks)
 ax.set_xticklabels(ticklabels)
 
 # Lims
-ax.set(xlim=(2, 160), ylim=(-0.05, 1.0))
+ax.set(xlim=(4, 160), ylim=(-0.05, 1.0))
 
 # Axis labels/titles
 ax.set_xlabel('Iteration')
