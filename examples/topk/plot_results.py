@@ -103,7 +103,8 @@ ax.set(xlim=(2, 160), ylim=(-0.05, 1.0))
 
 # Axis labels/titles
 ax.set_xlabel('Iteration')
-ax.set_ylabel('$1 -$ Jaccard Index for Top-$k$')
+#ax.set_ylabel('$1 -$ Jaccard Index for Top-$k$')
+ax.set_ylabel('Jaccard Distance for Top-$k$')
 ax.set_title('Top-$k$')
 
 neatplot.save_figure('topk', 'pdf')
