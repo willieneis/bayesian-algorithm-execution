@@ -17,7 +17,16 @@ class Dijkstra(Algorithm):
     Implments the shortest path or minimum cost algorithm using the Vertex class.
     """
 
-    def __init__(self, params=None, vertices=None, start=None, goal=None, verbose=True):
+    def __init__(
+        self,
+        params=None,
+        vertices=None,
+        edge_to_position=None,
+        node_representation="locations",
+        start=None,
+        goal=None,
+        verbose=True,
+    ):
         """
         Parameters
         ----------
@@ -25,6 +34,12 @@ class Dijkstra(Algorithm):
             Namespace or dict of parameters for the algorithm.
         vertices : list
             List of Vertex objects
+        edge_to_position: Optional[dict].
+            If node_representation is 'indices', this must map edges to positions, i.e.
+            of type Dict[Tuple[int,int], np.ndarray]
+        node_representation: str
+            How nodes are represented. Can either be by 'locations', i.e. numpy arrays,
+            or 'indices', i.e. integers
         start : Vertex
             Start vertex.
         goal : Vertex
@@ -35,6 +50,11 @@ class Dijkstra(Algorithm):
         super().__init__()
         self.set_params(params)
         self.vertices = vertices
+        assert node_representation in ["locations", "indices"]
+        if node_representation == "indices":
+            assert edge_to_position is not None
+        self.edge_to_position = edge_to_position
+        self.node_representation = node_representation
         self.start = start
         self.goal = goal
         if verbose:
@@ -73,7 +93,7 @@ class Dijkstra(Algorithm):
         """
         while True:
             # Complete post-query todos
-            #if self.num_queries > 0:
+            # if self.num_queries > 0:
             if self.do_after_query:
                 self.after_query()
 
@@ -107,11 +127,20 @@ class Dijkstra(Algorithm):
     def get_next_edge(self):
         """Return next edge. Assumes self.current is not None."""
         self.num_queries += 1
-        current_pos = self.current.position
-        neighbor_pos = self.current.neighbors[self.curr_neigh_idx].position
-        next_edge = (current_pos + neighbor_pos) / 2
+        if self.node_representation == "location":
+            current_pos = self.current.position
+            neighbor_pos = self.current.neighbors[self.curr_neigh_idx].position
+            next_edge_pos = (current_pos + neighbor_pos) / 2
+        elif self.node_representation == "indices":
+            cur_i = self.current.index
+            nei_i = self.current.neighbors[self.curr_neigh_idx].index
+            next_edge_pos = self.edge_to_position[(cur_i, nei_i)]
+        else:
+            raise RuntimeError(
+                f"Node representation {self.node_representation} not supported"
+            )
         self.do_after_query = True
-        return next_edge
+        return next_edge_pos
 
     def after_query(self):
         """To do after an edge has been queried."""
@@ -125,9 +154,7 @@ class Dijkstra(Algorithm):
             self.best_cost + step_cost < self.min_cost[neighbor.index]
         ):
             # Push by cost
-            heapq.heappush(
-                self.to_explore, (self.best_cost + step_cost, neighbor)
-            )
+            heapq.heappush(self.to_explore, (self.best_cost + step_cost, neighbor))
             self.min_cost[neighbor.index] = self.best_cost + step_cost
             self.prev[neighbor.index] = self.current.index
 
@@ -160,7 +187,7 @@ class Dijkstra(Algorithm):
     def run_algorithm_on_f_standalone(self, f):
 
         # prevent parallel processes from sharing random state
-        #np.random.seed()
+        # np.random.seed()
 
         def dijkstras(start: Vertex, goal: Vertex):
             """Dijkstra's algorithm."""
@@ -233,13 +260,27 @@ class Dijkstra(Algorithm):
 
         _, best_path = self.get_output()
         for i in range(len(best_path) - 1):
-            vec_start_pos = best_path[i].position
-            vec_end_pos = best_path[i + 1].position
-            edge_pos = (vec_start_pos + vec_end_pos) / 2.0
+            if self.node_representation == "locations":
+                vec_start_pos = best_path[i].position
+                vec_end_pos = best_path[i + 1].position
+                edge_pos = (vec_start_pos + vec_end_pos) / 2.0
+            elif self.node_representation == "indices":
+                vec_start = best_path[i].index
+                vec_end = best_path[i + 1].index
+                edge_pos = self.edge_to_position[(vec_start, vec_end)]
+            else:
+                raise RuntimeError(
+                    f"Node representation {self.node_representation} not supported"
+                )
 
             exe_path_crop.x.append(edge_pos)
             idx, pos = next(
-                (tup for tup in enumerate(self.exe_path.x) if all(tup[1] == edge_pos))
+                (
+                    tup
+                    for tup in enumerate(self.exe_path.x)
+                    if all(tup[1] == edge_pos)
+                    # if np.allclose(tup[1], edge_pos)
+                )
             )
             exe_path_crop.y.append(self.exe_path.y[idx])
 
