@@ -309,7 +309,7 @@ components = [[v.index for v in c] for c in components]
 # make sure start and goal are in the same connected component
 assert any(all((start.index in c, goal.index in c)) for c in components)
 
-algo = Dijkstra(algo_params, vertices, edge_to_position, start, goal)
+algo = Dijkstra(algo_params, vertices, start, goal, edge_to_position)
 
 # Set model details
 modelclass = GpfsGp

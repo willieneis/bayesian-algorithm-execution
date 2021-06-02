@@ -21,10 +21,10 @@ class Dijkstra(Algorithm):
         self,
         params=None,
         vertices=None,
-        edge_to_position=None,
-        node_representation="locations",
         start=None,
         goal=None,
+        edge_to_position=None,
+        node_representation="locations",
         verbose=True,
     ):
         """
@@ -127,7 +127,7 @@ class Dijkstra(Algorithm):
     def get_next_edge(self):
         """Return next edge. Assumes self.current is not None."""
         self.num_queries += 1
-        if self.node_representation == "location":
+        if self.node_representation == "locations":
             current_pos = self.current.position
             neighbor_pos = self.current.neighbors[self.curr_neigh_idx].position
             next_edge_pos = (current_pos + neighbor_pos) / 2
