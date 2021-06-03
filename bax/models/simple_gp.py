@@ -7,10 +7,11 @@ import copy
 import numpy as np
 
 from .gp.gp_utils import kern_exp_quad, sample_mvn, gp_post
+from ..util.base import Base
 from ..util.misc_util import dict_to_namespace
 
 
-class SimpleGp:
+class SimpleGp(Base):
     """
     Simple GP model without external backend.
     """
@@ -26,18 +27,14 @@ class SimpleGp:
         verbose : bool
             If True, print description string.
         """
-        self.verbose = verbose
-        self.set_params(params)
+        super().__init__(params, verbose)
         self.set_data(data)
-        if self.verbose:
-            self.print_str()
 
     def set_params(self, params):
         """Set self.params, the parameters for this model."""
+        super().set_params(params)
         params = dict_to_namespace(params)
 
-        # Set self.params
-        self.params = Namespace()
         self.params.name = getattr(params, 'name', 'SimpleGp')
         self.params.ls = getattr(params, 'ls', 3.7)
         self.params.alpha = getattr(params, 'alpha', 1.85)
@@ -221,15 +218,3 @@ class SimpleGp:
         ns.x = ns1.x + ns2.x
         ns.y = ns1.y + ns2.y
         return ns
-
-    def print_str(self):
-        """Print a description string."""
-        print('*[INFO] ' + str(self))
-
-    def set_print_params(self):
-        """Set self.print_params."""
-        self.print_params = copy.deepcopy(self.params)
-
-    def __str__(self):
-        self.set_print_params()
-        return f'{self.params.name} with params={self.print_params}'

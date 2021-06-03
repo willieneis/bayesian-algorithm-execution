@@ -20,12 +20,11 @@ class StanGp(SimpleGp):
 
     def set_params(self, params):
         """Set self.params, the parameters for this model."""
+        super().set_params(params)
         params = dict_to_namespace(params)
 
         # Set self.params
-        self.params = Namespace()
         self.params.name = getattr(params, 'name', 'StanGp')
-        self.params.sigma = getattr(params, 'sigma', 1e-2)
         self.params.kernel = getattr(params, 'kernel', kern_exp_quad)
         self.params.ig1 = getattr(params, 'ig1', 4.0)
         self.params.ig2 = getattr(params, 'ig2', 3.0)
@@ -34,7 +33,7 @@ class StanGp(SimpleGp):
         self.params.n_iter = getattr(params, 'n_iter', 70)
         self.params.print_warnings = getattr(params, 'print_warnings', True)
         self.params.print_fit_result = getattr(params, 'print_fit_result', True)
-        self.params.stanmodel = get_stanmodel(verbose=self.verbose)
+        self.params.stanmodel = get_stanmodel(verbose=self.params.verbose)
 
     def fit_hypers(self):
         """Fit hyperparameters."""

@@ -23,14 +23,11 @@ class GpfsGp(SimpleGp):
 
     def set_params(self, params):
         """Set self.params, the parameters for this model."""
+        super().set_params(params)
         params = dict_to_namespace(params)
 
         # Set self.params
-        self.params = Namespace()
         self.params.name = getattr(params, 'name', 'GpfsGp')
-        self.params.ls = getattr(params, 'ls', 3.7)
-        self.params.alpha = getattr(params, 'alpha', 1.85)
-        self.params.sigma = getattr(params, 'sigma', 1e-2)
         self.params.n_bases = getattr(params, 'n_bases', 1000)
         self.params.n_dimx = getattr(params, 'n_dimx', 1)
         self.set_kernel(params)
