@@ -7,15 +7,16 @@ import copy
 import numpy as np
 
 from .acquisition_new import BaxAcqFunction # TODO: update
+from ..util.base import Base
 from ..util.misc_util import dict_to_namespace
 
 
-class AcqOptimizer:
+class AcqOptimizer(Base):
     """
     Class for optimizing acquisition functions.
     """
 
-    def __init__(self, params=None, acqfunction=None, verbose=True):
+    def __init__(self, params=None, verbose=True):
         """
         Parameters
         ----------
@@ -24,16 +25,13 @@ class AcqOptimizer:
         verbose : bool
             If True, print description string.
         """
-        self.set_params(params)
-        if verbose:
-            self.print_str()
+        super().__init__(params, verbose)
 
     def set_params(self, params):
         """Set self.params, the parameters for the AcqOptimizer."""
+        super().set_params(params)
         params = dict_to_namespace(params)
 
-        # Set self.params
-        self.params = Namespace()
         self.params.name = getattr(params, "name", "AcqOptimizer")
         self.params.opt_str = getattr(params, "opt_str", "batch")
         default_x_batch = [[x] for x in np.linspace(0.0, 40.0, 500)]
@@ -104,15 +102,7 @@ class AcqOptimizer:
 
         return x_batch
 
-    def print_str(self):
-        """Print a description string."""
-        print("*[INFO] " + str(self))
-
     def set_print_params(self):
         """Set self.print_params."""
         self.print_params = copy.deepcopy(self.params)
         delattr(self.print_params, "x_batch")
-
-    def __str__(self):
-        self.set_print_params()
-        return f"{self.params.name} with params={self.print_params}"
