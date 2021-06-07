@@ -7,34 +7,19 @@ import copy
 import numpy as np
 from abc import ABC, abstractmethod
 
+from ..util.base import Base
 from ..util.misc_util import dict_to_namespace
 from ..util.domain_util import unif_random_sample_domain
 from ..util.graph import jaccard_similarity
 
 
-class Algorithm(ABC):
+class Algorithm(ABC, Base):
     """Base class for a BAX Algorithm"""
-
-    def __init__(self, params=None, verbose=True):
-        """
-        Parameters
-        ----------
-        params : Namespace_or_dict
-            Namespace or dict of parameters for the algorithm.
-        verbose : bool
-            If True, print description string.
-        """
-        self.set_params(params)
-        if verbose:
-            self.print_str()
-        super().__init__()
 
     def set_params(self, params):
         """Set self.params, the parameters for the algorithm."""
+        super().set_params(params)
         params = dict_to_namespace(params)
-
-        # Set self.params
-        self.params = Namespace()
         self.params.name = getattr(params, "name", "Algorithm")
 
     def initialize(self):
@@ -102,18 +87,6 @@ class Algorithm(ABC):
             return np.linalg.norm(a_arr - b_arr)
 
         return dist_fn
-
-    def print_str(self):
-        """Print a description string."""
-        print("*[INFO] " + str(self))
-
-    def set_print_params(self):
-        """Set self.print_params."""
-        self.print_params = copy.deepcopy(self.params)
-
-    def __str__(self):
-        self.set_print_params()
-        return f"{self.params.name} with params={self.print_params}"
 
 
 class FixedPathAlgorithm(Algorithm):
