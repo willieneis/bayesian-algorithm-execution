@@ -16,17 +16,6 @@ class AcqOptimizer(Base):
     Class for optimizing acquisition functions.
     """
 
-    def __init__(self, params=None, verbose=True):
-        """
-        Parameters
-        ----------
-        params : Namespace_or_dict
-            Namespace or dict of parameters for the AcqOptimizer.
-        verbose : bool
-            If True, print description string.
-        """
-        super().__init__(params, verbose)
-
     def set_params(self, params):
         """Set self.params, the parameters for the AcqOptimizer."""
         super().set_params(params)
