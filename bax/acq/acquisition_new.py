@@ -7,13 +7,14 @@ import copy
 import numpy as np
 from scipy.stats import norm as sps_norm
 
+from ..util.base import Base
 from ..util.misc_util import dict_to_namespace
 from ..util.timing import Timer
 from ..models.function import FunctionSample
 from ..alg.algorithms_new import AlgorithmSet
 
 
-class AcqFunction:
+class AcqFunction(Base):
     """
     Class for computing acquisition functions.
     """
@@ -29,17 +30,13 @@ class AcqFunction:
         verbose : bool
             If True, print description string.
         """
-        self.set_params(params)
+        super().__init__(params, verbose)
         self.set_model(model)
-        if verbose:
-            self.print_str()
 
     def set_params(self, params):
         """Set self.params, the parameters for the AcqFunction."""
+        super().set_params(params)
         params = dict_to_namespace(params)
-
-        # Set self.params
-        self.params = Namespace()
         self.params.name = getattr(params, 'name', 'AcqFunction')
 
     def set_model(self, model):
@@ -60,18 +57,6 @@ class AcqFunction:
         acq_list = [np.random.random() for x in x_list]
 
         return acq_list
-
-    def print_str(self):
-        """Print a description string."""
-        print('*[INFO] ' + str(self))
-
-    def set_print_params(self):
-        """Set self.print_params."""
-        self.print_params = copy.deepcopy(self.params)
-
-    def __str__(self):
-        self.set_print_params()
-        return f'{self.params.name} with params={self.print_params}'
 
 
 class RandAcqFunction(AcqFunction):
@@ -114,11 +99,9 @@ class AlgoAcqFunction(AcqFunction):
         verbose : bool
             If True, print description string.
         """
-        self.set_params(params)
+        super().__init__(params, verbose)
         self.set_model(model)
         self.set_algorithm(algorithm)
-        if verbose:
-            self.print_str()
 
     def set_params(self, params):
         """Set self.params, the parameters for the AcqFunction."""
