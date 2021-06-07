@@ -9,10 +9,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
 
+from ..util.base import Base
 from ..util.misc_util import dict_to_namespace
 
 
-class AcqViz1D:
+class AcqViz1D(Base):
     """
     Class to visualize acquisition function optimization for one-dimensional x.
     """
@@ -26,21 +27,19 @@ class AcqViz1D:
         verbose : bool
             If True, print description string.
         """
-        self.set_params(params)
+        super().__init__(params, verbose)
+
         fig, ax = plt.subplots(figsize=self.params.figsize)
         self.fig = fig
         self.ax = ax
         self.h_list = []
         self.clist = rcParams['axes.prop_cycle']
-        if verbose:
-            self.print_str()
 
     def set_params(self, params):
         """Set self.params, the parameters for the AcqOptimizer."""
+        super().set_params(params)
         params = dict_to_namespace(params)
 
-        # Set self.params
-        self.params = Namespace()
         self.params.name = getattr(params, "name", "AcqViz1D")
         self.params.figsize = getattr(params, "figsize", (8, 4))
         self.params.n_path_max = getattr(params, "n_path_max", None)
@@ -501,15 +500,3 @@ class AcqViz1D:
             samp_list = samp_list[:self.params.n_path_max]
 
         return samp_list
-
-    def set_print_params(self):
-        """Set self.print_params."""
-        self.print_params = copy.deepcopy(self.params)
-
-    def __str__(self):
-        self.set_print_params()
-        return f'{self.params.name} with params={self.print_params}'
-
-    def print_str(self):
-        """Print a description string."""
-        print('*[INFO] ' + str(self))

@@ -10,10 +10,11 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from matplotlib import rcParams
 
+from ..util.base import Base
 from ..util.misc_util import dict_to_namespace
 
 
-class AcqViz2D:
+class AcqViz2D(Base):
     """
     Class to visualize acquisition function optimization for two-dimensional x.
     """
@@ -29,7 +30,7 @@ class AcqViz2D:
         verbose : bool
             If True, print description string.
         """
-        self.set_params(params)
+        super().__init__(params, verbose)
 
         if fig_ax is None:
             fig, ax = plt.subplots(figsize=self.params.figsize)
@@ -39,17 +40,13 @@ class AcqViz2D:
 
         self.fig = fig
         self.ax = ax
-
         self.h_list = []
-        if verbose:
-            self.print_str()
 
     def set_params(self, params):
         """Set self.params, the parameters for the AcqOptimizer."""
+        super().set_params(params)
         params = dict_to_namespace(params)
 
-        # Set self.params
-        self.params = Namespace()
         self.params.name = getattr(params, "name", "AcqViz2D")
         self.params.figsize = getattr(params, "figsize", (6, 6))
         self.params.n_path_max = getattr(params, "n_path_max", None)
@@ -172,15 +169,3 @@ class AcqViz2D:
             samp_list = samp_list[:self.params.n_path_max]
 
         return samp_list
-
-    def set_print_params(self):
-        """Set self.print_params."""
-        self.print_params = copy.deepcopy(self.params)
-
-    def __str__(self):
-        self.set_print_params()
-        return f'{self.params.name} with params={self.print_params}'
-
-    def print_str(self):
-        """Print a description string."""
-        print('*[INFO] ' + str(self))
