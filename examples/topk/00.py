@@ -45,9 +45,12 @@ gp_params = {"ls": 2.0, "alpha": 2.0, "sigma": noise_scale ** 2}
 #modelclass = GpfsGp
 modelclass = SimpleGp # NOTE: can use SimpleGp model
 
+# Set fast_legend to True for producing the legend, and to False for producing the main
+# figure without a legend
+fast_legend = True
+
 # Set acquisition details
-fast = False
-if fast:
+if fast_legend:
     acqfn_params1 = {"acq_str": "exe", "n_path": 20, "crop": False}     # EIG 1
     acqfn_params2 = {                                                   # EIG 2
         "acq_str": "out",
@@ -220,7 +223,8 @@ h_list = [
 
 label_list = [
     '$f$',
-    '$(z_1, \ldots, z_{S_f})$',
+    #'$(z_1, \ldots, z_{|X|})$',
+    '$x \in X$',
     '$(x, y_x) \in \mathcal{D}_t$',
     '$p(y_x|\mathcal{D}_t)$',
     '$\\widetilde{f} \sim p(f | \mathcal{D}_t)$',
@@ -231,8 +235,7 @@ label_list = [
     'EIG$^v_t(x)$',
 ]
 
-show_legend = False
-if show_legend:
+if fast_legend:
     leg = ax.legend(
         h_list,
         label_list,
