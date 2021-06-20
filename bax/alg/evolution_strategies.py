@@ -13,8 +13,8 @@ from ..util.misc_util import dict_to_namespace
 
 class EvolutionStrategies(Algorithm):
     """
-    Evolution strategies for local minimization, computing a (local) optima in X as
-    output, starting from some initial point.
+    Evolution strategies for local minimization/maximization, computing a (local) optima
+    in X as output, starting from some initial point.
     """
 
     def set_params(self, params):
@@ -33,12 +33,12 @@ class EvolutionStrategies(Algorithm):
         self.params.domain = getattr(params, "domain", [[0, 10]])
         self.params.n_dim = len(self.params.init_x)
         self.params.n_dim_es = self.params.n_dim if self.params.n_dim>1 else 2
+        self.params.crop = getattr(params, "crop", True)
 
-    def run_algorithm_on_f(self, f):
-        """
-        Run the algorithm by sequentially querying function f. Return the execution path
-        and output.
-        """
+    def initialize(self):
+        """Initialize algorithm, reset execution path."""
+        super().initialize()
+
         # set self.params.sampler and self.params.gen_list
         if self.params.samp_str == 'cma':
             self.params.sampler = CMAES(
@@ -59,10 +59,7 @@ class EvolutionStrategies(Algorithm):
         #self.params.gen_list = [self.params.init_x]
         self.params.gen_list = []   # TODO: figure out initialization
 
-        # run algorithm in usual way on f
-        return super().run_algorithm_on_f(f)
-
-    def get_next_x(self, exe_path):
+    def get_next_x(self):
         """
         Given the current execution path, return the next x in the execution path. If
         the algorithm is complete, return None.
@@ -72,9 +69,9 @@ class EvolutionStrategies(Algorithm):
 
         except IndexError:
             max_iter = self.params.n_population * self.params.n_generation
-            if len(exe_path.x) < max_iter:
-                if len(exe_path.y):
-                    self.params.sampler.tell(exe_path.y[-self.params.n_population:])
+            if len(self.exe_path.x) < max_iter:
+                if len(self.exe_path.y):
+                    self.params.sampler.tell(self.exe_path.y[-self.params.n_population:])
 
                 next_gen_list = self.params.sampler.ask()
                 next_gen_list = self.convert_next_gen_list(next_gen_list)
@@ -107,14 +104,36 @@ class EvolutionStrategies(Algorithm):
         next_gen_list = next_gen_mat.tolist()
         return next_gen_list
 
-    def get_output_from_exe_path(self, exe_path):
-        """Given an execution path, return algorithm output."""
+    def get_exe_path_opt_idx(self):
+        """Return the index of the optimal point in execution path."""
         if self.params.opt_mode == "min":
-            opt_idx = np.argmin(exe_path.y)
+            opt_idx = np.argmin(self.exe_path.y)
         elif self.params.opt_mode == "max":
-            opt_idx = np.argmax(exe_path.y)
+            opt_idx = np.argmax(self.exe_path.y)
 
-        return exe_path.x[opt_idx]
+        return opt_idx
+
+    def get_output(self):
+        """Given an execution path, return algorithm output."""
+        opt_idx = self.get_exe_path_opt_idx()
+
+        return self.exe_path.x[opt_idx]
+
+    def get_exe_path_crop(self):
+        """
+        Return the minimal execution path for output, i.e. cropped execution path,
+        specific to this algorithm.
+        """
+        opt_idx = self.get_exe_path_opt_idx()
+        exe_path_crop = Namespace(x=[], y=[])
+
+        if self.params.crop:
+            exe_path_crop.x.append(self.exe_path.x[opt_idx])
+            exe_path_crop.y.append(self.exe_path.y[opt_idx])
+        else:
+            exe_path_crop = self.exe_path
+
+        return exe_path_crop
 
 
 class SimpleMutator:
@@ -161,3 +180,18 @@ class SimpleMutator:
         keep_idx = np.argsort(val_list)[int((1 - self.keep_frac) * len(val_list)):]
         new_gen_list = [self.mut_list[i] for i in keep_idx[::-1]]
         self.gen_list = new_gen_list
+
+
+class EvolutionStrategiesVal(EvolutionStrategies):
+    """
+    A version of EvolutionStrategies that returns the value of the optimal point.
+    """
+
+    def get_output(self):
+        """Given an execution path, return algorithm output."""
+        if self.params.opt_mode == "min":
+            opt_val = np.min(self.exe_path.y)
+        elif self.params.opt_mode == "max":
+            opt_val = np.max(self.exe_path.y)
+
+        return opt_val

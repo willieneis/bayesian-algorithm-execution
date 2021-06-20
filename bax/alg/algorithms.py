@@ -6,130 +6,124 @@ from argparse import Namespace
 import copy
 import numpy as np
 from abc import ABC, abstractmethod
-import heapq
-import random
-import time
 
+from ..util.base import Base
 from ..util.misc_util import dict_to_namespace
-from ..util.graph import Vertex, backtrack_indices
+from ..util.domain_util import unif_random_sample_domain
+from ..util.graph import jaccard_similarity
 
 
-class Algorithm(ABC):
+class Algorithm(ABC, Base):
     """Base class for a BAX Algorithm"""
-
-    def __init__(self, params=None, verbose=True):
-        """
-        Parameters
-        ----------
-        params : Namespace_or_dict
-            Namespace or dict of parameters for the algorithm.
-        verbose : bool
-            If True, print description string.
-        """
-        self.set_params(params)
-        if verbose:
-            self.print_str()
-        super().__init__()
 
     def set_params(self, params):
         """Set self.params, the parameters for the algorithm."""
+        super().set_params(params)
         params = dict_to_namespace(params)
-
-        # Set self.params
-        self.params = Namespace()
         self.params.name = getattr(params, "name", "Algorithm")
+
+    def initialize(self):
+        """Initialize algorithm, reset execution path."""
+        self.exe_path = Namespace(x=[], y=[])
+
+    def get_next_x(self):
+        """
+        Given the current execution path, return the next x in the execution path. If
+        the algorithm is complete, return None.
+        """
+        # Default behavior: return a uniform random value 10 times
+        next_x = np.random.uniform() if len(self.exe_path.x) < 10 else None
+        return next_x
+
+    def take_step(self, f):
+        """Take one step of the algorithm."""
+        x = self.get_next_x()
+        if x is not None:
+            y = f(x)
+            self.exe_path.x.append(x)
+            self.exe_path.y.append(y)
+
+        return x
 
     def run_algorithm_on_f(self, f):
         """
         Run the algorithm by sequentially querying function f. Return the execution path
         and output.
         """
-        # Initialize execution path
-        exe_path = Namespace(x=[], y=[])
+        self.initialize()
 
         # Step through algorithm
-        x = self.get_next_x(exe_path)
+        x = self.take_step(f)
         while x is not None:
-            y = f(x)
-            exe_path.x.append(x)
-            exe_path.y.append(y)
-            x = self.get_next_x(exe_path)
+            x = self.take_step(f)
 
-        # Compute output from exe_path, and return both
-        output = self.get_output_from_exe_path(exe_path)
-        return exe_path, output
+        # Return execution path and output
+        return self.exe_path, self.get_output()
 
-    def run_algorithm_on_f_list(self, f_list, n_f):
+    def get_exe_path_crop(self):
         """
-        Run the algorithm by sequentially querying f_list, which calls a list of n_f
-        functions given an x_list of n_f inputs. Return the lists of execution paths and
-        outputs.
+        Return the minimal execution path for output, i.e. cropped execution path,
+        specific to this algorithm.
         """
-        # Initialize execution paths
-        exe_path_list = [Namespace(x=[], y=[]) for _ in range(n_f)]
+        # As default, return untouched execution path
+        return self.exe_path
 
-        # Step through algorithm
-        x_list = [self.get_next_x(exe_path) for exe_path in exe_path_list]
-        while any(x is not None for x in x_list):
-            y_list = f_list(x_list)
-            x_list_new = []
-            for exe_path, x, y in zip(exe_path_list, x_list, y_list):
-                exe_path.x.append(x)
-                exe_path.y.append(y)
-                x_next = None if exe_path.x[-1] is None else self.get_next_x(exe_path)
-                x_list_new.append(x_next)
-            x_list = x_list_new
+    def get_copy(self):
+        """Return a copy of this algorithm."""
+        return copy.deepcopy(self)
 
-        # Remove Nones from execution path
-        exe_path_list = [self.crop_exe_path(exe_path) for exe_path in exe_path_list]
+    @abstractmethod
+    def get_output(self):
+        """Return output based on self.exe_path."""
+        pass
 
-        # Compute output_list from exe_path_list, and return both
-        output_list = [
-            self.get_output_from_exe_path(exe_path) for exe_path in exe_path_list
-        ]
-        return exe_path_list, output_list
+    def get_output_dist_fn(self):
+        """Return distance function for pairs of outputs."""
 
-    def get_next_x(self, exe_path):
+        # Default dist_fn casts outputs to arrays and returns Euclidean distance
+        def dist_fn(a, b):
+            a_arr = np.array(a)
+            b_arr = np.array(b)
+            return np.linalg.norm(a_arr - b_arr)
+
+        return dist_fn
+
+
+class FixedPathAlgorithm(Algorithm):
+    """
+    Algorithm with a fixed execution path input sequence, specified by x_path parameter.
+    """
+
+    def set_params(self, params):
+        """Set self.params, the parameters for the algorithm."""
+        super().set_params(params)
+        params = dict_to_namespace(params)
+
+        self.params.name = getattr(params, "name", "FixedPathAlgorithm")
+        self.params.x_path = getattr(params, "x_path", [])
+
+    def get_next_x(self):
         """
         Given the current execution path, return the next x in the execution path. If
         the algorithm is complete, return None.
         """
-        len_path = len(exe_path.x)
-        if len_path == len(self.params.x_path):
-            next_x = None
-        else:
-            next_x = self.params.x_path[len_path]
+        len_path = len(self.exe_path.x)
+        x_path = self.params.x_path
+        next_x = x_path[len_path] if len_path < len(x_path) else None
         return next_x
 
-    def crop_exe_path(self, exe_path):
-        """Return execution path without any Nones at end."""
-        try:
-            final_idx = next(i for i, x in enumerate(exe_path.x) if x==None)
-        except StopIteration:
-            final_idx = len(exe_path.x)
-
-        del exe_path.x[final_idx:]
-        del exe_path.y[final_idx:]
-        return exe_path
-
-    def print_str(self):
-        """Print a description string."""
-        print("*[INFO] " + str(self))
+    def get_output(self):
+        """Return output based on self.exe_path."""
+        # Default behavior: return execution path
+        return self.exe_path
 
     def set_print_params(self):
         """Set self.print_params."""
-        self.print_params = copy.deepcopy(self.params)
-
-    def __str__(self):
-        self.set_print_params()
-        return f"{self.params.name} with params={self.print_params}"
-
-    @abstractmethod
-    def get_output_from_exe_path(self, exe_path):
-        pass
+        super().set_print_params()
+        delattr(self.print_params, "x_path")
 
 
-class LinearScan(Algorithm):
+class LinearScan(FixedPathAlgorithm):
     """
     Algorithm that scans over a grid on a one dimensional domain, and as output returns
     function values at each point on grid.
@@ -141,16 +135,10 @@ class LinearScan(Algorithm):
         params = dict_to_namespace(params)
 
         self.params.name = getattr(params, "name", "LinearScan")
-        self.params.x_path = getattr(params, "x_path", [])
 
-    def get_output_from_exe_path(self, exe_path):
-        """Given an execution path, return algorithm output."""
-        return exe_path.y
-
-    def set_print_params(self):
-        """Set self.print_params."""
-        self.print_params = copy.deepcopy(self.params)
-        delattr(self.print_params, "x_path")
+    def get_output(self):
+        """Return algorithm output given the execution path."""
+        return self.exe_path.y
 
 
 class LinearScanRandGap(LinearScan):
@@ -188,12 +176,11 @@ class LinearScanRandGap(LinearScan):
 
     def set_print_params(self):
         """Set self.print_params."""
-        self.print_params = copy.deepcopy(self.params)
-        delattr(self.print_params, "x_path")
+        super().set_print_params()
         delattr(self.print_params, "x_path_orig")
 
 
-class AverageOutputs(Algorithm):
+class AverageOutputs(FixedPathAlgorithm):
     """
     Algorithm that computes the average of function outputs for a set of input points.
     """
@@ -204,19 +191,13 @@ class AverageOutputs(Algorithm):
         params = dict_to_namespace(params)
 
         self.params.name = getattr(params, "name", "AverageOutputs")
-        self.params.x_path = getattr(params, "x_path", [])
 
-    def get_output_from_exe_path(self, exe_path):
-        """Given an execution path, return algorithm output."""
-        return np.mean(exe_path.y)
-
-    def set_print_params(self):
-        """Set self.print_params."""
-        self.print_params = copy.deepcopy(self.params)
-        delattr(self.print_params, "x_path")
+    def get_output(self):
+        """Return output based on self.exe_path."""
+        return np.mean(self.exe_path.y)
 
 
-class SortOutputs(Algorithm):
+class SortOutputs(FixedPathAlgorithm):
     """
     Algorithm that sorts function outputs for a set of input points.
     """
@@ -227,16 +208,10 @@ class SortOutputs(Algorithm):
         params = dict_to_namespace(params)
 
         self.params.name = getattr(params, "name", "SortOutputs")
-        self.params.x_path = getattr(params, "x_path", [])
 
-    def get_output_from_exe_path(self, exe_path):
-        """Given an execution path, return algorithm output."""
-        return np.argsort(exe_path.y)
-
-    def set_print_params(self):
-        """Set self.print_params."""
-        self.print_params = copy.deepcopy(self.params)
-        delattr(self.print_params, "x_path")
+    def get_output(self):
+        """Return output based on self.exe_path."""
+        return np.argsort(self.exe_path.y)
 
 
 class OptRightScan(Algorithm):
@@ -255,21 +230,22 @@ class OptRightScan(Algorithm):
         self.params.x_grid_gap = getattr(params, "x_grid_gap", 0.1)
         self.params.conv_thresh = getattr(params, "conv_thresh", 0.2)
         self.params.max_iter = getattr(params, "max_iter", 100)
+        self.params.crop_str = getattr(params, "crop_str", "min")
 
-    def get_next_x(self, exe_path):
+    def get_next_x(self):
         """
         Given the current execution path, return the next x in the execution path. If
         the algorithm is complete, return None.
         """
-        len_path = len(exe_path.x)
+        len_path = len(self.exe_path.x)
         if len_path == 0:
             next_x = self.params.init_x
         else:
-            next_x = [exe_path.x[-1][0] + self.params.x_grid_gap]
+            next_x = [self.exe_path.x[-1][0] + self.params.x_grid_gap]
 
         if len_path >= 2:
-            conv_max_val = np.min(exe_path.y[:-1]) + self.params.conv_thresh
-            if exe_path.y[-1] > conv_max_val:
+            conv_max_val = np.min(self.exe_path.y[:-1]) + self.params.conv_thresh
+            if self.exe_path.y[-1] > conv_max_val:
                 next_x = None
 
         # Algorithm also has max number of steps
@@ -278,121 +254,43 @@ class OptRightScan(Algorithm):
 
         return next_x
 
-    def get_output_from_exe_path(self, exe_path):
-        """Given an execution path, return algorithm output."""
-        return exe_path.x[-1]
+    def get_exe_path_crop(self):
+        """
+        Return the minimal execution path for output, i.e. cropped execution path,
+        specific to this algorithm.
+        """
+        exe_path_crop = Namespace(x=[], y=[])
+        min_idx = np.argmin(self.exe_path.y)
+
+        if self.params.crop_str == "min":
+            exe_path_crop.x.append(self.exe_path.x[min_idx])
+            exe_path_crop.y.append(self.exe_path.y[min_idx])
+        elif self.params.crop_str == "minplus":
+            exe_path_crop.x.extend(self.exe_path.x[min_idx:])
+            exe_path_crop.y.extend(self.exe_path.y[min_idx:])
+        else:
+            exe_path_crop = self.exe_path
+
+        return exe_path_crop
+
+    def get_output(self):
+        """Return output based on self.exe_path."""
+        min_idx = np.argmin(self.exe_path.y)
+        min_pair = [self.exe_path.x[min_idx], self.exe_path.y[min_idx]]
+        return min_pair
+
+    def get_output_dist_fn(self):
+        """Return distance function for pairs of outputs."""
+
+        def dist_fn(a, b):
+            a = np.array(a[0] + [a[1]])
+            b = np.array(b[0] + [b[1]])
+            return np.linalg.norm(a - b)
+
+        return dist_fn
 
 
-class Dijkstras(Algorithm):
-    """Implments the shortest path or minimum cost algorithm using the Vertex
-    class.
-
-    """
-
-    def set_params(self, params):
-        """Set self.params, the parameters for the algorithm."""
-        super().set_params(params)
-        params = dict_to_namespace(params)
-
-        self.params.name = getattr(params, "name", "Dijkstras")
-        self.params.start = getattr(params, "start", None)
-        self.params.goal = getattr(params, "goal", None)
-        self.params.vertices = getattr(params, "vertices", None)
-        self.params.cost_func = getattr(params, "cost_func", lambda u, v: 0)
-        self.params.true_cost = getattr(params, "true_cost", lambda u, v: 0)
-
-    def run_algorithm_on_f(self, f):
-        np.random.seed()  # prevent parallel processes from sharing random state
-
-        def dijkstras(start: Vertex, goal: Vertex):
-            explored = [False for _ in range(len(self.params.vertices))]
-            min_cost = [float("inf") for _ in range(len(self.params.vertices))]
-            prev = [None for _ in range(len(self.params.vertices))]
-            to_explore = [(0, start)]  # initialize priority queue
-            num_expansions = 0
-            num_queries = 0
-            while len(to_explore) > 0:
-                best_cost, current = heapq.heappop(to_explore)
-                if explored[current.index]:
-                    # the same node could appear in the pqueue multiple times with different costs
-                    continue
-                explored[current.index] = True
-                num_expansions += 1
-                if current.index == goal.index:
-                    print(
-                        f"Found goal after {num_expansions} expansions and {num_queries} queries with estimated cost {best_cost}"
-                    )
-                    best_path = [
-                        self.params.vertices[i]
-                        for i in backtrack_indices(current.index, prev)
-                    ]
-
-                    def true_cost_of_path(path):
-                        cost = 0
-                        for i in range(len(path) - 1):
-                            cost += self.params.true_cost(path[i], path[i + 1])[0]
-                        print("true cost", cost)
-
-                    true_cost_of_path(best_path)
-                    return best_cost, best_path
-
-                for neighbor in current.neighbors:
-                    num_queries += 1
-                    step_cost = distance(current, neighbor)
-                    if (not explored[neighbor.index]) and (
-                        best_cost + step_cost < min_cost[neighbor.index]
-                    ):
-                        heapq.heappush(
-                            to_explore, (best_cost + step_cost, neighbor)
-                        )  # push by cost
-                        min_cost[neighbor.index] = best_cost + step_cost
-                        prev[neighbor.index] = current.index
-
-            print("No path exists to goal")
-            return float("inf"), []
-
-        exe_path = Namespace(x=[], y=[])
-
-        def distance(u: Vertex, v: Vertex):
-            cost, xs, ys = self.params.cost_func(u, v, f)
-
-            exe_path.x.extend(xs)
-            exe_path.y.extend(ys)
-            assert cost >= 0
-            return cost
-
-        min_cost = dijkstras(self.params.start, self.params.goal)
-
-        return exe_path, min_cost
-
-    def get_output_from_exe_path(self, exe_path):
-        raise RuntimeError("Can't return output from execution path for Dijkstras")
-
-
-class Noop(Algorithm):
-    """"Dummy noop algorithm for debugging parallel code"""
-
-    def set_params(self, params):
-        """Set self.params, the parameters for the algorithm."""
-        super().set_params(params)
-        params = dict_to_namespace(params)
-
-    def run_algorithm_on_f(self, f):
-        np.random.seed()  # must reseed each time or else child process will have the same state as parent, resulting in the same randomness
-        output = 0
-        exe_path = Namespace(x=[], y=[])
-        wait_time = random.randint(1, 5)
-        rand = np.random.rand(1)
-        print(f"Got {rand}. Going to wait for {wait_time} seconds")
-        time.sleep(wait_time)
-        print(f"Finished waiting for {wait_time} seconds")
-        return exe_path, output
-
-    def get_output_from_exe_path(self, exe_path):
-        raise RuntimeError("Can't return output from execution path for Noop")
-
-
-class GlobalOptValGrid(Algorithm):
+class GlobalOptValGrid(FixedPathAlgorithm):
     """
     Algorithm that scans over a grid of points, and as output returns the minimum
     function value over the grid.
@@ -404,22 +302,37 @@ class GlobalOptValGrid(Algorithm):
         params = dict_to_namespace(params)
 
         self.params.name = getattr(params, "name", "GlobalOptGrid")
-        self.params.x_path = getattr(params, "x_path", [])
         self.params.opt_mode = getattr(params, "opt_mode", "min")
 
-    def get_output_from_exe_path(self, exe_path):
-        """Given an execution path, return algorithm output."""
+    def get_exe_path_opt_idx(self):
+        """Return the index of the optimal point in execution path."""
         if self.params.opt_mode == "min":
-            opt_val = np.min(exe_path.y)
+            opt_idx = np.argmin(self.exe_path.y)
         elif self.params.opt_mode == "max":
-            opt_val = np.max(exe_path.y)
+            opt_idx = np.argmax(self.exe_path.y)
+
+        return opt_idx
+
+    def get_exe_path_crop(self):
+        """
+        Return the minimal execution path for output, i.e. cropped execution path,
+        specific to this algorithm.
+        """
+        opt_idx = self.get_exe_path_opt_idx()
+
+        exe_path_crop = Namespace(x=[], y=[])
+        exe_path_crop.x.append(self.exe_path.x[opt_idx])
+        exe_path_crop.y.append(self.exe_path.y[opt_idx])
+
+        return exe_path_crop
+        #return self.exe_path
+
+    def get_output(self):
+        """Return output based on self.exe_path."""
+        opt_idx = self.get_exe_path_opt_idx()
+        opt_val = self.exe_path.y[opt_idx]
 
         return opt_val
-
-    def set_print_params(self):
-        """Set self.print_params."""
-        self.print_params = copy.deepcopy(self.params)
-        delattr(self.print_params, "x_path")
 
 
 class GlobalOptGrid(GlobalOptValGrid):
@@ -428,11 +341,261 @@ class GlobalOptGrid(GlobalOptValGrid):
     function input over the grid.
     """
 
-    def get_output_from_exe_path(self, exe_path):
-        """Given an execution path, return algorithm output."""
+    def get_output(self):
+        """Return output based on self.exe_path."""
         if self.params.opt_mode == "min":
-            opt_idx = np.argmin(exe_path.y)
+            opt_idx = np.argmin(self.exe_path.y)
         elif self.params.opt_mode == "max":
-            opt_idx = np.argmax(exe_path.y)
+            opt_idx = np.argmax(self.exe_path.y)
 
-        return exe_path.x[opt_idx]
+        # Set opt_pair as [list, float]
+        opt_pair = [self.exe_path.x[opt_idx], self.exe_path.y[opt_idx]]
+
+        return opt_pair
+
+    def get_output_dist_fn(self):
+        """Return distance function for pairs of outputs."""
+
+        def dist_fn(a, b):
+            a = np.array(a[0] + [a[1]])
+            b = np.array(b[0] + [b[1]])
+            return np.linalg.norm(a - b)
+
+        return dist_fn
+
+
+class GlobalOptUnifRandVal(Algorithm):
+    """
+    Algorithm that performs global optimization over a domain via uniform random
+    sampling and returns value of best input.
+    """
+
+    def set_params(self, params):
+        """Set self.params, the parameters for the algorithm."""
+        super().set_params(params)
+        params = dict_to_namespace(params)
+
+        self.params.name = getattr(params, "name", "GlobalOptUnifRandVal")
+        self.params.opt_mode = getattr(params, "opt_mode", "min")
+        self.params.domain = getattr(params, "domain", [[0, 10]])
+        self.params.n_samp = getattr(params, "n_samp", 100)
+
+    def get_next_x(self):
+        """
+        Given the current execution path, return the next x in the execution path. If
+        the algorithm is complete, return None.
+        """
+        if len(self.exe_path.x) < self.params.n_samp:
+            # Return a random sample in domain
+            next_x = unif_random_sample_domain(self.params.domain)[0]
+        else:
+            next_x = None
+
+        return next_x
+
+    def get_opt_idx(self):
+        """Return index of optimal point in self.exe_path."""
+        if self.params.opt_mode == "min":
+            opt_idx = np.argmin(self.exe_path.y)
+        elif self.params.opt_mode == "max":
+            opt_idx = np.argmax(self.exe_path.y)
+
+        return opt_idx
+
+    def get_output(self):
+        """Return output based on self.exe_path."""
+        opt_idx = self.get_opt_idx()
+        return self.exe_path.y[opt_idx]
+
+
+class GlobalOptUnifRand(GlobalOptUnifRandVal):
+    """
+    Algorithm that performs global optimization over a domain via uniform random
+    sampling and returns best input.
+    """
+
+    def set_params(self, params):
+        """Set self.params, the parameters for the algorithm."""
+        super().set_params(params)
+        params = dict_to_namespace(params)
+        self.params.name = getattr(params, "name", "GlobalOptUnifRand")
+
+    def get_output(self):
+        """Return output based on self.exe_path."""
+        opt_idx = self.get_opt_idx()
+        return self.exe_path.x[opt_idx]
+
+
+class TopK(FixedPathAlgorithm):
+    """
+    Algorithm that scans over a set of points, and as output returns the K points with
+    highest value.
+    """
+
+    def set_params(self, params):
+        """Set self.params, the parameters for the algorithm."""
+        super().set_params(params)
+        params = dict_to_namespace(params)
+
+        self.params.name = getattr(params, "name", "TopK")
+        self.params.opt_mode = getattr(params, "opt_mode", "max")
+        self.params.k = getattr(params, "k", 3)
+        self.params.dist_str = getattr(params, "dist_str", "norm")
+
+    def get_exe_path_topk_idx(self):
+        """Return the index of the optimal point in execution path."""
+        if self.params.opt_mode == "min":
+            topk_idx = np.argsort(self.exe_path.y)[:self.params.k]
+        elif self.params.opt_mode == "max":
+            rev_exe_path_y = -np.array(self.exe_path.y)
+            topk_idx = np.argsort(rev_exe_path_y)[:self.params.k]
+
+        return topk_idx
+
+    def get_exe_path_crop(self):
+        """
+        Return the minimal execution path for output, i.e. cropped execution path,
+        specific to this algorithm.
+        """
+        topk_idx = self.get_exe_path_topk_idx()
+
+        exe_path_crop = Namespace()
+        exe_path_crop.x = [self.exe_path.x[idx] for idx in topk_idx]
+        exe_path_crop.y = [self.exe_path.y[idx] for idx in topk_idx]
+
+        return exe_path_crop
+
+    def get_output(self):
+        """Return output based on self.exe_path."""
+        topk_idx = self.get_exe_path_topk_idx()
+
+        out_ns = Namespace()
+        out_ns.x = [self.exe_path.x[idx] for idx in topk_idx]
+        out_ns.y = [self.exe_path.y[idx] for idx in topk_idx]
+
+        return out_ns
+
+    def get_output_dist_fn(self):
+        """Return distance function for pairs of outputs."""
+        if self.params.dist_str == "norm":
+            dist_fn = self.output_dist_fn_norm
+        elif self.params.dist_str == "jaccard":
+            dist_fn = self.output_dist_fn_jaccard
+
+        return dist_fn
+
+    def output_dist_fn_norm(self, a, b):
+        """Output dist_fn based on concatenated vector norm."""
+        a_list = []
+        list(map(a_list.extend, a.x))
+        a_list.extend(a.y)
+        a_arr = np.array(a_list)
+
+        b_list = []
+        list(map(b_list.extend, b.x))
+        b_list.extend(b.y)
+        b_arr = np.array(b_list)
+
+        return np.linalg.norm(a_arr - b_arr)
+
+    def output_dist_fn_jaccard(self, a, b):
+        """Output dist_fn based on Jaccard similarity."""
+        a_x_tup = [tuple(x) for x in a.x]
+        b_x_tup = [tuple(x) for x in b.x]
+        jac_sim = jaccard_similarity(a_x_tup, b_x_tup)
+        dist = 1 - jac_sim
+        return dist
+
+
+class Noop(Algorithm):
+    """"Dummy noop algorithm for debugging parallel code."""
+
+    def set_params(self, params):
+        """Set self.params, the parameters for the algorithm."""
+        super().set_params(params)
+        params = dict_to_namespace(params)
+        self.params.name = getattr(params, "name", "Noop")
+
+    def run_algorithm_on_f(self, f):
+        """
+        Run the dummy noop algorithm. Note that we must reseed each time or else child
+        process will have the same state as parent, resulting in the same randomness.
+        """
+        np.random.seed()
+        self.initialize()
+
+        output = 0
+        wait_time = random.randint(1, 5)
+        rand = np.random.rand(1)
+        print(f"Got {rand}. Going to wait for {wait_time} seconds")
+        time.sleep(wait_time)
+        print(f"Finished waiting for {wait_time} seconds")
+
+        return self.exe_path, output
+
+    def get_output(self):
+        """Return output based on self.exe_path."""
+        raise RuntimeError("Can't return output from execution path for Noop")
+
+
+class AlgorithmSet:
+    """Wrapper that duplicates and manages a set of Algorithms."""
+
+    def __init__(self, algo):
+        """Set self.algo as an Algorithm."""
+        self.algo = algo
+
+    def run_algorithm_on_f_list(self, f_list, n_f):
+        """
+        Run the algorithm by sequentially querying f_list, which calls a list of n_f
+        functions given an x_list of n_f inputs. Return the lists of execution paths and
+        outputs.
+        """
+        algo_list = [self.algo.get_copy() for _ in range(n_f)]
+
+        # Initialize each algo in list
+        for algo in algo_list:
+            algo.initialize()
+
+        # Step through algorithms
+        x_list = [algo.get_next_x() for algo in algo_list]
+        while any(x is not None for x in x_list):
+            y_list = f_list(x_list)
+            x_list_new = []
+            for algo, x, y in zip(algo_list, x_list, y_list):
+                if x is not None:
+                    algo.exe_path.x.append(x)
+                    algo.exe_path.y.append(y)
+                    x_next = algo.get_next_x()
+                else:
+                    x_next = None
+                x_list_new.append(x_next)
+            x_list = x_list_new
+
+        # Store algo_list
+        self.algo_list = algo_list
+
+        # Collect exe_path_list and output_list
+        exe_path_list = [algo.exe_path for algo in algo_list]
+        output_list = [algo.get_output() for algo in algo_list]
+        return exe_path_list, output_list
+
+    def get_exe_path_list_crop(self):
+        """Return get_exe_path_crop for each algo in self.algo_list."""
+        exe_path_list_crop = []
+        for algo in self.algo_list:
+            exe_path_crop = algo.get_exe_path_crop()
+            exe_path_list_crop.append(exe_path_crop)
+
+        return exe_path_list_crop
+
+    def crop_exe_path_old(self, exe_path):
+        """Return execution path without any Nones at end."""
+        try:
+            final_idx = next(i for i, x in enumerate(exe_path.x) if x==None)
+        except StopIteration:
+            final_idx = len(exe_path.x)
+
+        del exe_path.x[final_idx:]
+        del exe_path.y[final_idx:]
+        return exe_path

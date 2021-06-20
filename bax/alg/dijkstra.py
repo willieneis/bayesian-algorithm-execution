@@ -7,7 +7,7 @@ import copy
 import heapq
 import numpy as np
 
-from .algorithms_new import Algorithm
+from .algorithms import Algorithm
 from ..util.misc_util import dict_to_namespace
 from ..util.graph import Vertex, backtrack_indices, edges_of_path, jaccard_similarity
 
