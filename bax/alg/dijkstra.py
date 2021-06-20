@@ -47,8 +47,8 @@ class Dijkstra(Algorithm):
         verbose : bool
             If True, print description string.
         """
-        super().__init__()
-        self.set_params(params)
+        super().__init__(params, verbose)
+
         self.vertices = vertices
         assert node_representation in ["locations", "indices"]
         if node_representation == "indices":
@@ -57,8 +57,6 @@ class Dijkstra(Algorithm):
         self.node_representation = node_representation
         self.start = start
         self.goal = goal
-        if verbose:
-            self.print_str()
 
     def set_params(self, params):
         """Set self.params, the parameters for the algorithm."""
