@@ -41,9 +41,6 @@ def inv_softplus(x):
 def true_latent_f(x_y):
     return inv_softplus(true_f(x_y))
 
-
-# Set other useful functions
-
 def softplus(x):
         return np.log1p(np.exp(x))
 
@@ -153,7 +150,7 @@ method_str = 'bax'
 #method_str = 'us'
 #method_str = 'eigf'
 
-print(f'PRINT: method_str = {method_str}')
+print(f'Running method: method_str = {method_str}')
 
 # Set acquisition details
 acqfn_params = {"acq_str": "exe", "n_path": 30}
