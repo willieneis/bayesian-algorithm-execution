@@ -162,11 +162,23 @@ class MultiGpfsGp(Base):
         return y_list
 
     def get_post_mu_cov(self, x_list, full_cov=False):
-        """See SimpleGp. Should return a list of mu, and a list of cov/std."""
-        # TODO
-        pass
+        """See SimpleGp. Returns a list of mu, and a list of cov/std."""
+        mu_list, cov_list = self.gp_post_wrapper(x_list, self.data, full_cov)
+        return mu_list, cov_list
 
     def gp_post_wrapper(self, x_list, data, full_cov=True):
-        """See SimpleGp. Should return a list of mu, and a list of cov ?"""
-        # TODO
-        pass
+        """See SimpleGp. Returns a list of mu, and a list of cov/std."""
+
+        mu_list = []
+        cov_list = []
+
+        for i, gpfsgp in enumerate(self.gpfsgp_list):
+            # Make data Namespace with 1d y data
+            data_single = Namespace(x=data.x, y=[y_vec[i] for y_vec in data.y])
+
+            # Call usual 1d gpfsgp gp_post_wrapper
+            mu, cov = gpfsgp.gp_post_wrapper(x_list, data_single, full_cov)
+            mu_list.append(mu)
+            cov_list.append(cov)
+
+        return mu_list, cov_list
