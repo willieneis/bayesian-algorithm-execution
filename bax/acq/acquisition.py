@@ -450,11 +450,11 @@ class BaxAcqFunction(AlgoAcqFunction):
                 comb_data = Namespace()
                 comb_data.x = self.model.data.x + exe_path.x
                 comb_data.y = self.model.data.y + exe_path.y
-                mu_samp, std_samp = self.model.gp_post_wrapper(
+                samp_mu, samp_std = self.model.gp_post_wrapper(
                     x_list, comb_data, full_cov=False
                 )
-                mu_list.append(mu_samp)
-                std_list.append(std_samp)
+                mu_list.append(samp_mu)
+                std_list.append(samp_std)
 
             # Compute acq_list, the acqfunction value for each x in x_list
             if self.params.acq_str == "exe":
@@ -592,63 +592,49 @@ class MultiBaxAcqFunction(AlgoAcqFunction):
     """
     Class for computing BAX acquisition functions.
     """
-    #
-    # in [prospective] MultiBaxAcqFunction:
-    #   - not doing anything related to the "out" acquisition function
-    #   - need to focus on methods: get_acq_list_batch, acq_exe_normal, entropy_given_normal_std
-    #       - where get_acq_list_batch involves:
-    #       - mu, std = self.model.get_post_mu_cov(x_list, full_cov=False)
-    #       - comb_data.x = self.model.data.x + exe_path.x
-    #       - comb_data.y = self.model.data.y + exe_path.y
-    #       - mu_samp, std_samp = self.model.gp_post_wrapper(x_list, comb_data, full_cov=False)
-    #
-    #   And related math question: how do multiple (independent) entropies correspond
-    #   to the multivariate entropy?
 
-    #def set_params(self, params):
-        #"""Set self.params, the parameters for the AcqFunction."""
-        #super().set_params(params)
+    def set_params(self, params):
+        """Set self.params, the parameters for the AcqFunction."""
+        super().set_params(params)
 
-        #params = dict_to_namespace(params)
-        #self.params.name = getattr(params, 'name', 'BaxAcqFunction')
-        #self.params.acq_str = getattr(params, "acq_str", "exe")
-        #self.params.min_neighbors = getattr(params, "min_neighbors", 10)
-        #self.params.max_neighbors = getattr(params, "max_neighbors", 30)
-        #self.params.dist_thresh = getattr(params, "dist_thresh", 1.0)
-        #self.params.dist_thresh_init = getattr(params, "dist_thresh_init", 20.0)
-        #self.params.dist_thresh_inc = getattr(params, "dist_thresh_inc", 0.5)
-        #self.params.min_n_clust = getattr(params, "min_n_clust", 5)
+        params = dict_to_namespace(params)
+        self.params.name = getattr(params, 'name', 'MultiBaxAcqFunction')
 
-    #def entropy_given_normal_std(self, std_arr):
-        #"""Return entropy given an array of 1D normal standard deviations."""
-        #entropy = np.log(std_arr) + np.log(np.sqrt(2 * np.pi)) + 0.5
-        #return entropy
+    def entropy_given_normal_std(self, std_arr_list):
+        """
+        Return entropy given a list of arrays, where each is an array of 1D normal
+        standard deviations.
+        """
+        std_arr = std_arr_list[0] # TODO
+        entropy = np.log(std_arr) + np.log(np.sqrt(2 * np.pi)) + 0.5
+        return entropy
 
-    #def acq_exe_normal(self, post_std, samp_std_list):
-        #"""
-        #Execution-path-based acquisition function: EIG on the execution path, via
-        #predictive entropy, for normal posterior predictive distributions.
-        #"""
+    def acq_exe_normal(self, post_stds, samp_stds_list):
+        """
+        Execution-path-based acquisition function: EIG on the execution path, via
+        predictive entropy, for normal posterior predictive distributions.
+        """
 
-        ## Compute entropies for posterior predictive
-        #h_post = self.entropy_given_normal_std(post_std)
+        # Compute entropies for posterior predictive
+        h_post = self.entropy_given_normal_std(post_stds)
 
-        ## Compute entropies for posterior predictive given execution path samples
-        #h_samp_list = []
-        #for samp_std in samp_std_list:
-            #h_samp = self.entropy_given_normal_std(samp_std)
-            #h_samp_list.append(h_samp)
+        # Compute entropies for posterior predictive given execution path samples
+        h_samp_list = []
+        for samp_stds in samp_stds_list:
+            h_samp = self.entropy_given_normal_std(samp_stds)
+            h_samp_list.append(h_samp)
 
-        #avg_h_samp = np.mean(h_samp_list, 0)
-        #acq_exe = h_post - avg_h_samp
-        #return acq_exe
+        avg_h_samp = np.mean(h_samp_list, 0)
+        acq_exe = h_post - avg_h_samp
+        return acq_exe
 
     def get_acq_list_batch(self, x_list):
         """Return acquisition function for a batch of inputs x_list."""
 
+        # Compute posterior, and post given each execution path sample, for x_list
         with Timer(f"Compute acquisition function for a batch of {len(x_list)} points"):
-            # Compute posterior, and post given each execution path sample, for x_list
-            # NOTE: assume self.model is multimodel, which returns list of mus and stds
+            # NOTE: self.model is multimodel so the following returns a list of mus and
+            # a list of stds
             mus, stds = self.model.get_post_mu_cov(x_list, full_cov=False)
             assert isinstance(mus, list)
             assert isinstance(stds, list)
@@ -661,12 +647,13 @@ class MultiBaxAcqFunction(AlgoAcqFunction):
                 comb_data.x = self.model.data.x + exe_path.x
                 comb_data.y = self.model.data.y + exe_path.y
 
-                # NOTE assume self.model is multimodel, which returns ??? TODO
-                mus_samp, stds_samp = self.model.gp_post_wrapper(
+                # NOTE: self.model is multimodel so the following returns a list of mus
+                # and a list of stds
+                samp_mus, samp_stds = self.model.gp_post_wrapper(
                     x_list, comb_data, full_cov=False
                 )
-                mus_list.append(mus_samp)
-                stds_list.append(stds_samp)
+                mus_list.append(samp_mus)
+                stds_list.append(samp_stds)
 
             # Compute acq_list, the acqfunction value for each x in x_list
             acq_list = self.acq_exe_normal(stds, stds_list)
