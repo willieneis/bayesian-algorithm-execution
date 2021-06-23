@@ -29,6 +29,7 @@ tf.random.set_seed(seed)
 
 # Global variables
 DEFAULT_F_IS_DIFF = True
+LONG_PATH = False
 
 
 class NStep(Algorithm):
@@ -101,8 +102,6 @@ def plot_path_2d(path, ax=None, true_path=False):
         ax.plot(x_plot, y_plot, 'k--', linewidth=1, alpha=0.3)
         ax.plot(x_plot, y_plot, 'o', alpha=0.3)
 
-    ax.set(xlim=(0, 10), ylim=(0, 10), xlabel='$x_1$', ylabel='$x_2$')
-
 
 # -------------
 # Start Script
@@ -111,11 +110,12 @@ def plot_path_2d(path, ax=None, true_path=False):
 f = step_northwest
 
 # Set domain
-domain = [[0, 10], [0, 10]]
+domain = [[0, 23], [0, 23]] if LONG_PATH else [[0, 10], [0, 10]]
 
 # Set algorithm
 algo_class = NStep
-algo_params = {'n': 15, 'init_x': [0.5, 0.5], 'domain': domain}
+n_steps = 40 if LONG_PATH else 15
+algo_params = {'n': n_steps, 'init_x': [0.5, 0.5], 'domain': domain}
 algo = algo_class(algo_params)
 
 # Set model
@@ -167,7 +167,15 @@ for i in range(n_iter):
         plot_path_2d(path, ax)
 
     # Plot x_next
-    ax.scatter(x_next[0], x_next[1], color='deeppink', s=120)
+    ax.scatter(x_next[0], x_next[1], color='deeppink', s=120, zorder=100)
+
+    # Plot settings
+    ax.set(
+        xlim=(domain[0][0], domain[0][1]),
+        ylim=(domain[1][0], domain[1][1]),
+        xlabel='$x_1$',
+        ylabel='$x_2$',
+    )
 
     save_figure = True
     if save_figure: neatplot.save_figure(f'bax_multi_{i}', 'pdf')
