@@ -122,6 +122,7 @@ class MultiGpfsGp(Base):
 
     def __init__(self, params=None, data=None, verbose=True):
         super().__init__(params, verbose)
+        self.set_data(data)
         self.set_gpfsgp_list(data)
 
     def set_params(self, params):
@@ -131,14 +132,23 @@ class MultiGpfsGp(Base):
 
         self.params.name = getattr(params, 'name', 'MultiGpfsGp')
         self.params.n_dimy = getattr(params, 'n_dimy', 1)
+        self.params.gp_params = getattr(params, 'gp_params', {})
+
+    def set_data(self, data):
+        """Set self.data."""
+        if data is None:
+            self.data = Namespace(x=[], y=[])
+        else:
+            data = dict_to_namespace(data)
+            self.data = copy.deepcopy(data)
 
     def set_gpfsgp_list(self, data):
         """Set self.gpfsgp_list by instantiating a list of GpfsGp objects."""
+        data_list = self.get_data_list()
 
+        # NOTE: GpfsGp verbose set to False (though MultiGpfsGp may be verbose)
         self.gpfsgp_list = [
-            # NOTE: instantiate GpfsGp with same params as MultiGpfsGp?
-            # NOTE: GpfsGp verbose set to False (though MultiGpfsGp may be verbose)
-            GpfsGp(self.params, data, False) for _ in range(self.params.n_dimy)
+            GpfsGp(self.params.gp_params, dat, False) for dat in data_list
         ]
 
     def initialize_function_sample_list(self, n_samp=1):
@@ -161,6 +171,17 @@ class MultiGpfsGp(Base):
         y_list = [list(x) for x in zip(*y_list_list)]
         return y_list
 
+    def get_data_list(self):
+        """
+        Return list of Namespaces, where each is a version of self.data containing only
+        one of the dimensions of data.y (and the full data.x).
+        """
+        data_list = []
+        for j in range(self.params.n_dimy):
+            data_list.append(Namespace(x=self.data.x, y=[yi[j] for yi in self.data.y]))
+
+        return data_list
+
     def get_post_mu_cov(self, x_list, full_cov=False):
         """See SimpleGp. Returns a list of mu, and a list of cov/std."""
         mu_list, cov_list = self.gp_post_wrapper(x_list, self.data, full_cov)
@@ -169,15 +190,13 @@ class MultiGpfsGp(Base):
     def gp_post_wrapper(self, x_list, data, full_cov=True):
         """See SimpleGp. Returns a list of mu, and a list of cov/std."""
 
+        data_list = self.get_data_list()
         mu_list = []
         cov_list = []
 
-        for i, gpfsgp in enumerate(self.gpfsgp_list):
-            # Make data Namespace with 1d y data
-            data_single = Namespace(x=data.x, y=[y_vec[i] for y_vec in data.y])
-
+        for gpfsgp, data in zip(self.gpfsgp_list, data_list):
             # Call usual 1d gpfsgp gp_post_wrapper
-            mu, cov = gpfsgp.gp_post_wrapper(x_list, data_single, full_cov)
+            mu, cov = gpfsgp.gp_post_wrapper(x_list, data, full_cov)
             mu_list.append(mu)
             cov_list.append(cov)
 
