@@ -600,13 +600,20 @@ class MultiBaxAcqFunction(AlgoAcqFunction):
         params = dict_to_namespace(params)
         self.params.name = getattr(params, 'name', 'MultiBaxAcqFunction')
 
-    def entropy_given_normal_std(self, std_arr_list):
+    def entropy_given_normal_std(self, std_arr):
+        """Return entropy given an array of 1D normal standard deviations."""
+        entropy = np.log(std_arr) + np.log(np.sqrt(2 * np.pi)) + 0.5
+        return entropy
+
+    def entropy_given_normal_std_list(self, std_arr_list):
         """
         Return entropy given a list of arrays, where each is an array of 1D normal
         standard deviations.
         """
-        std_arr = std_arr_list[0] # TODO
-        entropy = np.log(std_arr) + np.log(np.sqrt(2 * np.pi)) + 0.5
+        entropy_list = [
+            self.entropy_given_normal_std(std_arr) for std_arr in std_arr_list
+        ]
+        entropy = np.sum(entropy_list, 0)
         return entropy
 
     def acq_exe_normal(self, post_stds, samp_stds_list):
@@ -616,12 +623,12 @@ class MultiBaxAcqFunction(AlgoAcqFunction):
         """
 
         # Compute entropies for posterior predictive
-        h_post = self.entropy_given_normal_std(post_stds)
+        h_post = self.entropy_given_normal_std_list(post_stds)
 
         # Compute entropies for posterior predictive given execution path samples
         h_samp_list = []
         for samp_stds in samp_stds_list:
-            h_samp = self.entropy_given_normal_std(samp_stds)
+            h_samp = self.entropy_given_normal_std_list(samp_stds)
             h_samp_list.append(h_samp)
 
         avg_h_samp = np.mean(h_samp_list, 0)
@@ -668,4 +675,9 @@ class MultiBaxAcqFunction(AlgoAcqFunction):
         }
 
         # Return list of acquisition function on x in x_list
+        return acq_list
+
+    def __call__(self, x_list):
+        """Class is callable and returns acquisition function on x_list."""
+        acq_list = self.get_acq_list_batch(x_list)
         return acq_list
