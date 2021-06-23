@@ -86,7 +86,7 @@ def plot_path_2d(path, ax=None, true_path=False):
         ax.plot(x_plot, y_plot, 'k--', linewidth=3)
         ax.plot(x_plot, y_plot, '*', color='k', markersize=15)
     else:
-        ax.plot(x_plot, y_plot, 'k--', linewidth=2, alpha=0.3)
+        ax.plot(x_plot, y_plot, 'k--', linewidth=1, alpha=0.3)
         ax.plot(x_plot, y_plot, 'o', alpha=0.3)
 
     ax.set(xlim=(0, 10), ylim=(0, 10), xlabel='$x_1$', ylabel='$x_2$')
@@ -103,24 +103,24 @@ domain = [[0, 10], [0, 10]]
 
 # Set algorithm
 algo_class = NStep
-algo_params = {'init_x': [0.5, 0.5], 'domain': domain}
+algo_params = {'n': 15, 'init_x': [0.5, 0.5], 'domain': domain}
 algo = algo_class(algo_params)
 
 # Set model
-gp_params = {'ls': 5.0, 'alpha': 5.0, 'sigma': 1e-2, 'n_dimx': 2}
+gp_params = {'ls': 8.0, 'alpha': 5.0, 'sigma': 1e-2, 'n_dimx': 2}
 multi_gp_params = {'n_dimy': 2, 'gp_params': gp_params}
 gp_model_class = MultiGpfsGp
 
 # Set data
 data = Namespace()
-n_init_data = 5
+n_init_data = 1
 data.x = unif_random_sample_domain(domain, n_init_data)
 data.y = [step_northwest(xi) for xi in data.x]
 
 # Set acqfunction
-acqfn_params = {'n_path': 5}
+acqfn_params = {'n_path': 30}
 acqfn_class = MultiBaxAcqFunction
-n_rand_acqopt = 100
+n_rand_acqopt = 1000
 
 # Compute true path
 true_algo = algo_class(algo_params)
@@ -144,6 +144,11 @@ for i in range(n_iter):
     # Plot
     fig, ax = plt.subplots(1, 1, figsize=(5, 5))
 
+    # Plot observations
+    x_obs = [xi[0] for xi in data.x]
+    y_obs = [xi[1] for xi in data.x]
+    ax.scatter(x_obs, y_obs, color='k', s=120)
+
     # Plot true path and posterior path samples
     plot_path_2d(true_path, ax, true_path=True)
     for path in acqfn.exe_path_list:
@@ -152,11 +157,8 @@ for i in range(n_iter):
     # Plot x_next
     ax.scatter(x_next[0], x_next[1], color='deeppink', s=120)
 
-    plt.show()
-    inp = input("Press enter to continue (any other key to stop): ")
-    if inp:
-        break
-    plt.close()
+    save_figure = True
+    if save_figure: neatplot.save_figure(f'bax_multi_{i}', 'pdf')
 
     # Query function, update data
     print(f'Length of data.x: {len(data.x)}')
