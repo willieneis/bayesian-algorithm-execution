@@ -27,6 +27,9 @@ seed = 11
 np.random.seed(seed)
 tf.random.set_seed(seed)
 
+# Global variables
+DEFAULT_F_IS_DIFF = True
+
 
 class NStep(Algorithm):
     """
@@ -40,6 +43,7 @@ class NStep(Algorithm):
 
         self.params.name = getattr(params, 'name', 'NStep')
         self.params.n = getattr(params, 'n', 10)
+        self.params.f_is_diff = getattr(params, 'f_is_diff', DEFAULT_F_IS_DIFF)
         self.params.init_x = getattr(params, 'init_x', [0.0, 0.0])
         self.params.project_to_domain = getattr(params, 'project_to_domain', True)
         self.params.domain = getattr(params, 'domain', [[0.0, 10.0], [0.0, 10.0]])
@@ -55,7 +59,11 @@ class NStep(Algorithm):
         elif len_path >= self.params.n + 1:
             next_x = None
         else:
-            next_x = self.exe_path.y[-1]
+            if self.params.f_is_diff:
+                zip_path_end = zip(self.exe_path.x[-1], self.exe_path.y[-1])
+                next_x = [xi + yi for xi, yi in zip_path_end]
+            else:
+                next_x = self.exe_path.y[-1]
 
             if self.params.project_to_domain:
                 # Optionally, project to domain
@@ -68,10 +76,14 @@ class NStep(Algorithm):
         return self.exe_path
 
 
-def step_northwest(x_list, step_size=0.5):
+def step_northwest(x_list, step_size=0.5, f_is_diff=DEFAULT_F_IS_DIFF):
     """Return x_list with a small positive value added to each element."""
-    x_list_new = [x + step_size for x in x_list]
-    return x_list_new
+    if f_is_diff:
+        diffs_list = [step_size for x in x_list]
+        return diffs_list
+    else:
+        x_list_new = [x + step_size for x in x_list]
+        return x_list_new
 
 
 def plot_path_2d(path, ax=None, true_path=False):
