@@ -72,7 +72,7 @@ acqfn_params = {"acq_str": "exe", "n_path": 100}
 n_rand_acqopt = 350
 
 # Run BAX loop
-n_iter = 25
+n_iter = 30
 
 for i in range(n_iter):
     print('---' * 5 + f' Start iteration i={i} ' + '---' * 5)
@@ -109,12 +109,18 @@ for i in range(n_iter):
 
     # Plot
     fig, ax = plt.subplots(figsize=(6, 6))
-    vizzer = AcqViz2D(fig_ax=(fig, ax))
+    vizzer = AcqViz2D({"n_path_max": 25}, (fig, ax))
     vizzer.plot_function_contour(branin_xy, domain)
-    #h1 = vizzer.plot_output_samples(acqfn.output_list)
+    h1 = vizzer.plot_exe_path_samples(acqfn.exe_path_full_list)
     h2 = vizzer.plot_model_data(model.data)
-    h3 = vizzer.plot_expected_output(output_mf)
+    #h3 = vizzer.plot_expected_output(output_mf)
     h4 = vizzer.plot_optima([(-3.14, 12.275), (3.14, 2.275), (9.425, 2.475)])
+    h5 = vizzer.plot_output_samples(acqfn.output_list)
+    h6 = vizzer.plot_next_query(x_next)
+    ax.text(
+        -4.75, 0.5, f"Iteration=${i+1}$",
+        bbox=dict(boxstyle="round", fc="white", alpha=0.4, ec="none")
+    )
 
     # Legend
     #vizzer.make_legend([h2[0], h4[0], h1[0], h3[0]]) # For out-of-plot legend
@@ -125,18 +131,18 @@ for i in range(n_iter):
     ax.set_xlim((domain[0][0] - offset, domain[0][1] + offset))
     ax.set_ylim((domain[1][0] - offset, domain[1][1] + offset))
     ax.set_aspect("equal", "box")
-    ax.set_xlabel('x')
-    ax.set_ylabel('y')
-    ax.set_title("InfoBAX")
+    ax.set_xlabel('$x$')
+    ax.set_ylabel('$y$')
+    ax.set_title("InfoBAX with Evolution Strategy")
 
     # Save plot
-    #neatplot.save_figure(f"branin_bax_{i}", "pdf")
+    neatplot.save_figure(f"branin_bax_{i}", "pdf")
 
     # Show, pause, and close plot
-    plt.show()
-    inp = input("Press enter to continue (any other key to stop): ")
-    if inp:
-        break
+    #plt.show()
+    #inp = input("Press enter to continue (any other key to stop): ")
+    #if inp:
+        #break
     plt.close()
 
     # Query function, update data
