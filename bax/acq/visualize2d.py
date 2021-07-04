@@ -70,8 +70,8 @@ class AcqViz2D(Base):
 
     def plot_output_samples(self, output_list):
         """
-        Plot algorithm outputs. This method assumes an optimization algorithm that
-        returns 2d locations.
+        Plot algorithm output samples. This method assumes an optimization algorithm
+        that returns 2d locations.
         """
 
         # Optionally crop, given self.n_path_max
@@ -81,11 +81,40 @@ class AcqViz2D(Base):
             h = self.ax.plot(
                 output[0],
                 output[1],
-                "^",
-                color="blue",
-                #color="#1f77b4",
-                markersize=5,
+                "o",
+                color="darkviolet",
+                markersize=7,
+                alpha=0.5,
                 label="$\{ \\tilde{o}_\mathcal{A}^j \} \sim  p(o_\mathcal{A} | \mathcal{D}_t)$",
+            )
+        self.h_list.append(h[0])
+        return h
+
+    def plot_exe_path_samples(self, exe_path_list):
+        """
+        Plot execution path samples. This method assumes an optimization algorithm
+        computes a sequence of 2d points as an execution path.
+        """
+
+        # Optionally crop, given self.n_path_max
+        exe_path_list = self.reduce_samp_list(exe_path_list)
+
+        for exe_path in exe_path_list:
+            self.ax.plot(
+                [xi[0] for xi in exe_path.x],
+                [xi[1] for xi in exe_path.x],
+                "-",
+                color="blue",
+                alpha=0.05,
+            )
+            h = self.ax.plot(
+                [xi[0] for xi in exe_path.x],
+                [xi[1] for xi in exe_path.x],
+                ".",
+                color="blue",
+                markersize=3,
+                alpha=0.1,
+                label="$\{ \\tilde{e}_\mathcal{A}^j \} \sim  p(e_\mathcal{A} | \mathcal{D}_t)$",
             )
         self.h_list.append(h[0])
         return h
@@ -107,6 +136,19 @@ class AcqViz2D(Base):
             markersize=7,
         )
         self.h_list.append(h[0])
+        return h
+
+    def plot_next_query(self, next_query):
+        """Plot next query."""
+        h = self.ax.scatter(
+            next_query[0],
+            next_query[1],
+            color='deeppink',
+            s=120,
+            label='Next query',
+            zorder=10,
+        )
+        self.h_list.append(h)
         return h
 
     def plot_expected_output(self, expected_output):
