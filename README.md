@@ -1,4 +1,4 @@
-# Bayesian algorithm execution (BAX)
+# Bayesian Algorithm Execution (BAX)
 
 > [Bayesian Algorithm Execution: Estimating Computable Properties of Black-box Functions
 > Using Mutual Information](https://arxiv.org/abs/2104.09460)\
@@ -53,8 +53,9 @@ $ python bax/models/stan/compile_models.py
 
 ## Examples
 
-**[WIP]** More examples are in the process of being included. Note that the following
-API and functionality may undergo changes, as this library is still in the early stages.
+**[WIP]** More examples are in the process of being merged into this branch. Note that
+the following API and functionality may undergo changes, as this library is still in the
+early stages.
 
 First make sure this repo directory is on the PYTHONPATH, e.g. by running:
 ```bash
@@ -82,7 +83,7 @@ $ python examples/branin/bax_viz2d_simple_demo.py
 
 ### Example 3: Top-k estimation
 
-For a demo on a top-10 estimation task over a discrete set of 150 points, run:
+For a demo on a top-10 estimation task over a discrete set of points, run:
 ```bash
 $ python examples/topk/bax_simple_demo.py
 ```
