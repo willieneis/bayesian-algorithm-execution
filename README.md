@@ -1,5 +1,7 @@
 # Bayesian Algorithm Execution (BAX)
 
+Code for the paper:
+
 > [Bayesian Algorithm Execution: Estimating Computable Properties of Black-box Functions
 > Using Mutual Information](https://arxiv.org/abs/2104.09460)\
 > Willie Neiswanger, Ke Alexander Wang, Stefano Ermon\
@@ -74,6 +76,11 @@ To produce images for an animation on a 20x20 grid graph, run:
 $ python examples/dijkstra/bax_grid20_animation.py
 ```
 
+<p align="center">
+    <img src="docs/images/infobax_dijkstra_animation_still.svg" width=500 />
+</p>
+
+
 ### Example 2: Bayesian local optimization
 
 For a demo on a two-dimensional optimization problem, run:
@@ -81,12 +88,22 @@ For a demo on a two-dimensional optimization problem, run:
 $ python examples/branin/bax_viz2d_simple_demo.py
 ```
 
+<p align="center">
+    &nbsp;
+    <img src="docs/images/infobax_branin_animation_still.svg" width=300 />
+</p>
+
+
 ### Example 3: Top-k estimation
 
 For a demo on a top-10 estimation task over a discrete set of points, run:
 ```bash
 $ python examples/topk/bax_simple_demo.py
 ```
+
+<p align="center">
+    <img src="docs/images/infobax_topk_animation_still.svg" width=305 />
+</p>
 
 
 ## Citation
