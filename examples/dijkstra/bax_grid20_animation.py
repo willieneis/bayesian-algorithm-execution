@@ -182,10 +182,10 @@ for i in range(n_iter):
     ax = axs[1]
 
     # Description
-    descr = "Estimating shortest paths in\ngraphs when edge weights\nare expensive to obtain."
+    descr = "\\textit{Example:}\n\nEstimating shortest paths in\ngraphs when edge weights\nare expensive to obtain."
 
     # Standalone descr
-    axs[0].text(0.06, 0.5, descr)
+    axs[0].text(0.06, 0.5, descr, va="center")
 
     # Showing descr with details
     #axs[0].text(0.06, 0.7, descr, va="top")
@@ -201,7 +201,7 @@ for i in range(n_iter):
         true_output[1],
         path_color=(0.2, 0.2, 0.2, 1),
         linewidths=2,
-        linestyle="--",
+        linestyle='--',
         label='True shortest path',
     )
 
