@@ -12,6 +12,7 @@ from gpflow.config import default_float as floatx
 from .simple_gp import SimpleGp
 from .gpfs.models import PathwiseGPR
 from .gp.gp_utils import kern_exp_quad
+from ..util.base import Base
 from ..util.misc_util import dict_to_namespace, suppress_stdout_stderr
 from ..util.domain_util import unif_random_sample_domain
 
@@ -110,3 +111,93 @@ class GpfsGp(SimpleGp):
         x_list_new = [new_val if x is None else x for x in x_list]
 
         return x_list_new
+
+
+class MultiGpfsGp(Base):
+    """
+    Simple multi-output GP model using GPFlowSampling. To do this, this class duplicates
+    the model in GpfsGp multiple times (and uses same kernel and other parameters in
+    each duplication).
+    """
+
+    def __init__(self, params=None, data=None, verbose=True):
+        super().__init__(params, verbose)
+        self.set_data(data)
+        self.set_gpfsgp_list()
+
+    def set_params(self, params):
+        """Set self.params, the parameters for this model."""
+        super().set_params(params)
+        params = dict_to_namespace(params)
+
+        self.params.name = getattr(params, 'name', 'MultiGpfsGp')
+        self.params.n_dimy = getattr(params, 'n_dimy', 1)
+        self.params.gp_params = getattr(params, 'gp_params', {})
+
+    def set_data(self, data):
+        """Set self.data."""
+        if data is None:
+            self.data = Namespace(x=[], y=[])
+        else:
+            data = dict_to_namespace(data)
+            self.data = copy.deepcopy(data)
+
+    def set_gpfsgp_list(self):
+        """Set self.gpfsgp_list by instantiating a list of GpfsGp objects."""
+        data_list = self.get_data_list(self.data)
+
+        # NOTE: GpfsGp verbose set to False (though MultiGpfsGp may be verbose)
+        self.gpfsgp_list = [
+            GpfsGp(self.params.gp_params, dat, False) for dat in data_list
+        ]
+
+    def initialize_function_sample_list(self, n_samp=1):
+        """
+        Initialize a list of n_samp function samples, for each GP in self.gpfsgp_list.
+        """
+        for gpfsgp in self.gpfsgp_list:
+            gpfsgp.initialize_function_sample_list(n_samp)
+
+    def call_function_sample_list(self, x_list):
+        """
+        Call a set of posterior function samples on respective x in x_list, for each GP
+        in self.gpfsgp_list.
+        """
+        y_list_list = [
+            gpfsgp.call_function_sample_list(x_list) for gpfsgp in self.gpfsgp_list
+        ]
+
+        # y_list is a list, where each element is a list representing a multidim y
+        y_list = [list(x) for x in zip(*y_list_list)]
+        return y_list
+
+    def get_post_mu_cov(self, x_list, full_cov=False):
+        """See SimpleGp. Returns a list of mu, and a list of cov/std."""
+        mu_list, cov_list = self.gp_post_wrapper(x_list, self.data, full_cov)
+        return mu_list, cov_list
+
+    def gp_post_wrapper(self, x_list, data, full_cov=True):
+        """See SimpleGp. Returns a list of mu, and a list of cov/std."""
+
+        data_list = self.get_data_list(data)
+        mu_list = []
+        cov_list = []
+
+        for gpfsgp, data_single in zip(self.gpfsgp_list, data_list):
+            # Call usual 1d gpfsgp gp_post_wrapper
+            mu, cov = gpfsgp.gp_post_wrapper(x_list, data_single, full_cov)
+            mu_list.append(mu)
+            cov_list.append(cov)
+
+        return mu_list, cov_list
+
+    def get_data_list(self, data):
+        """
+        Return list of Namespaces, where each is a version of data containing only one
+        of the dimensions of data.y (and the full data.x).
+        """
+        data_list = []
+        for j in range(self.params.n_dimy):
+            data_list.append(Namespace(x=data.x, y=[yi[j] for yi in data.y]))
+
+        return data_list
