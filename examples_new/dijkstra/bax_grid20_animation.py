@@ -19,7 +19,7 @@ neatplot.set_style('fonts')
 neatplot.update_rc('font.size', 20)
 
 
-seed = 11
+seed = 4
 np.random.seed(seed)
 tf.random.set_seed(seed)
 
@@ -172,18 +172,25 @@ for i in range(n_iter):
     print(f'Finished iter i = {i}')
 
     # Plot
-    #fig, ax = plt.subplots(figsize=(7.4, 7))
-    #fig, ax = plt.subplots(figsize=(9, 7))
-    #fig, ax = plt.subplots(figsize=(8.9, 7))
+    #fig, ax = plt.subplots(figsize=(7.4, 7)) # For square image, no colorbar
+    #fig, ax = plt.subplots(figsize=(8.9, 7)) # For square image, with colorbar
 
-    gridspec_kw = {'width_ratios': (0.3, 0.7)}
-    fig, axs = plt.subplots(1, 2, figsize=(14.25, 7), gridspec_kw=gridspec_kw)
+    # For wide image, with description
+    gkw = {'width_ratios': (0.3, 0.7)}
+    fig, axs = plt.subplots(1, 2, figsize=(14.25, 7), gridspec_kw=gkw)
     axs[0].axis('off')
     ax = axs[1]
 
-    #descr = "Estimating shortest paths in\ngraphs when edge weights are\nexpensive to access."
-    descr = "Estimating shortest paths in\ngraphs when it is expensive\nto access edge weights."
-    axs[0].text(0, 0.5, descr)
+    # Description
+    descr = "Estimating shortest paths in\ngraphs when edge weights\nare expensive to obtain."
+
+    # Standalone descr
+    axs[0].text(0.06, 0.5, descr)
+
+    # Showing descr with details
+    #axs[0].text(0.06, 0.7, descr, va="top")
+    #descr_2 = "$\cdot$ Black dots are (expensive) edge queries.\n\n$\cdot$ Blue lines are inferred shortest paths.\n\n$\cdot$ Black line is true shortest path."
+    #axs[0].text(0.06, 0.47, descr_2, va="top", fontdict={"size": 14})
 
     plot_contourf(fig, ax, x1_lims, x2_lims)
 
