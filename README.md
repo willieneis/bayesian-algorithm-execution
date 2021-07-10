@@ -77,7 +77,8 @@ $ python examples/dijkstra/bax_grid20_animation.py
 ```
 
 <p align="center">
-    <img src="docs/images/infobax_dijkstra_animation_still.svg" width=500 />
+    <img src="docs/images/infobax_dijkstra_animation_still.svg" width=500
+    style="border:1px solid #BDC3C7; border-radius: 5px;" />
 </p>
 
 
@@ -90,7 +91,8 @@ $ python examples/branin/bax_viz2d_simple_demo.py
 
 <p align="center">
     &nbsp;
-    <img src="docs/images/infobax_branin_animation_still.svg" width=300 />
+    <img src="docs/images/infobax_branin_animation_still.svg" width=300
+    style="border:1px solid #BDC3C7; border-radius: 5px;" />
 </p>
 
 
@@ -102,7 +104,8 @@ $ python examples/topk/bax_simple_demo.py
 ```
 
 <p align="center">
-    <img src="docs/images/infobax_topk_animation_still.svg" width=305 />
+    <img src="docs/images/infobax_topk_animation_still.svg" width=305
+    style="border:1px solid #BDC3C7; border-radius: 5px;" />
 </p>
 
 
@@ -111,10 +114,10 @@ Please cite [our paper](https://arxiv.org/abs/2104.09460) if you find this proje
 helpful:
 ```
 @inproceedings{neiswanger2021bayesian,
-  title={Bayesian Algorithm Execution: Estimating Computable Properties of Black-box Functions Using Mutual Information},
-  author={Neiswanger, Willie and Wang, Ke Alexander and Ermon, Stefano},
-  booktitle={International Conference on Machine Learning},
-  year={2021},
-  organization={PMLR}
+  title         = {Bayesian Algorithm Execution: Estimating Computable Properties of Black-box Functions Using Mutual Information},
+  author        = {Neiswanger, Willie and Wang, Ke Alexander and Ermon, Stefano},
+  booktitle     = {International Conference on Machine Learning},
+  year          = {2021},
+  organization  = {PMLR}
 }
 ```
