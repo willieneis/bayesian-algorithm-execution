@@ -8,10 +8,15 @@ Code for the paper:
 > International Conference on Machine Learning (ICML), 2021\
 > _arXiv:2104.09460_
 
+See also the [BAX website](https://willieneis.github.io/bax-website/) for additional details
+and animations.
+
 
 ### One-sentence summary
+
 Extending Bayesian optimization from estimating global optima to
 estimating other function properties defined by the output of algorithms.
+
 
 ### Abstract
 
